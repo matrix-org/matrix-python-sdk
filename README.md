@@ -8,7 +8,7 @@ an object model to perform actions on.
 
 Client:
 ```
-from matrix.client import MatrixClient
+from matrix_client.client import MatrixClient
 
 client = MatrixClient("http://localhost:8008")
 token = client.register_with_password(username="foobar", password="monkey")
@@ -18,7 +18,7 @@ room.send_text("Hello!")
 
 API:
 ```
-from matrix.api import MatrixHttpApi
+from matrix_client.api import MatrixHttpApi
 
 matrix = MatrixHttpApi("https://matrix.org", token="some_token")
 response = matrix.initial_sync()
