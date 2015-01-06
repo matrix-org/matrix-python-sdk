@@ -24,7 +24,7 @@ class MatrixHttpApi(object):
     """Contains all raw Matrix HTTP Client-Server API calls.
 
     Usage:
-        matrix = MatrixApi("https://matrix.org", token="foobar")
+        matrix = MatrixHttpApi("https://matrix.org", token="foobar")
         response = matrix.initial_sync()
         response = matrix.send_message("!roomid:matrix.org", "Hello!")
 
