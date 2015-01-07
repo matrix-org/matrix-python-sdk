@@ -31,7 +31,7 @@ setup(
     author="matrix.org",
     author_email="kegan@matrix.org",
     url="https://github.com/matrix-org/matrix-python-sdk",
-    package =['matrix_client'],
+    packages=['matrix_client'],
     license="Apache License, Version 2.0",
     classifiers=[
         "Development Status :: 3 - Alpha",
