@@ -83,7 +83,7 @@ class MatrixHttpApi(object):
         return self._send("POST", "/register", content)
 
     def login(self, login_type, **kwargs):
-        """Performs /register.
+        """Performs /login.
 
         Args:
             login_type(str): The value for the 'type' key.
