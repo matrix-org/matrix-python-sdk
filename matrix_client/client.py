@@ -68,6 +68,17 @@ class MatrixClient(object):
         self._sync()
         return self.token
 
+    def login_with_password(self, username, password):
+        response = self.api.login(
+            "m.login.password", user=username, password=password
+        )
+        self.user_id = response["user_id"]
+        self.token = response["access_token"]
+        self.hs = response["home_server"]
+        self.api.token = self.token
+        self._sync()
+        return self.token
+
     def create_room(self, alias=None, is_public=False, invitees=()):
         response = self.api.create_room(alias, is_public, invitees)
         return self._mkroom(response["room_id"])
@@ -79,6 +90,9 @@ class MatrixClient(object):
         )
         return self._mkroom(room_id)
 
+    def get_rooms(self):
+        return self.rooms
+
     def _mkroom(self, room_id):
         self.rooms[room_id] = Room(self, room_id)
         return self.rooms[room_id]
@@ -88,6 +102,7 @@ class MatrixClient(object):
         try:
             for room in response["rooms"]:
                 self._mkroom(room["room_id"])
+            self.end = response["end"]
         except KeyError:
             pass
 

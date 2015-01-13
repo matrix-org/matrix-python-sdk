@@ -216,6 +216,7 @@ class MatrixHttpApi(object):
         response = requests.request(
             method, endpoint, params=query_params,
             data=json.dumps(content), headers=headers
+            # , verify=False  #if you want to use SSL without verifying the Cert
         )
 
         if response.status_code < 200 or response.status_code >= 300:
