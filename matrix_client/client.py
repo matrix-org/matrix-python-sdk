@@ -51,6 +51,7 @@ class MatrixClient(object):
 
     def __init__(self, base_url, token=None):
         self.api = MatrixHttpApi(base_url, token)
+        self.listeners = []
         self.rooms = {
             # room_id: Room
         }
@@ -93,6 +94,25 @@ class MatrixClient(object):
     def get_rooms(self):
         return self.rooms
 
+    def add_listener(self, callback):
+        self.listeners.append(callback)
+
+    def listen_for_events(self, timeout=30000):
+        event = self.api.event_stream(self.end, timeout)
+        self.end = event["end"]
+        for listener in self.listeners:
+            listener(event)
+        for chunk in event["chunk"]:
+            if "room_id" in chunk:
+                for listener in self.rooms[chunk["room_id"]].listeners:
+                    listener(
+                        {
+                            "chunk": [chunk],
+                            "start": event["start"],
+                            "end": event["end"]
+                        })
+
+
     def _mkroom(self, room_id):
         self.rooms[room_id] = Room(self, room_id)
         return self.rooms[room_id]
@@ -112,6 +132,10 @@ class Room(object):
     def __init__(self, client, room_id):
         self.room_id = room_id
         self.client = client
+        self.listeners = []
 
     def send_text(self, text):
         return self.client.api.send_message(self.room_id, text)
+
+    def add_listener(self, callback):
+        self.listeners.append(callback)
