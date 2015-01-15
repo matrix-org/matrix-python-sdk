@@ -100,11 +100,12 @@ class MatrixClient(object):
         self.listeners.append(callback)
 
     def listen_for_events(self, timeout=30000):
-        event = self.api.event_stream(self.end, timeout)
-        self.end = event["end"]
-        for listener in self.listeners:
-            listener(event)
-        for chunk in event["chunk"]:
+        response = self.api.event_stream(self.end, timeout)
+        self.end = response["end"]
+
+        for chunk in response["chunk"]:
+            for listener in self.listeners:
+                listener(chunk)
             if "room_id" in chunk:
                 self.rooms[chunk["room_id"]].events.append(chunk)
                 for listener in self.rooms[chunk["room_id"]].listeners:
