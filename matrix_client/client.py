@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from .api import MatrixHttpApi
-
+from threading import Thread
+import sys
 # TODO: Finish implementing this.
 
 
@@ -23,7 +24,8 @@ class MatrixClient(object):
 
     Usage (new user):
         client = MatrixClient("https://matrix.org")
-        token = client.register_with_password(username="foobar", password="monkey")
+        token = client.register_with_password(username="foobar",
+            password="monkey")
         room = client.create_room("myroom")
         room.send_image(file_like_object)
 
@@ -58,7 +60,7 @@ class MatrixClient(object):
         if token:
             self._sync()
 
-    def register_with_password(self, username, password):
+    def register_with_password(self, username, password, limit=1):
         response = self.api.register(
             "m.login.password", user=username, password=password
         )
@@ -66,10 +68,10 @@ class MatrixClient(object):
         self.token = response["access_token"]
         self.hs = response["home_server"]
         self.api.token = self.token
-        self._sync()
+        self._sync(limit)
         return self.token
 
-    def login_with_password(self, username, password):
+    def login_with_password(self, username, password, limit=1):
         response = self.api.login(
             "m.login.password", user=username, password=password
         )
@@ -77,7 +79,7 @@ class MatrixClient(object):
         self.token = response["access_token"]
         self.hs = response["home_server"]
         self.api.token = self.token
-        self._sync()
+        self._sync(limit)
         return self.token
 
     def create_room(self, alias=None, is_public=False, invitees=()):
@@ -104,25 +106,37 @@ class MatrixClient(object):
             listener(event)
         for chunk in event["chunk"]:
             if "room_id" in chunk:
+                self.rooms[chunk["room_id"]].events.append(chunk)
                 for listener in self.rooms[chunk["room_id"]].listeners:
-                    listener(
-                        {
-                            "chunk": [chunk],
-                            "start": event["start"],
-                            "end": event["end"]
-                        })
+                    listener(chunk)
 
+    def listen_forever(self, timeout=30000):
+        while(True):
+            self.listen_for_events(timeout)
+
+    def start_listener_thread(self, timeout=30000):
+        try:
+            thread = Thread(target=self.listen_forever, args=(timeout, ))
+            thread.daemon = True
+            thread.start()
+        except:
+            e = sys.exc_info()[0]
+            print("Error: unable to start thread. " + str(e))
 
     def _mkroom(self, room_id):
         self.rooms[room_id] = Room(self, room_id)
         return self.rooms[room_id]
 
-    def _sync(self):
-        response = self.api.initial_sync()
+    def _sync(self, limit=1):
+        response = self.api.initial_sync(limit)
         try:
+            self.end = response["end"]
             for room in response["rooms"]:
                 self._mkroom(room["room_id"])
-            self.end = response["end"]
+
+                for chunk in room["messages"]["chunk"]:
+                    self.rooms.get(room["room_id"]).events.append(chunk)
+
         except KeyError:
             pass
 
@@ -133,9 +147,13 @@ class Room(object):
         self.room_id = room_id
         self.client = client
         self.listeners = []
+        self.events = []
 
     def send_text(self, text):
         return self.client.api.send_message(self.room_id, text)
 
     def add_listener(self, callback):
         self.listeners.append(callback)
+
+    def get_events(self):
+        return self.events
