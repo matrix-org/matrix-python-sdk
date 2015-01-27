@@ -153,6 +153,9 @@ class Room(object):
     def send_text(self, text):
         return self.client.api.send_message(self.room_id, text)
 
+    def send_emote(self, text):
+        return self.client.api.send_emote(self.room_id, text)
+
     def add_listener(self, callback):
         self.listeners.append(callback)
 

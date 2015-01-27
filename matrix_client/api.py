@@ -190,6 +190,18 @@ class MatrixHttpApi(object):
             self.get_text_body(text_content)
         )
 
+    def send_emote(self, room_id, text_content):
+        """Performs /rooms/$room_id/send/m.room.message
+
+        Args:
+            room_id(str): The room ID to send the event in.
+            text_content(str): The m.text body to send.
+        """
+        return self.send_message_event(
+            room_id, "m.room.message",
+            self.get_emote_body(text_content)
+        )
+
     def get_text_body(self, text):
         return {
             "msgtype": "m.text",
@@ -202,6 +214,12 @@ class MatrixHttpApi(object):
             "msgtype": "m.text",
             "format": "org.matrix.custom.html",
             "formatted_body": html
+        }
+
+    def get_emote_body(self, text):
+        return {
+            "msgtype": "m.emote",
+            "body": text
         }
 
     def _send(self, method, path, content=None, query_params={}, headers={}):
