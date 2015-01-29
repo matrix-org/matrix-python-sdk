@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from .api import MatrixHttpApi
+from .api import MatrixHttpApi, MatrixRequestError
 from threading import Thread
 import sys
 # TODO: Finish implementing this.
@@ -135,8 +135,17 @@ class MatrixClient(object):
             for room in response["rooms"]:
                 self._mkroom(room["room_id"])
 
+                current_room = self.get_rooms()[room["room_id"]]
                 for chunk in room["messages"]["chunk"]:
-                    self.rooms.get(room["room_id"]).events.append(chunk)
+                    current_room.events.append(chunk)
+
+                for state_event in room["state"]:
+                    if "type" in state_event and state_event["type"] == "m.room.name":
+                        current_room.name = state_event["content"]["name"]
+                    if "type" in state_event and state_event["type"] == "m.room.topic":
+                        current_room.topic = state_event["content"]["topic"]
+                    if "type" in state_event and state_event["type"] == "m.room.aliases":
+                        current_room.aliases = state_event["content"]["aliases"]
 
         except KeyError:
             pass
@@ -149,6 +158,9 @@ class Room(object):
         self.client = client
         self.listeners = []
         self.events = []
+        self.name = None
+        self.aliases = []
+        self.topic = None
 
     def send_text(self, text):
         return self.client.api.send_message(self.room_id, text)
@@ -161,3 +173,30 @@ class Room(object):
 
     def get_events(self):
         return self.events
+
+    def update_room_name(self):
+        try:
+            response = self.client.api.get_room_name(self.room_id)
+            self.name = response["name"]
+            return True
+        except MatrixRequestError:
+            return False
+
+    def update_aliases(self):
+        try:
+            response = self.client.api.get_room_state(self.room_id)
+            for chunk in response:
+                if "content" in chunk and "aliases" in chunk["content"]:
+                    self.aliases = chunk["content"]["aliases"]
+                    return True
+        except MatrixRequestError:
+            return False
+
+    def update_room_topic(self):
+        try:
+            response = self.client.api.get_room_topic(self.room_id)
+            self.topic = response["topic"]
+            return True
+        except MatrixRequestError:
+            return False
+

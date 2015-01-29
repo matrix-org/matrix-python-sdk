@@ -202,6 +202,27 @@ class MatrixHttpApi(object):
             self.get_emote_body(text_content)
         )
 
+    def get_room_name(self, room_id):
+        """Performs GET /rooms/$room_id/state/m.room.name
+        Args:
+            room_id(str): The room ID
+        """
+        return self._send("GET", "/rooms/" + room_id + "/state/m.room.name")
+
+    def get_room_topic(self, room_id):
+        """Performs GET /rooms/$room_id/state/m.room.topic
+        Args:
+            room_id(str): The room ID
+        """
+        return self._send("GET", "/rooms/" + room_id + "/state/m.room.topic")
+
+    def get_room_state(self, room_id):
+        """Performs GET /rooms/$room_id/state
+        Args:
+            room_id(str): The room ID
+        """
+        return self._send("GET", "/rooms/" + room_id + "/state")
+
     def get_text_body(self, text):
         return {
             "msgtype": "m.text",
