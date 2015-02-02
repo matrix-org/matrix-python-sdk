@@ -107,6 +107,8 @@ class MatrixClient(object):
             for listener in self.listeners:
                 listener(chunk)
             if "room_id" in chunk:
+                if chunk["room_id"] not in self.rooms:
+                    self._mkroom(chunk["room_id"])
                 self.rooms[chunk["room_id"]].events.append(chunk)
                 for listener in self.rooms[chunk["room_id"]].listeners:
                     listener(chunk)
@@ -174,29 +176,83 @@ class Room(object):
     def get_events(self):
         return self.events
 
-    def update_room_name(self):
+    def invite_user(self, user_id):
+        """Invite user to this room
+
+        Return True if the invitation was sent
+        """
         try:
-            response = self.client.api.get_room_name(self.room_id)
-            self.name = response["name"]
+            response = self.client.api.invite_user(self.room_id, user_id)
             return True
         except MatrixRequestError:
             return False
 
-    def update_aliases(self):
+    def kick_user(self, user_id):
         try:
-            response = self.client.api.get_room_state(self.room_id)
-            for chunk in response:
-                if "content" in chunk and "aliases" in chunk["content"]:
-                    self.aliases = chunk["content"]["aliases"]
-                    return True
+            response = self.client.api.kick_user(self.room_id, user_id)
+            return True
+        except MatrixRequestError:
+            return False
+
+    def ban_user(self, user_id, reason):
+        try:
+            response = self.client.api.ban_user(self.room_id, user_id, reason)
+            return True
+        except MatrixRequestError:
+            return False
+
+    def leave(self, user_id):
+        try:
+            response = self.client.api.leave_room(self.room_id)
+            self.client.rooms.remove(self.room_id)
+            return True
+        except MatrixRequestError:
+            return False
+
+    def update_room_name(self):
+        """Get room name
+
+        Return True if the room name changed, False if not
+        """
+        try:
+            response = self.client.api.get_room_name(self.room_id)
+            if "name" in response and response["name"] != self.name:
+                self.name = response["name"]
+                return True
+            else:
+                return False
         except MatrixRequestError:
             return False
 
     def update_room_topic(self):
+        """Get room topic
+
+        Return True if the room topic changed, False if not
+        """
         try:
             response = self.client.api.get_room_topic(self.room_id)
-            self.topic = response["topic"]
-            return True
+            if "topic" in response and response["topic"] != self.topic:
+                self.topic = response["topic"]
+                return True
+            else:
+                return False
+        except MatrixRequestError:
+            return False
+
+    def update_aliases(self):
+        """Get aliases information from room state
+
+        Return True if the aliases changed, False if not
+        """
+        try:
+            response = self.client.api.get_room_state(self.room_id)
+            for chunk in response:
+                if "content" in chunk and "aliases" in chunk["content"]:
+                    if chunk["content"]["aliases"] != self.aliases:
+                        self.aliases = chunk["content"]["aliases"]
+                        return True
+                    else:
+                        return False
         except MatrixRequestError:
             return False
 
