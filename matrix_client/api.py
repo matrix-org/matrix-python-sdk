@@ -19,7 +19,6 @@ import requests
 import urllib
 import urlparse
 
-
 class MatrixError(Exception):
     """A generic Matrix error. Specific errors will subclass this."""
     pass
@@ -60,7 +59,7 @@ class MatrixHttpApi(object):
         self.txn_id = 0
 
     def initial_sync(self, limit=1):
-        """Performs /initialSync.
+        """Perform /initialSync.
 
         Args:
             limit(int): The limit= param to provide.
@@ -83,7 +82,7 @@ class MatrixHttpApi(object):
         return self._send("POST", "/register", content)
 
     def login(self, login_type, **kwargs):
-        """Performs /login.
+        """Perform /login.
 
         Args:
             login_type(str): The value for the 'type' key.
@@ -98,7 +97,7 @@ class MatrixHttpApi(object):
         return self._send("POST", "/login", content)
 
     def create_room(self, alias=None, is_public=False, invitees=()):
-        """Performs /createRoom.
+        """Perform /createRoom.
 
         Args:
             alias(str): Optional. The room alias name to set for this room.
@@ -143,7 +142,7 @@ class MatrixHttpApi(object):
         )
 
     def send_state_event(self, room_id, event_type, content, state_key=""):
-        """Performs /rooms/$room_id/state/$event_type
+        """Perform /rooms/$room_id/state/$event_type
 
         Args:
             room_id(str): The room ID to send the state event in.
@@ -159,7 +158,7 @@ class MatrixHttpApi(object):
         return self._send("PUT", path, content)
 
     def send_message_event(self, room_id, event_type, content, txn_id=None):
-        """Performs /rooms/$room_id/send/$event_type
+        """Perform /rooms/$room_id/send/$event_type
 
         Args:
             room_id(str): The room ID to send the message event in.
@@ -179,7 +178,7 @@ class MatrixHttpApi(object):
         return self._send("PUT", path, content)
 
     def send_message(self, room_id, text_content):
-        """Performs /rooms/$room_id/send/m.room.message
+        """Perform /rooms/$room_id/send/m.room.message
 
         Args:
             room_id(str): The room ID to send the event in.
@@ -191,7 +190,7 @@ class MatrixHttpApi(object):
         )
 
     def send_emote(self, room_id, text_content):
-        """Performs /rooms/$room_id/send/m.room.message with m.emote msgtype
+        """Perform /rooms/$room_id/send/m.room.message with m.emote msgtype
 
         Args:
             room_id(str): The room ID to send the event in.
@@ -203,21 +202,63 @@ class MatrixHttpApi(object):
         )
 
     def get_room_name(self, room_id):
-        """Performs GET /rooms/$room_id/state/m.room.name
+        """Perform GET /rooms/$room_id/state/m.room.name
         Args:
             room_id(str): The room ID
         """
         return self._send("GET", "/rooms/" + room_id + "/state/m.room.name")
 
     def get_room_topic(self, room_id):
-        """Performs GET /rooms/$room_id/state/m.room.topic
+        """Perform GET /rooms/$room_id/state/m.room.topic
         Args:
             room_id(str): The room ID
         """
         return self._send("GET", "/rooms/" + room_id + "/state/m.room.topic")
 
+    def leave_room(self, room_id):
+        """Perform POST /rooms/$room_id/leave
+        Args:
+            room_id(str): The room ID
+        """
+        return self._send("POST", "/rooms/" + room_id + "/leave")
+
+    def invite_user(self, room_id, user_id):
+        """Perform POST /rooms/$room_id/invite
+        Args:
+            room_id(str): The room ID
+            user_id(str): The user ID of the invitee
+        """
+        body = {
+            "user_id": user_id
+        }
+        return self._send("POST", "/rooms/" + room_id + "/invite", body)
+
+    def kick_user(self, room_id, user_id):
+        """Perform POST /rooms/$room_id/kick
+        Args:
+            room_id(str): The room ID
+            user_id(str): The user ID of the kickee(sic)
+        """
+        body = {
+            "user_id": user_id
+        }
+        return self._send("POST", "/rooms/" + room_id + "/kick", body)
+
+    def ban_user(self, room_id, user_id, reason=""):
+        """Perform POST /rooms/$room_id/ban
+        Args:
+            room_id(str): The room ID
+            user_id(str): The user ID of the banee(sic)
+            reason(str): The reason for this ban
+        """
+        body = {
+            "user_id": user_id,
+            "reason": reason
+        }
+        return self._send("POST", "/rooms/" + room_id + "/ban", body)
+
     def get_room_state(self, room_id):
-        """Performs GET /rooms/$room_id/state
+        """Perform GET /rooms/$room_id/state
         Args:
             room_id(str): The room ID
         """
