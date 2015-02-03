@@ -190,16 +190,16 @@ class MatrixHttpApi(object):
             self.get_text_body(text_content)
         )
 
-    def get_text_body(self, text):
+    def get_text_body(self, text, msgtype="m.text"):
         return {
-            "msgtype": "m.text",
+            "msgtype": msgtype,
             "body": text
         }
 
-    def get_html_body(self, html):
+    def get_html_body(self, html, msgtype="m.text"):
         return {
             "body": re.sub('<[^<]+?>', '', html),
-            "msgtype": "m.text",
+            "msgtype": msgtype,
             "format": "org.matrix.custom.html",
             "formatted_body": html
         }
