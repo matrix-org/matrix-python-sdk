@@ -177,7 +177,7 @@ class MatrixHttpApi(object):
         )
         return self._send("PUT", path, content)
 
-    def send_message(self, room_id, text_content):
+    def send_message(self, room_id, text_content, msgtype="m.text"):
         """Perform /rooms/$room_id/send/m.room.message
 
         Args:
@@ -186,7 +186,7 @@ class MatrixHttpApi(object):
         """
         return self.send_message_event(
             room_id, "m.room.message",
-            self.get_text_body(text_content)
+            self.get_text_body(text_content, msgtype)
         )
 
     def send_emote(self, room_id, text_content):
