@@ -187,7 +187,7 @@ class Room(object):
         except MatrixRequestError:
             return False
 
-    def kick_user(self, user_id):
+    def kick_user(self, user_id, reason=""):
         try:
             response = self.client.api.kick_user(self.room_id, user_id)
             return True

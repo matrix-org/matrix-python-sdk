@@ -233,16 +233,26 @@ class MatrixHttpApi(object):
         }
         return self._send("POST", "/rooms/" + room_id + "/invite", body)
 
-    def kick_user(self, room_id, user_id):
-        """Perform POST /rooms/$room_id/kick
+    def kick_user(self, room_id, user_id, reason=""):
+        """Calls set_membership with membership="leave" for the user_id provided
+        """
+        self.set_membership(room_id, user_id, "leave", reason)
+
+    def set_membership(self, room_id, user_id, membership, reason=""):
+        """Perform PUT /rooms/$room_id/state/m.room.member/$user_id
         Args:
             room_id(str): The room ID
-            user_id(str): The user ID of the kickee(sic)
+            user_id(str): The user ID
+            membership(str): New membership value
+            reason(str): The reason
         """
         body = {
-            "user_id": user_id
+            "membership": membership,
+            "reason": reason
         }
-        return self._send("POST", "/rooms/" + room_id + "/kick", body)
+        return self._send("PUT", "/rooms/" + room_id + "/state/m.room.number/" + user_id, body)
+
+
 
     def ban_user(self, room_id, user_id, reason=""):
         """Perform POST /rooms/$room_id/ban
