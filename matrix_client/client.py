@@ -51,8 +51,9 @@ class MatrixClient(object):
 
     """
 
-    def __init__(self, base_url, token=None):
+    def __init__(self, base_url, token=None, valid_cert_check=True):
         self.api = MatrixHttpApi(base_url, token)
+        self.api.validate_certificate(valid_cert_check)
         self.listeners = []
         self.rooms = {
             # room_id: Room
