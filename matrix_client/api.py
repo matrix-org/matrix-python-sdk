@@ -57,6 +57,7 @@ class MatrixHttpApi(object):
             self.url = base_url
         self.token = token
         self.txn_id = 0
+        self.validate_cert = True
 
     def initial_sync(self, limit=1):
         """Perform /initialSync.
@@ -65,6 +66,10 @@ class MatrixHttpApi(object):
             limit(int): The limit= param to provide.
         """
         return self._send("GET", "/initialSync", query_params={"limit": limit})
+
+    def validate_certificate(self, valid):
+        self.validate_cert = valid
+        return
 
     def register(self, login_type, **kwargs):
         """Performs /register.
@@ -306,7 +311,7 @@ class MatrixHttpApi(object):
         response = requests.request(
             method, endpoint, params=query_params,
             data=json.dumps(content), headers=headers
-            # , verify=False  #if you want to use SSL without verifying the Cert
+            , verify=self.validate_cert  #if you want to use SSL without verifying the Cert
         )
 
         if response.status_code < 200 or response.status_code >= 300:
