@@ -57,7 +57,7 @@ class MatrixHttpApi(object):
             self.url = base_url
         self.token = token
         self.txn_id = 0
-        self.validate_cert = False
+        self.validate_cert = True
 
     def initial_sync(self, limit=1):
         """Perform /initialSync.
