@@ -57,7 +57,7 @@ class MatrixHttpApi(object):
             self.url = base_url
         self.token = token
         self.txn_id = 0
-        self.validate_cert = True
+        self.validate_cert = False
 
     def initial_sync(self, limit=1):
         """Perform /initialSync.
@@ -127,7 +127,7 @@ class MatrixHttpApi(object):
         if not room_id_or_alias:
             raise MatrixError("No alias or room ID to join.")
 
-        path = "/join/%s" % room_id_or_alias
+        path = "/join/%s" % urllib.quote(room_id_or_alias)
 
         return self._send("POST", path)
 
