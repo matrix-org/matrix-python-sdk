@@ -225,7 +225,7 @@ class MatrixHttpApi(object):
         Args:
             room_id(str): The room ID
         """
-        return self._send("POST", "/rooms/" + room_id + "/leave")
+        return self._send("POST", "/rooms/" + room_id + "/leave", {})
 
     def invite_user(self, room_id, user_id):
         """Perform POST /rooms/$room_id/invite
@@ -255,7 +255,7 @@ class MatrixHttpApi(object):
             "membership": membership,
             "reason": reason
         }
-        return self._send("PUT", "/rooms/" + room_id + "/state/m.room.number/" + user_id, body)
+        return self._send("PUT", "/rooms/" + room_id + "/state/m.room.member/" + user_id, body)
 
 
 
