@@ -29,7 +29,7 @@ setup(
     description="Client-Server SDK for Matrix",
     long_description=read_file(("README.rst",)),
     author="matrix.org",
-    author_email="kegan@matrix.org",
+    author_email="team@matrix.org",
     url="https://github.com/matrix-org/matrix-python-sdk",
     packages=['matrix_client'],
     license="Apache License, Version 2.0",
