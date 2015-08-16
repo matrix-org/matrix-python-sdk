@@ -17,7 +17,16 @@ import json
 import re
 import requests
 import urllib
-import urlparse
+try:
+    import urllib.parse as urlparse
+    quote = urlparse.quote
+except ImportError:
+    import urlparse
+    quote = urllib.quote
+try:
+    unicode
+except NameError:
+    unicode = str
 
 class MatrixError(Exception):
     """A generic Matrix error. Specific errors will subclass this."""
@@ -127,7 +136,7 @@ class MatrixHttpApi(object):
         if not room_id_or_alias:
             raise MatrixError("No alias or room ID to join.")
 
-        path = "/join/%s" % urllib.quote(room_id_or_alias)
+        path = "/join/%s" % quote(room_id_or_alias)
 
         return self._send("POST", path)
 
@@ -156,10 +165,10 @@ class MatrixHttpApi(object):
             state_key(str): Optional. The state key for the event.
         """
         path = ("/rooms/%s/state/%s" %
-            (urllib.quote(room_id), urllib.quote(event_type))
+            (quote(room_id), quote(event_type))
         )
         if state_key:
-            path += "/%s" % (urllib.quote(state_key))
+            path += "/%s" % (quote(state_key))
         return self._send("PUT", path, content)
 
     def send_message_event(self, room_id, event_type, content, txn_id=None):
@@ -177,8 +186,8 @@ class MatrixHttpApi(object):
         self.txn_id = self.txn_id + 1
 
         path = ("/rooms/%s/send/%s/%s" %
-            (urllib.quote(room_id), urllib.quote(event_type),
-             urllib.quote(unicode(txn_id)))
+            (quote(room_id), quote(event_type),
+             quote(unicode(txn_id)))
         )
         return self._send("PUT", path, content)
 
