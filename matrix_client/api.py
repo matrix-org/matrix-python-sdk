@@ -17,7 +17,10 @@ import json
 import re
 import requests
 import urllib
-import urlparse
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse  # For python 3
 
 class MatrixError(Exception):
     """A generic Matrix error. Specific errors will subclass this."""
