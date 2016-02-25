@@ -5,7 +5,7 @@ Matrix Client SDK for Python
   :target: https://pypi.python.org/pypi/matrix-client/
   :alt: Latest Version
 
-This is a Matrix client-server SDK for Python 2.x.
+This is a Matrix client-server SDK for Python 3.x.
 
 Usage
 =====
