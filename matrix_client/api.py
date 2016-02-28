@@ -189,7 +189,7 @@ class MatrixHttpApi(object):
     # extra information should be supplied, see https://matrix.org/docs/spec/r0.0.1/client_server.html
     def send_content(self,room_id, item_url,item_name,item_type,extra_information=None):
         if extra_information == None:
-            extra_information = {}f
+            extra_information = {}
 
         content_pack = {
             "url":item_url,
