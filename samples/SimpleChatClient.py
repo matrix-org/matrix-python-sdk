@@ -2,6 +2,9 @@
 from matrix_client.client import MatrixClient
 from matrix_client.api import MatrixRequestError
 from requests.exceptions import MissingSchema
+
+from getpass import getpass
+
 import sys
 
 def on_message(event):
@@ -30,7 +33,7 @@ if len(sys.argv) > 2:
 else:
     username = input("Username: ")
 
-password = input("Password: ")
+password = getpass() #Hide user input
 
 try:
     client.login_with_password(username,password)
