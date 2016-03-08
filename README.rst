@@ -5,7 +5,7 @@ Matrix Client SDK for Python
   :target: https://pypi.python.org/pypi/matrix-client/
   :alt: Latest Version
 
-This is a Matrix client-server SDK for Python 3.x.
+This is a Matrix client-server SDK for Python 2.x and 3.x.
 
 Usage
 =====
@@ -49,3 +49,12 @@ transaction ID (``txn_id``) which will be incremented for each request.
 Client
 ------
 This encapsulates the API module and provides object models such as ``Room``. 
+
+Samples
+=======
+A collection of samples are included, written in Python 3.
+
+To start a sample without having to install the sdk run:
+
+    startSample.sh samplefilename.py
+
