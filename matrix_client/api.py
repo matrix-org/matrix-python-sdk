@@ -16,10 +16,12 @@
 import json
 import re
 import requests
-import urllib
+
 try:
     import urlparse
+    from urllib import quote
 except ImportError:
+    from urllib.parse import quote
     import urllib.parse as urlparse  # For python 3
 
 class MatrixError(Exception):
@@ -130,7 +132,7 @@ class MatrixHttpApi(object):
         if not room_id_or_alias:
             raise MatrixError("No alias or room ID to join.")
 
-        path = "/join/%s" % urlparse.quote(room_id_or_alias)
+        path = "/join/%s" % quote(room_id_or_alias)
 
         return self._send("POST", path)
 
@@ -162,7 +164,7 @@ class MatrixHttpApi(object):
             (urlparse.quote(room_id), urlparse.quote(event_type))
         )
         if state_key:
-            path += "/%s" % (urlparse.quote(state_key))
+            path += "/%s" % (quote(state_key))
         return self._send("PUT", path, content)
 
     def send_message_event(self, room_id, event_type, content, txn_id=None):
@@ -180,8 +182,7 @@ class MatrixHttpApi(object):
         self.txn_id = self.txn_id + 1
 
         path = ("/rooms/%s/send/%s/%s" %
-            (urlparse.quote(room_id), urlparse.quote(event_type),
-             urlparse.quote(str(txn_id)))
+            (quote(room_id), quote(event_type), quote(str(txn_id)))
         )
         return self._send("PUT", path, content)
 
