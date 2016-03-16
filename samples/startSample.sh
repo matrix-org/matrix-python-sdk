@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
-if [ "$1" == "-h" ] || [ $# -lt 1 ]; then
+if [ "$1" = "-h" ] || [ $# -lt 1 ]; then
   echo "Usage: `basename $0` scriptname [OPTIONS] "
   exit 0
 fi
