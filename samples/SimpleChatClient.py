@@ -85,11 +85,9 @@ except MatrixRequestError as e:
 room.add_listener(on_message)
 client.start_listener_thread()
 
-
-shouldRun = True
-while shouldRun:
+while True:
     msg = input()
     if msg == "/quit":
-        shouldRun = False
+        break
     else:
         room.send_text(msg)
