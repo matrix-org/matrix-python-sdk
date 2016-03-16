@@ -11,13 +11,14 @@
 # 11 - Wrong room format.
 # 12 - Couldn't find room.
 
+import sys
+sys.path.insert(0, "../") # add ../ to PYTHONPATH
+
 from matrix_client.client import MatrixClient
 from matrix_client.api import MatrixRequestError
 from requests.exceptions import MissingSchema
 
 from getpass import getpass
-
-import sys
 
 # Called when a message is recieved.
 def on_message(event):
