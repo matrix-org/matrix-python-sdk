@@ -56,10 +56,7 @@ class MatrixHttpApi(object):
             base_url(str): The home server URL e.g. 'http://localhost:8008'
             token(str): Optional. The client's access token.
         """
-        if not base_url.endswith("/_matrix/client/api/v1"):
-            self.url = urlparse.urljoin(base_url, "/_matrix/client/api/v1")
-        else:
-            self.url = base_url
+        self.base_url = base_url
         self.token = token
         self.txn_id = 0
         self.validate_cert = True
@@ -188,7 +185,7 @@ class MatrixHttpApi(object):
 
     # content_type can be a image,audio or video
     # extra information should be supplied, see https://matrix.org/docs/spec/r0.0.1/client_server.html
-    def send_content(self,room_id, item_url,item_name,item_type,extra_information=None):
+    def send_content(self, room_id, item_url, item_name, item_type, extra_information=None):
         if extra_information == None:
             extra_information = {}
 
@@ -198,7 +195,7 @@ class MatrixHttpApi(object):
             "body":item_name,
             "info":extra_information
         }
-        return self.send_message_event(room_id,"m.room.message",content_pack)
+        return self.send_message_event(room_id, "m.room.message", content_pack)
 
     def send_message(self, room_id, text_content, msgtype="m.text"):
         """Perform /rooms/$room_id/send/m.room.message
@@ -317,35 +314,22 @@ class MatrixHttpApi(object):
             "body": text
         }
 
-    def _send(self, method, path, content=None, query_params={}, headers={},content_type="application/json"):
+    def _send(self, method, path, content=None, query_params={}, headers={}, apipath="/_matrix/client/api/v1"):
         method = method.upper()
         if method not in ["GET", "PUT", "DELETE", "POST"]:
             raise MatrixError("Unsupported HTTP method: %s" % method)
 
-        headers["Content-Type"] = "application/json"
+        if "Content-Type" not in headers:
+            headers["Content-Type"] = "application/json"
+
         query_params["access_token"] = self.token
-        endpoint = self.url + path
+        endpoint = self.base_url + apipath + path
+
+        if headers["Content-Type"] == "application/json":
+            content = json.dumps(content)
 
         response = requests.request(
             method, endpoint, params=query_params,
-            data=json.dumps(content), headers=headers
-            , verify=self.validate_cert  #if you want to use SSL without verifying the Cert
-        )
-
-        if response.status_code < 200 or response.status_code >= 300:
-            raise MatrixRequestError(
-                code=response.status_code, content=response.text
-            )
-
-        return response.json()
-
-    def media_upload(self,content,content_type):
-        query_params = {"access_token":self.token}
-        headers = {"Content-Type":content_type}
-        endpoint = self.url.replace( "/_matrix/client/api/v1","/_matrix/media/r0/upload")
-
-        response = requests.request(
-            "POST", endpoint, params=query_params,
             data=content, headers=headers
             , verify=self.validate_cert  #if you want to use SSL without verifying the Cert
         )
@@ -356,3 +340,6 @@ class MatrixHttpApi(object):
             )
 
         return response.json()
+
+    def media_upload(self, content, content_type):
+        return _send("PUT","",content=content,headers={"Content-Type":content_type},apipath="/_matrix/media/r0/upload")
