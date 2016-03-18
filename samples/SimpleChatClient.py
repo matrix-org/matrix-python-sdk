@@ -52,13 +52,13 @@ password = getpass() #Hide user input
 try:
     client.login_with_password(username,password)
 except MatrixRequestError as e:
+    print(e)
     if e.code == 403:
         print("Bad username or password.")
         sys.exit(4)
     else:
         print("Check your sever details are correct.")
         sys.exit(3)
-    print(e)
 
 except MissingSchema as e:
     print("Bad URL format.")
@@ -76,6 +76,7 @@ else:
 try:
     room = client.join_room(room)
 except MatrixRequestError as e:
+    print(e)
     if e.code == 400:
         print("Room ID/Alias in the wrong format")
         sys.exit(11)
