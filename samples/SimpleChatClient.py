@@ -31,9 +31,9 @@ def on_message(event):
     else:
         print(event['type'])
 
-host = "";
-username = "";
-room = "";
+host = ""
+username = ""
+room = ""
 
 if len(sys.argv) > 1:
     host = sys.argv[1]
