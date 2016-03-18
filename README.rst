@@ -42,19 +42,15 @@ The SDK is split into two modules: ``api`` and ``client``.
 
 API
 ---
-This contains the raw HTTP API calls and has minimal business logic. You can 
-set the access token (``token``) to use for requests as well as set a custom 
+This contains the raw HTTP API calls and has minimal business logic. You can
+set the access token (``token``) to use for requests as well as set a custom
 transaction ID (``txn_id``) which will be incremented for each request.
 
 Client
 ------
-This encapsulates the API module and provides object models such as ``Room``. 
+This encapsulates the API module and provides object models such as ``Room``.
 
 Samples
 =======
 A collection of samples are included, written in Python 3.
-
-To start a sample without having to install the sdk run:
-
-    startSample.sh samplefilename.py
-
+You do not need to install matrix_client to run the samples, they will automatically include the files.
