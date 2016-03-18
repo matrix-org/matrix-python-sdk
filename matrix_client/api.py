@@ -28,6 +28,12 @@ class MatrixError(Exception):
     """A generic Matrix error. Specific errors will subclass this."""
     pass
 
+class MatrixUnexpectedResponse(MatrixError):
+    """The home server gave an unexpected response. """
+    def __init__(self,content=""):
+        super(MatrixRequestError, self).__init__(content)
+        self.content = content
+
 
 class MatrixRequestError(MatrixError):
     """ The home server returned an error response. """
@@ -185,13 +191,13 @@ class MatrixHttpApi(object):
 
     # content_type can be a image,audio or video
     # extra information should be supplied, see https://matrix.org/docs/spec/r0.0.1/client_server.html
-    def send_content(self, room_id, item_url, item_name, item_type, extra_information=None):
+    def send_content(self, room_id, item_url, item_name, msg_type, extra_information=None):
         if extra_information == None:
             extra_information = {}
 
         content_pack = {
             "url":item_url,
-            "msgtype":"m."+item_type,
+            "msgtype":msg_type,
             "body":item_name,
             "info":extra_information
         }
@@ -314,7 +320,7 @@ class MatrixHttpApi(object):
             "body": text
         }
 
-    def _send(self, method, path, content=None, query_params={}, headers={}, apipath="/_matrix/client/api/v1"):
+    def _send(self, method, path, content=None, query_params={}, headers={}, api_path="/_matrix/client/api/v1"):
         method = method.upper()
         if method not in ["GET", "PUT", "DELETE", "POST"]:
             raise MatrixError("Unsupported HTTP method: %s" % method)
@@ -323,7 +329,7 @@ class MatrixHttpApi(object):
             headers["Content-Type"] = "application/json"
 
         query_params["access_token"] = self.token
-        endpoint = self.base_url + apipath + path
+        endpoint = self.base_url + api_path + path
 
         if headers["Content-Type"] == "application/json":
             content = json.dumps(content)
