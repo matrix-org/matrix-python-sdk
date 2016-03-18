@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from .api import MatrixHttpApi, MatrixRequestError
+from .api import MatrixHttpApi, MatrixRequestError, MatrixUnexpectedResponse
 from threading import Thread
 import sys
 # TODO: Finish implementing this.
@@ -128,8 +128,14 @@ class MatrixClient(object):
             print("Error: unable to start thread. " + str(e))
 
     def upload(self,content,content_type):
-        response = self.api.media_upload(content,content_type)
-        return response["content_uri"]
+        try:
+            response = self.api.media_upload(content,content_type)
+            return response["content_uri"]
+        except MatrixRequestError as e:
+            raise MatrixRequestError(code=e.code, content="Upload failed: %s" % e)
+        except KeyError:
+            raise MatrixUnexpectedResponse(content="The upload was successful, but content_uri was found in response.")
+
 
     def _mkroom(self, room_id):
         self.rooms[room_id] = Room(self, room_id)
@@ -176,8 +182,8 @@ class Room(object):
         return self.client.api.send_emote(self.room_id, text)
 
     #See http://matrix.org/docs/spec/r0.0.1/client_server.html#m-image for the imageinfo args.
-    def send_image(self,url,name,**imageinfo):
-        return self.client.api.send_content(self.room_id, url,name,"image",imageinfo)
+    def send_image(self, url, name, **imageinfo):
+        return self.client.api.send_content(self.room_id, url, name, "image", imageinfo)
 
     def add_listener(self, callback):
         self.listeners.append(callback)
