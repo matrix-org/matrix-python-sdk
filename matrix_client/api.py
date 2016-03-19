@@ -16,15 +16,23 @@
 import json
 import re
 import requests
-import urllib
+
 try:
     import urlparse
+    from urllib import quote
 except ImportError:
+    from urllib.parse import quote
     import urllib.parse as urlparse  # For python 3
 
 class MatrixError(Exception):
     """A generic Matrix error. Specific errors will subclass this."""
     pass
+
+class MatrixUnexpectedResponse(MatrixError):
+    """The home server gave an unexpected response. """
+    def __init__(self,content=""):
+        super(MatrixRequestError, self).__init__(content)
+        self.content = content
 
 
 class MatrixRequestError(MatrixError):
@@ -54,10 +62,7 @@ class MatrixHttpApi(object):
             base_url(str): The home server URL e.g. 'http://localhost:8008'
             token(str): Optional. The client's access token.
         """
-        if not base_url.endswith("/_matrix/client/api/v1"):
-            self.url = urlparse.urljoin(base_url, "/_matrix/client/api/v1")
-        else:
-            self.url = base_url
+        self.base_url = base_url
         self.token = token
         self.txn_id = 0
         self.validate_cert = True
@@ -130,7 +135,7 @@ class MatrixHttpApi(object):
         if not room_id_or_alias:
             raise MatrixError("No alias or room ID to join.")
 
-        path = "/join/%s" % urllib.quote(room_id_or_alias)
+        path = "/join/%s" % quote(room_id_or_alias)
 
         return self._send("POST", path)
 
@@ -159,10 +164,10 @@ class MatrixHttpApi(object):
             state_key(str): Optional. The state key for the event.
         """
         path = ("/rooms/%s/state/%s" %
-            (urllib.quote(room_id), urllib.quote(event_type))
+            (urlparse.quote(room_id), urlparse.quote(event_type))
         )
         if state_key:
-            path += "/%s" % (urllib.quote(state_key))
+            path += "/%s" % (quote(state_key))
         return self._send("PUT", path, content)
 
     def send_message_event(self, room_id, event_type, content, txn_id=None):
@@ -180,10 +185,23 @@ class MatrixHttpApi(object):
         self.txn_id = self.txn_id + 1
 
         path = ("/rooms/%s/send/%s/%s" %
-            (urllib.quote(room_id), urllib.quote(event_type),
-             urllib.quote(unicode(txn_id)))
+            (quote(room_id), quote(event_type), quote(str(txn_id)))
         )
         return self._send("PUT", path, content)
+
+    # content_type can be a image,audio or video
+    # extra information should be supplied, see https://matrix.org/docs/spec/r0.0.1/client_server.html
+    def send_content(self, room_id, item_url, item_name, msg_type, extra_information=None):
+        if extra_information == None:
+            extra_information = {}
+
+        content_pack = {
+            "url":item_url,
+            "msgtype":msg_type,
+            "body":item_name,
+            "info":extra_information
+        }
+        return self.send_message_event(room_id, "m.room.message", content_pack)
 
     def send_message(self, room_id, text_content, msgtype="m.text"):
         """Perform /rooms/$room_id/send/m.room.message
@@ -302,18 +320,23 @@ class MatrixHttpApi(object):
             "body": text
         }
 
-    def _send(self, method, path, content=None, query_params={}, headers={}):
+    def _send(self, method, path, content=None, query_params={}, headers={}, api_path="/_matrix/client/api/v1"):
         method = method.upper()
         if method not in ["GET", "PUT", "DELETE", "POST"]:
             raise MatrixError("Unsupported HTTP method: %s" % method)
 
-        headers["Content-Type"] = "application/json"
+        if "Content-Type" not in headers:
+            headers["Content-Type"] = "application/json"
+
         query_params["access_token"] = self.token
-        endpoint = self.url + path
+        endpoint = self.base_url + api_path + path
+
+        if headers["Content-Type"] == "application/json":
+            content = json.dumps(content)
 
         response = requests.request(
             method, endpoint, params=query_params,
-            data=json.dumps(content), headers=headers
+            data=content, headers=headers
             , verify=self.validate_cert  #if you want to use SSL without verifying the Cert
         )
 
@@ -323,3 +346,6 @@ class MatrixHttpApi(object):
             )
 
         return response.json()
+
+    def media_upload(self, content, content_type):
+        return _send("PUT","",content=content,headers={"Content-Type":content_type},apipath="/_matrix/media/r0/upload")
