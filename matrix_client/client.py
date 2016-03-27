@@ -136,7 +136,6 @@ class MatrixClient(object):
         except KeyError:
             raise MatrixUnexpectedResponse(content="The upload was successful, but content_uri was found in response.")
 
-
     def _mkroom(self, room_id):
         self.rooms[room_id] = Room(self, room_id)
         return self.rooms[room_id]
@@ -163,6 +162,8 @@ class MatrixClient(object):
         except KeyError:
             pass
 
+    def get_user(self,user_id):
+        return User(self.api,user_id)
 
 class Room(object):
 
@@ -270,3 +271,17 @@ class Room(object):
                         return False
         except MatrixRequestError:
             return False
+
+class User(object):
+
+    def __init__(self,api,user_id):
+        self.user_id = user_id
+        self.api = api
+
+    def get_display_name(self):
+        return self.api.get_display_name(self.user_id)
+
+    def get_avatar_url(self):
+        mxcurl = self.api.get_avatar_url(self.user_id)
+        url = self.api.get_download_url(mxcurl)
+        return url
