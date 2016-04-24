@@ -350,18 +350,18 @@ class MatrixHttpApi(object):
     def media_upload(self, content, content_type):
         return _send("PUT","",content=content,headers={"Content-Type":content_type},apipath="/_matrix/media/r0/upload")
 
-    def get_display_name(self,user_id):
+    def get_display_name(self, user_id):
         content = self._send("GET","/profile/%s/displayname" % user_id);
         if "displayname" not in content.keys():
             raise MatrixUnexpectedResponse("Display name query returned OK without displayname")
         return content['displayname']
 
-    def get_avatar_url(self,user_id):
+    def get_avatar_url(self, user_id):
         content = self._send("GET","/profile/%s/avatar_url" % user_id);
         if "avatar_url" not in content.keys():
             raise MatrixUnexpectedResponse("Avatar url query returned OK without url")
         return content['avatar_url']
 
-    def get_download_url(self,mxcurl):
+    def get_download_url(self, mxcurl):
         part = mxcurl.split('mxc://')[1]
         return self.base_url + "/_matrix/media/r0/download/" + part;
