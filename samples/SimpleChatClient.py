@@ -12,13 +12,14 @@
 # 12 - Couldn't find room.
 
 import sys
-sys.path.insert(0, "../") # add ../ to PYTHONPATH
+sys.path.insert(0, "../")  # add ../ to PYTHONPATH
 
 from matrix_client.client import MatrixClient
 from matrix_client.api import MatrixRequestError
 from requests.exceptions import MissingSchema
 
 from getpass import getpass
+
 
 # Called when a message is recieved.
 def on_message(event):
@@ -27,7 +28,7 @@ def on_message(event):
             print("{0} joined".format(event['content']['displayname']))
     elif event['type'] == "m.room.message":
         if event['content']['msgtype'] == "m.text":
-            print("{0}: {1}".format(event['sender'],event['content']['body']))
+            print("{0}: {1}".format(event['sender'], event['content']['body']))
     else:
         print(event['type'])
 
@@ -47,10 +48,10 @@ if len(sys.argv) > 2:
 else:
     username = input("Username: ")
 
-password = getpass() #Hide user input
+password = getpass()  # Hide user input
 
 try:
-    client.login_with_password(username,password)
+    client.login_with_password(username, password)
 except MatrixRequestError as e:
     print(e)
     if e.code == 403:
