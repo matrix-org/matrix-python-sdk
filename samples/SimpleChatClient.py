@@ -12,7 +12,6 @@
 # 12 - Couldn't find room.
 
 import sys
-sys.path.insert(0, "../")  # add ../ to PYTHONPATH
 
 from matrix_client.client import MatrixClient
 from matrix_client.api import MatrixRequestError
@@ -32,65 +31,62 @@ def on_message(event):
     else:
         print(event['type'])
 
-host = ""
-username = ""
-room = ""
 
-if len(sys.argv) > 1:
-    host = sys.argv[1]
-else:
-    host = input("Host (ex: http://localhost:8008 ): ")
+def main(host, username, password, room_id_alias):
+    client = MatrixClient(host)
 
-client = MatrixClient(host)
+    try:
+        client.login_with_password(username, password)
+    except MatrixRequestError as e:
+        print(e)
+        if e.code == 403:
+            print("Bad username or password.")
+            sys.exit(4)
+        else:
+            print("Check your sever details are correct.")
+            sys.exit(3)
+    except MissingSchema as e:
+        print("Bad URL format.")
+        print(e)
+        sys.exit(2)
 
-if len(sys.argv) > 2:
-    username = sys.argv[2]
-else:
-    username = input("Username: ")
+    try:
+        room = client.join_room(room_id_alias)
+    except MatrixRequestError as e:
+        print(e)
+        if e.code == 400:
+            print("Room ID/Alias in the wrong format")
+            sys.exit(11)
+        else:
+            print("Couldn't find room.")
+            sys.exit(12)
 
-password = getpass()  # Hide user input
+    room.add_listener(on_message)
+    client.start_listener_thread()
 
-try:
-    client.login_with_password(username, password)
-except MatrixRequestError as e:
-    print(e)
-    if e.code == 403:
-        print("Bad username or password.")
-        sys.exit(4)
+    while True:
+        msg = raw_input()
+        if msg == "/quit":
+            break
+        else:
+            room.send_text(msg)
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        host = sys.argv[1]
     else:
-        print("Check your sever details are correct.")
-        sys.exit(3)
+        host = raw_input("Host (ex: http://localhost:8008 ): ")
 
-except MissingSchema as e:
-    print("Bad URL format.")
-    print(e)
-    sys.exit(2)
-
-
-room = None
-
-if len(sys.argv) > 3:
-    room = sys.argv[3]
-else:
-    room = input("Room ID/Alias: ")
-
-try:
-    room = client.join_room(room)
-except MatrixRequestError as e:
-    print(e)
-    if e.code == 400:
-        print("Room ID/Alias in the wrong format")
-        sys.exit(11)
+    if len(sys.argv) > 2:
+        username = sys.argv[2]
     else:
-        print("Couldn't find room.")
-        sys.exit(12)
+        username = raw_input("Username: ")
 
-room.add_listener(on_message)
-client.start_listener_thread()
+    password = getpass()  # Hide user input
 
-while True:
-    msg = input()
-    if msg == "/quit":
-        break
+    if len(sys.argv) > 3:
+        room_id_alias = sys.argv[3]
     else:
-        room.send_text(msg)
+        room_id_alias = raw_input("Room ID/Alias: ")
+
+    main(host, username, password, room_id_alias)
