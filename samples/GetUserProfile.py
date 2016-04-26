@@ -11,7 +11,8 @@
 
 
 import sys
-sys.path.insert(0, "../") # add ../ to PYTHONPATH
+
+sys.path.insert(0, "../")  # add ../ to PYTHONPATH
 
 from matrix_client.client import MatrixClient, User
 from matrix_client.api import MatrixRequestError
@@ -37,10 +38,10 @@ else:
 if len(sys.argv) > 3:
     password = sys.argv[3]
 else:
-    password = getpass() #Hide user input
+    password = getpass()  # Hide user input
 
 try:
-    client.login_with_password(username,password)
+    client.login_with_password(username, password)
 except MatrixRequestError as e:
     print(e)
     if e.code == 403:
