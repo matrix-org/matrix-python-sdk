@@ -24,13 +24,15 @@ except ImportError:
     from urllib.parse import quote
     import urllib.parse as urlparse  # For python 3
 
+
 class MatrixError(Exception):
     """A generic Matrix error. Specific errors will subclass this."""
     pass
 
+
 class MatrixUnexpectedResponse(MatrixError):
     """The home server gave an unexpected response. """
-    def __init__(self,content=""):
+    def __init__(self, content=""):
         super(MatrixRequestError, self).__init__(content)
         self.content = content
 
@@ -163,8 +165,8 @@ class MatrixHttpApi(object):
             content(dict): The JSON content to send.
             state_key(str): Optional. The state key for the event.
         """
-        path = ("/rooms/%s/state/%s" %
-            (urlparse.quote(room_id), urlparse.quote(event_type))
+        path = "/rooms/%s/state/%s" % (
+            urlparse.quote(room_id), urlparse.quote(event_type),
         )
         if state_key:
             path += "/%s" % (quote(state_key))
@@ -184,22 +186,24 @@ class MatrixHttpApi(object):
 
         self.txn_id = self.txn_id + 1
 
-        path = ("/rooms/%s/send/%s/%s" %
-            (quote(room_id), quote(event_type), quote(str(txn_id)))
+        path = "/rooms/%s/send/%s/%s" % (
+            quote(room_id), quote(event_type), quote(str(txn_id)),
         )
         return self._send("PUT", path, content)
 
     # content_type can be a image,audio or video
-    # extra information should be supplied, see https://matrix.org/docs/spec/r0.0.1/client_server.html
-    def send_content(self, room_id, item_url, item_name, msg_type, extra_information=None):
-        if extra_information == None:
+    # extra information should be supplied, see
+    # https://matrix.org/docs/spec/r0.0.1/client_server.html
+    def send_content(self, room_id, item_url, item_name, msg_type,
+                     extra_information=None):
+        if extra_information is None:
             extra_information = {}
 
         content_pack = {
-            "url":item_url,
-            "msgtype":msg_type,
-            "body":item_name,
-            "info":extra_information
+            "url": item_url,
+            "msgtype": msg_type,
+            "body": item_name,
+            "info": extra_information
         }
         return self.send_message_event(room_id, "m.room.message", content_pack)
 
@@ -276,9 +280,11 @@ class MatrixHttpApi(object):
             "membership": membership,
             "reason": reason
         }
-        return self._send("PUT", "/rooms/" + room_id + "/state/m.room.member/" + user_id, body)
-
-
+        return self._send(
+            "PUT",
+            "/rooms/%s/state/m.room.member/%s" % (room_id, user_id),
+            body
+        )
 
     def ban_user(self, room_id, user_id, reason=""):
         """Perform POST /rooms/$room_id/ban
@@ -320,7 +326,8 @@ class MatrixHttpApi(object):
             "body": text
         }
 
-    def _send(self, method, path, content=None, query_params={}, headers={}, api_path="/_matrix/client/api/v1"):
+    def _send(self, method, path, content=None, query_params={}, headers={},
+              api_path="/_matrix/client/api/v1"):
         method = method.upper()
         if method not in ["GET", "PUT", "DELETE", "POST"]:
             raise MatrixError("Unsupported HTTP method: %s" % method)
@@ -335,9 +342,11 @@ class MatrixHttpApi(object):
             content = json.dumps(content)
 
         response = requests.request(
-            method, endpoint, params=query_params,
-            data=content, headers=headers
-            , verify=self.validate_cert  #if you want to use SSL without verifying the Cert
+            method, endpoint,
+            params=query_params,
+            data=content,
+            headers=headers,
+            verify=self.validate_cert
         )
 
         if response.status_code < 200 or response.status_code >= 300:
@@ -348,7 +357,12 @@ class MatrixHttpApi(object):
         return response.json()
 
     def media_upload(self, content, content_type):
-        return _send("PUT","",content=content,headers={"Content-Type":content_type},apipath="/_matrix/media/r0/upload")
+        return self._send(
+            "PUT", "",
+            content=content,
+            headers={"Content-Type": content_type},
+            apipath="/_matrix/media/r0/upload"
+        )
 
     def get_display_name(self, user_id):
         content = self._send("GET","/profile/%s/displayname" % user_id);

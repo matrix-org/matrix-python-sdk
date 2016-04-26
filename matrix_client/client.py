@@ -127,14 +127,16 @@ class MatrixClient(object):
             e = sys.exc_info()[0]
             print("Error: unable to start thread. " + str(e))
 
-    def upload(self,content,content_type):
+    def upload(self, content, content_type):
         try:
-            response = self.api.media_upload(content,content_type)
+            response = self.api.media_upload(content, content_type)
             return response["content_uri"]
         except MatrixRequestError as e:
             raise MatrixRequestError(code=e.code, content="Upload failed: %s" % e)
         except KeyError:
-            raise MatrixUnexpectedResponse(content="The upload was successful, but content_uri was found in response.")
+            raise MatrixUnexpectedResponse(
+                "The upload was successful, but content_uri was found in response."
+            )
 
     def _mkroom(self, room_id):
         self.rooms[room_id] = Room(self, room_id)
@@ -182,7 +184,8 @@ class Room(object):
     def send_emote(self, text):
         return self.client.api.send_emote(self.room_id, text)
 
-    #See http://matrix.org/docs/spec/r0.0.1/client_server.html#m-image for the imageinfo args.
+    # See http://matrix.org/docs/spec/r0.0.1/client_server.html#m-image for the
+    # imageinfo args.
     def send_image(self, url, name, **imageinfo):
         return self.client.api.send_content(self.room_id, url, name, "m.image", imageinfo)
 
@@ -198,28 +201,28 @@ class Room(object):
         Return True if the invitation was sent
         """
         try:
-            response = self.client.api.invite_user(self.room_id, user_id)
+            self.client.api.invite_user(self.room_id, user_id)
             return True
         except MatrixRequestError:
             return False
 
     def kick_user(self, user_id, reason=""):
         try:
-            response = self.client.api.kick_user(self.room_id, user_id)
+            self.client.api.kick_user(self.room_id, user_id)
             return True
         except MatrixRequestError:
             return False
 
     def ban_user(self, user_id, reason):
         try:
-            response = self.client.api.ban_user(self.room_id, user_id, reason)
+            self.client.api.ban_user(self.room_id, user_id, reason)
             return True
         except MatrixRequestError:
             return False
 
     def leave(self, user_id):
         try:
-            response = self.client.api.leave_room(self.room_id)
+            self.client.api.leave_room(self.room_id)
             self.client.rooms.remove(self.room_id)
             return True
         except MatrixRequestError:
