@@ -17,10 +17,6 @@ from matrix_client.api import MatrixRequestError
 from requests.exceptions import MissingSchema
 from getpass import getpass
 
-host = ""
-username = ""
-room = ""
-
 if len(sys.argv) > 1:
     host = sys.argv[1]
 else:
@@ -53,9 +49,6 @@ except MissingSchema as e:
     print("Bad URL format.")
     print(e)
     sys.exit(2)
-
-
-userid = None
 
 if len(sys.argv) > 4:
     userid = sys.argv[4]
