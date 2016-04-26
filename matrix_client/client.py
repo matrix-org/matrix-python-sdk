@@ -144,11 +144,16 @@ class MatrixClient(object):
         return self.rooms[room_id]
 
     def _process_state_event(self, state_event, current_room):
-        if "type" in state_event and state_event["type"] == "m.room.name":
+        if "type" not in state_event:
+            return  # Ignore event
+
+        etype = state_event["type"]
+
+        if etype == "m.room.name":
             current_room.name = state_event["content"]["name"]
-        if "type" in state_event and state_event["type"] == "m.room.topic":
+        elif etype == "m.room.topic":
             current_room.topic = state_event["content"]["topic"]
-        if "type" in state_event and state_event["type"] == "m.room.aliases":
+        elif etype == "m.room.aliases":
             current_room.aliases = state_event["content"]["aliases"]
 
     def _sync(self, limit=1):
