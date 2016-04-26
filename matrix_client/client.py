@@ -130,13 +130,16 @@ class MatrixClient(object):
     def upload(self, content, content_type):
         try:
             response = self.api.media_upload(content, content_type)
-            return response["content_uri"]
+            if "content_uri" in response:
+                return response["content_uri"]
+            else:
+                raise MatrixUnexpectedResponse(
+                    "The upload was successful, but content_uri wasn't found."
+                )
         except MatrixRequestError as e:
-            raise MatrixRequestError(code=e.code,
-                                     content="Upload failed: %s" % e)
-        except KeyError:
-            raise MatrixUnexpectedResponse(
-                "The upload was successful, but content_uri was found."
+            raise MatrixRequestError(
+                code=e.code,
+                content="Upload failed: %s" % e
             )
 
     def _mkroom(self, room_id):
