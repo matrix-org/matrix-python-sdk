@@ -143,6 +143,14 @@ class MatrixClient(object):
         self.rooms[room_id] = Room(self, room_id)
         return self.rooms[room_id]
 
+    def _process_state_event(self, state_event, current_room):
+        if "type" in state_event and state_event["type"] == "m.room.name":
+            current_room.name = state_event["content"]["name"]
+        if "type" in state_event and state_event["type"] == "m.room.topic":
+            current_room.topic = state_event["content"]["topic"]
+        if "type" in state_event and state_event["type"] == "m.room.aliases":
+            current_room.aliases = state_event["content"]["aliases"]
+
     def _sync(self, limit=1):
         response = self.api.initial_sync(limit)
         try:
@@ -155,12 +163,7 @@ class MatrixClient(object):
                     current_room.events.append(chunk)
 
                 for state_event in room["state"]:
-                    if "type" in state_event and state_event["type"] == "m.room.name":
-                        current_room.name = state_event["content"]["name"]
-                    if "type" in state_event and state_event["type"] == "m.room.topic":
-                        current_room.topic = state_event["content"]["topic"]
-                    if "type" in state_event and state_event["type"] == "m.room.aliases":
-                        current_room.aliases = state_event["content"]["aliases"]
+                    self._process_state_event(state_event, current_room)
 
         except KeyError:
             pass
