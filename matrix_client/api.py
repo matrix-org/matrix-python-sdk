@@ -377,5 +377,7 @@ class MatrixHttpApi(object):
         return content['avatar_url']
 
     def get_download_url(self, mxcurl):
-        part = mxcurl.split('mxc://')[1]
-        return self.base_url + "/_matrix/media/r0/download/" + part
+        if mxcurl.startswith('mxc://'):
+            return self.base_url + "/_matrix/media/r0/download/" + mxcurl[6:]
+        else:
+            raise ValueError("MXC URL did not begin with 'mxc://'")
