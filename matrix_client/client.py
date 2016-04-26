@@ -132,10 +132,11 @@ class MatrixClient(object):
             response = self.api.media_upload(content, content_type)
             return response["content_uri"]
         except MatrixRequestError as e:
-            raise MatrixRequestError(code=e.code, content="Upload failed: %s" % e)
+            raise MatrixRequestError(code=e.code,
+                                     content="Upload failed: %s" % e)
         except KeyError:
             raise MatrixUnexpectedResponse(
-                "The upload was successful, but content_uri was found in response."
+                "The upload was successful, but content_uri was found."
             )
 
     def _mkroom(self, room_id):
@@ -164,8 +165,9 @@ class MatrixClient(object):
         except KeyError:
             pass
 
-    def get_user(self,user_id):
-        return User(self.api,user_id)
+    def get_user(self, user_id):
+        return User(self.api, user_id)
+
 
 class Room(object):
 
@@ -187,7 +189,11 @@ class Room(object):
     # See http://matrix.org/docs/spec/r0.0.1/client_server.html#m-image for the
     # imageinfo args.
     def send_image(self, url, name, **imageinfo):
-        return self.client.api.send_content(self.room_id, url, name, "m.image", imageinfo)
+        return self.client.api.send_content(self.room_id,
+                                            url,
+                                            name,
+                                            "m.image",
+                                            imageinfo)
 
     def add_listener(self, callback):
         self.listeners.append(callback)
@@ -275,9 +281,10 @@ class Room(object):
         except MatrixRequestError:
             return False
 
+
 class User(object):
 
-    def __init__(self,api,user_id):
+    def __init__(self, api, user_id):
         self.user_id = user_id
         self.api = api
 
