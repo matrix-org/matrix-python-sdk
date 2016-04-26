@@ -12,8 +12,6 @@
 
 import sys
 
-sys.path.insert(0, "../")  # add ../ to PYTHONPATH
-
 from matrix_client.client import MatrixClient, User
 from matrix_client.api import MatrixRequestError
 from requests.exceptions import MissingSchema

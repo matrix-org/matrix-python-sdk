@@ -53,4 +53,9 @@ This encapsulates the API module and provides object models such as ``Room``.
 Samples
 =======
 A collection of samples are included, written in Python 3.
-You do not need to install matrix_client to run the samples, they will automatically include the files.
+
+You can either install the SDK, or run the sample like this:
+
+.. code:: shell
+
+    PYTHONPATH=. python samples/samplename.py
