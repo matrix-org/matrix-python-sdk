@@ -17,17 +17,22 @@ from matrix_client.api import MatrixRequestError
 from requests.exceptions import MissingSchema
 from getpass import getpass
 
+try:
+    get_input = raw_input
+except NameError:
+    get_input = input
+
 if len(sys.argv) > 1:
     host = sys.argv[1]
 else:
-    host = input("Host (ex: http://localhost:8008 ): ")
+    host = get_input("Host (ex: http://localhost:8008 ): ")
 
 client = MatrixClient(host)
 
 if len(sys.argv) > 2:
     username = sys.argv[2]
 else:
-    username = input("Username: ")
+    username = get_input("Username: ")
 
 if len(sys.argv) > 3:
     password = sys.argv[3]
@@ -53,7 +58,7 @@ except MissingSchema as e:
 if len(sys.argv) > 4:
     userid = sys.argv[4]
 else:
-    userid = input("UserID: ")
+    userid = get_input("UserID: ")
 
 try:
     user = client.get_user(userid)

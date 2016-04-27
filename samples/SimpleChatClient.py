@@ -19,6 +19,11 @@ from requests.exceptions import MissingSchema
 
 from getpass import getpass
 
+try:
+    get_input = raw_input
+except NameError:
+    get_input = input
+
 
 # Called when a message is recieved.
 def on_message(event):
@@ -65,7 +70,7 @@ def main(host, username, password, room_id_alias):
     client.start_listener_thread()
 
     while True:
-        msg = raw_input()
+        msg = get_input()
         if msg == "/quit":
             break
         else:
@@ -75,18 +80,18 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         host = sys.argv[1]
     else:
-        host = raw_input("Host (ex: http://localhost:8008 ): ")
+        host = get_input("Host (ex: http://localhost:8008 ): ")
 
     if len(sys.argv) > 2:
         username = sys.argv[2]
     else:
-        username = raw_input("Username: ")
+        username = get_input("Username: ")
 
     password = getpass()  # Hide user input
 
     if len(sys.argv) > 3:
         room_id_alias = sys.argv[3]
     else:
-        room_id_alias = raw_input("Room ID/Alias: ")
+        room_id_alias = get_input("Room ID/Alias: ")
 
     main(host, username, password, room_id_alias)
