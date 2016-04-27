@@ -231,6 +231,22 @@ class MatrixHttpApi(object):
             self.get_emote_body(text_content)
         )
 
+    def get_display_name(self, user_id):
+        """Perform GET /profile/user_id/displayname
+        Args:
+            user_id(str): The user ID
+        """
+        return self._send("GET", "/profile/" + user_id + "/displayname")
+
+    def set_display_name(self, user_id, display_name):
+        """Perform PUT /profile/user_id/displayname
+        Args:
+            user_id(str): The user ID
+            display_name(str): The display name to set
+        """
+        body = {"displayname": display_name}
+        return self._send("PUT", "/profile/" + user_id + "/displayname", body)
+
     def get_room_name(self, room_id):
         """Perform GET /rooms/$room_id/state/m.room.name
         Args:
