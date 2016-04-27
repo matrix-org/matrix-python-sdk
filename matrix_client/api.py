@@ -363,3 +363,21 @@ class MatrixHttpApi(object):
             headers={"Content-Type": content_type},
             apipath="/_matrix/media/r0/upload"
         )
+
+    def get_display_name(self, user_id):
+        content = self._send("GET", "/profile/%s/displayname" % user_id)
+        if "displayname" not in content.keys():
+            raise MatrixUnexpectedResponse("'displayname' missing")
+        return content['displayname']
+
+    def get_avatar_url(self, user_id):
+        content = self._send("GET", "/profile/%s/avatar_url" % user_id)
+        if "avatar_url" not in content.keys():
+            raise MatrixUnexpectedResponse("'avatar_url' missing")
+        return content['avatar_url']
+
+    def get_download_url(self, mxcurl):
+        if mxcurl.startswith('mxc://'):
+            return self.base_url + "/_matrix/media/r0/download/" + mxcurl[6:]
+        else:
+            raise ValueError("MXC URL did not begin with 'mxc://'")

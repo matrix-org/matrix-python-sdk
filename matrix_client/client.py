@@ -130,17 +130,34 @@ class MatrixClient(object):
     def upload(self, content, content_type):
         try:
             response = self.api.media_upload(content, content_type)
-            return response["content_uri"]
+            if "content_uri" in response:
+                return response["content_uri"]
+            else:
+                raise MatrixUnexpectedResponse(
+                    "The upload was successful, but content_uri wasn't found."
+                )
         except MatrixRequestError as e:
-            raise MatrixRequestError(code=e.code, content="Upload failed: %s" % e)
-        except KeyError:
-            raise MatrixUnexpectedResponse(
-                "The upload was successful, but content_uri was found in response."
+            raise MatrixRequestError(
+                code=e.code,
+                content="Upload failed: %s" % e
             )
 
     def _mkroom(self, room_id):
         self.rooms[room_id] = Room(self, room_id)
         return self.rooms[room_id]
+
+    def _process_state_event(self, state_event, current_room):
+        if "type" not in state_event:
+            return  # Ignore event
+
+        etype = state_event["type"]
+
+        if etype == "m.room.name":
+            current_room.name = state_event["content"]["name"]
+        elif etype == "m.room.topic":
+            current_room.topic = state_event["content"]["topic"]
+        elif etype == "m.room.aliases":
+            current_room.aliases = state_event["content"]["aliases"]
 
     def _sync(self, limit=1):
         response = self.api.initial_sync(limit)
@@ -154,15 +171,13 @@ class MatrixClient(object):
                     current_room.events.append(chunk)
 
                 for state_event in room["state"]:
-                    if "type" in state_event and state_event["type"] == "m.room.name":
-                        current_room.name = state_event["content"]["name"]
-                    if "type" in state_event and state_event["type"] == "m.room.topic":
-                        current_room.topic = state_event["content"]["topic"]
-                    if "type" in state_event and state_event["type"] == "m.room.aliases":
-                        current_room.aliases = state_event["content"]["aliases"]
+                    self._process_state_event(state_event, current_room)
 
         except KeyError:
             pass
+
+    def get_user(self, user_id):
+        return User(self.api, user_id)
 
 
 class Room(object):
@@ -185,7 +200,10 @@ class Room(object):
     # See http://matrix.org/docs/spec/r0.0.1/client_server.html#m-image for the
     # imageinfo args.
     def send_image(self, url, name, **imageinfo):
-        return self.client.api.send_content(self.room_id, url, name, "image", imageinfo)
+        return self.client.api.send_content(
+            self.room_id, url, name, "m.image",
+            extra_information=imageinfo
+        )
 
     def add_listener(self, callback):
         self.listeners.append(callback)
@@ -272,3 +290,18 @@ class Room(object):
                         return False
         except MatrixRequestError:
             return False
+
+
+class User(object):
+
+    def __init__(self, api, user_id):
+        self.user_id = user_id
+        self.api = api
+
+    def get_display_name(self):
+        return self.api.get_display_name(self.user_id)
+
+    def get_avatar_url(self):
+        mxcurl = self.api.get_avatar_url(self.user_id)
+        url = self.api.get_download_url(mxcurl)
+        return url
