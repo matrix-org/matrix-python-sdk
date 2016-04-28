@@ -18,8 +18,6 @@ from matrix_client.client import MatrixClient
 from matrix_client.api import MatrixRequestError
 from requests.exceptions import MissingSchema
 
-from getpass import getpass
-
 try:
     get_input = raw_input
 except NameError:

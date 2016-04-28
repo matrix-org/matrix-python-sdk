@@ -14,7 +14,6 @@ import samples_common  # Common bits used between samples
 from matrix_client.client import MatrixClient
 from matrix_client.api import MatrixRequestError
 from requests.exceptions import MissingSchema
-from getpass import getpass
 
 host, username, password = samples_common.get_user_details()
 
