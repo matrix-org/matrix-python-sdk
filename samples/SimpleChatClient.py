@@ -18,11 +18,6 @@ from matrix_client.client import MatrixClient
 from matrix_client.api import MatrixRequestError
 from requests.exceptions import MissingSchema
 
-try:
-    get_input = raw_input
-except NameError:
-    get_input = input
-
 
 # Called when a message is recieved.
 def on_message(event):
@@ -77,7 +72,7 @@ def main(host, username, password, room_id_alias):
 
 if __name__ == '__main__':
 
-    host, username, password = samples_common.get_user_details()
+    host, username, password = samples_common.get_user_details(sys.argv)
 
     if len(sys.argv) > 4:
         room_id_alias = sys.argv[4]

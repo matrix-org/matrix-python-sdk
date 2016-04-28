@@ -15,7 +15,7 @@ from matrix_client.client import MatrixClient
 from matrix_client.api import MatrixRequestError
 from requests.exceptions import MissingSchema
 
-host, username, password = samples_common.get_user_details()
+host, username, password = samples_common.get_user_details(sys.argv)
 
 client = MatrixClient(host)
 
