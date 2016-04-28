@@ -2,7 +2,7 @@
 
 # A simple chat client for matrix.
 # This sample will allow you to connect to a room, and send/recieve messages.
-# Args: host:port username room
+# Args: host:port username password room
 # Error Codes:
 # 1 - Unknown problem has occured
 # 2 - Could not find the server.
@@ -12,6 +12,7 @@
 # 12 - Couldn't find room.
 
 import sys
+import samples_common  # Common bits used between samples
 
 from matrix_client.client import MatrixClient
 from matrix_client.api import MatrixRequestError
@@ -70,28 +71,19 @@ def main(host, username, password, room_id_alias):
     client.start_listener_thread()
 
     while True:
-        msg = get_input()
+        msg = samples_common.get_input()
         if msg == "/quit":
             break
         else:
             room.send_text(msg)
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        host = sys.argv[1]
-    else:
-        host = get_input("Host (ex: http://localhost:8008 ): ")
 
-    if len(sys.argv) > 2:
-        username = sys.argv[2]
-    else:
-        username = get_input("Username: ")
+    host, username, password = samples_common.get_user_details()
 
-    password = getpass()  # Hide user input
-
-    if len(sys.argv) > 3:
-        room_id_alias = sys.argv[3]
+    if len(sys.argv) > 4:
+        room_id_alias = sys.argv[4]
     else:
-        room_id_alias = get_input("Room ID/Alias: ")
+        room_id_alias = samples_common.get_input("Room ID/Alias: ")
 
     main(host, username, password, room_id_alias)
