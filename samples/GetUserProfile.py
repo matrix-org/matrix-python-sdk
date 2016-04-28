@@ -6,38 +6,18 @@
 # 2 - Could not find the server.
 # 3 - Bad URL Format.
 # 4 - Bad username/password.
-# 11 - Wrong room format.
-# 12 - Couldn't find room.
 
 
 import sys
+import samples_common  # Common bits used between samples
 
 from matrix_client.client import MatrixClient
 from matrix_client.api import MatrixRequestError
 from requests.exceptions import MissingSchema
-from getpass import getpass
 
-try:
-    get_input = raw_input
-except NameError:
-    get_input = input
-
-if len(sys.argv) > 1:
-    host = sys.argv[1]
-else:
-    host = get_input("Host (ex: http://localhost:8008 ): ")
+host, username, password = samples_common.get_user_details(sys.argv)
 
 client = MatrixClient(host)
-
-if len(sys.argv) > 2:
-    username = sys.argv[2]
-else:
-    username = get_input("Username: ")
-
-if len(sys.argv) > 3:
-    password = sys.argv[3]
-else:
-    password = getpass()  # Hide user input
 
 try:
     client.login_with_password(username, password)
@@ -58,7 +38,7 @@ except MissingSchema as e:
 if len(sys.argv) > 4:
     userid = sys.argv[4]
 else:
-    userid = get_input("UserID: ")
+    userid = samples_common.get_input("UserID: ")
 
 try:
     user = client.get_user(userid)
