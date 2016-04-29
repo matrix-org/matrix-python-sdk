@@ -301,7 +301,13 @@ class User(object):
     def get_display_name(self):
         return self.api.get_display_name(self.user_id)
 
+    def set_display_name(self, display_name):
+        return self.api.set_display_name(self.user_id, display_name)
+
     def get_avatar_url(self):
         mxcurl = self.api.get_avatar_url(self.user_id)
         url = self.api.get_download_url(mxcurl)
         return url
+
+    def set_avatar_url(self, avatar_url):
+        return self.api.set_avatar_url(self.user_id, avatar_url)
