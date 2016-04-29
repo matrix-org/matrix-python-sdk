@@ -370,11 +370,19 @@ class MatrixHttpApi(object):
             raise MatrixUnexpectedResponse("'displayname' missing")
         return content['displayname']
 
+    def set_display_name(self, user_id, display_name):
+        content = {"displayname": display_name}
+        self._send("PUT", "/profile/%s/displayname" % user_id, content)
+
     def get_avatar_url(self, user_id):
         content = self._send("GET", "/profile/%s/avatar_url" % user_id)
         if "avatar_url" not in content.keys():
             raise MatrixUnexpectedResponse("'avatar_url' missing")
         return content['avatar_url']
+
+    def set_avatar_url(self, user_id, avatar_url):
+        content = {"avatar_url": avatar_url}
+        self._send("PUT", "/profile/%s/displayname" % user_id, content)
 
     def get_download_url(self, mxcurl):
         if mxcurl.startswith('mxc://'):
