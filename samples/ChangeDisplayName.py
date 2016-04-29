@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
-# Get a users display name and avatar
-# Args: host:port username password user_id
+# Set the current users display name.
+# Args: host:port username password display_name
 # Error Codes:
 # 2 - Could not find the server.
 # 3 - Bad URL Format.
 # 4 - Bad username/password.
+# 11 - Serverside Error
 
 import sys
 import samples_common
@@ -35,7 +36,16 @@ except MissingSchema as e:
     sys.exit(2)
 
 user = client.get_user(client.user_id)
-print("Current Display Name: %s" % user.get_display_name())
 
-displayname = input("New Display Name: ")
-user.set_display_name(displayname)
+if len(sys.argv) < 5:
+    print("Current Display Name: %s" % user.get_display_name())
+
+    displayname = input("New Display Name: ")
+else:
+    displayname = sys.argv[4]
+
+try:
+    user.set_display_name(displayname)
+except MatrixRequestError as e:
+    print(e)
+    sys.exit(11)
