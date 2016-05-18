@@ -59,3 +59,10 @@ You can either install the SDK, or run the sample like this:
 .. code:: shell
 
     PYTHONPATH=. python samples/samplename.py
+
+Building the Documentation
+==========================
+
+The documentation can be built by installing ``sphinx`` and ``sphinx_rtd_theme``.
+
+Simple run ``make`` inside ``docs`` which will list the avaliable output formats.
