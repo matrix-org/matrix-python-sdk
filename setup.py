@@ -43,4 +43,7 @@ setup(
     install_requires=[
         "requests"
     ],
+    extras_require={
+        'test': ['tox', 'pytest', 'flake8']
+    }
 )
