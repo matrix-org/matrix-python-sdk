@@ -91,6 +91,6 @@ man_pages = [
 
 texinfo_documents = [
     (master_doc, 'MatrixPythonSDK', 'Matrix Python SDK Documentation',
-     author, 'MatrixPythonSDK', 'One line description of project.',
+     author, 'MatrixPythonSDK', 'SDK for writing Matrix Clients in Python',
      'Miscellaneous'),
 ]
