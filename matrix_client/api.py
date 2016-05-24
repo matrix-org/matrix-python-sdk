@@ -358,7 +358,7 @@ class MatrixHttpApi(object):
 
     def media_upload(self, content, content_type):
         return self._send(
-            "PUT", "",
+            "POST", "",
             content=content,
             headers={"Content-Type": content_type},
             api_path="/_matrix/media/r0/upload"
