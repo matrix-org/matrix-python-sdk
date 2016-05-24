@@ -374,7 +374,7 @@ class MatrixHttpApi(object):
             "PUT", "",
             content=content,
             headers={"Content-Type": content_type},
-            apipath="/_matrix/media/r0/upload"
+            api_path="/_matrix/media/r0/upload"
         )
 
     def get_display_name(self, user_id):
