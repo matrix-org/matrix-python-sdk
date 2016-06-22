@@ -166,7 +166,7 @@ class MatrixHttpApi(object):
             state_key(str): Optional. The state key for the event.
         """
         path = "/rooms/%s/state/%s" % (
-            urlparse.quote(room_id), urlparse.quote(event_type),
+            quote(room_id), quote(event_type),
         )
         if state_key:
             path += "/%s" % (quote(state_key))
