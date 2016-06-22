@@ -18,11 +18,9 @@ import re
 import requests
 
 try:
-    import urlparse
     from urllib import quote
 except ImportError:
     from urllib.parse import quote
-    import urllib.parse as urlparse  # For python 3
 
 
 class MatrixError(Exception):
