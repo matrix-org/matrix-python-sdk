@@ -18,11 +18,9 @@ import re
 import requests
 
 try:
-    import urlparse
     from urllib import quote
 except ImportError:
     from urllib.parse import quote
-    import urllib.parse as urlparse  # For python 3
 
 
 class MatrixError(Exception):
@@ -166,7 +164,7 @@ class MatrixHttpApi(object):
             state_key(str): Optional. The state key for the event.
         """
         path = "/rooms/%s/state/%s" % (
-            urlparse.quote(room_id), urlparse.quote(event_type),
+            quote(room_id), quote(event_type),
         )
         if state_key:
             path += "/%s" % (quote(state_key))
