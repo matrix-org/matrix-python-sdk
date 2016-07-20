@@ -31,7 +31,7 @@ class MatrixError(Exception):
 class MatrixUnexpectedResponse(MatrixError):
     """The home server gave an unexpected response. """
     def __init__(self, content=""):
-        super(MatrixRequestError, self).__init__(content)
+        super(MatrixError, self).__init__(content)
         self.content = content
 
 
