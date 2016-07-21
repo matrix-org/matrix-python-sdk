@@ -302,7 +302,13 @@ class User(object):
         self.api = api
 
     def get_display_name(self):
+        '''See also get_friendly_name()
+        '''
         return self.api.get_display_name(self.user_id)
+
+    def get_friendly_name(self):
+        display_name = self.api.get_display_name(self.user_id)
+        return display_name if display_name is not None else self.user_id
 
     def set_display_name(self, display_name):
         return self.api.set_display_name(self.user_id, display_name)
