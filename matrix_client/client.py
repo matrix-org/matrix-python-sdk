@@ -287,6 +287,9 @@ class MatrixClient(object):
             current_room.topic = state_event["content"].get("topic", None)
         elif etype == "m.room.aliases":
             current_room.aliases = state_event["content"].get("aliases", None)
+        elif etype == "m.room.member":
+            member_id = state_event["user_id"]
+            current_room.members[member_id] = User(self.api, member_id)
 
     def _sync(self, timeout_ms=30000):
         # TODO: Deal with presence
@@ -342,6 +345,9 @@ class Room(object):
         self.name = None
         self.aliases = []
         self.topic = None
+        self.members = {
+            # user_id: User
+        }
 
     def send_text(self, text):
         """ Send a plain text message to the room.
