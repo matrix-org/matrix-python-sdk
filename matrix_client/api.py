@@ -389,7 +389,7 @@ class MatrixHttpApi(object):
 
     def set_avatar_url(self, user_id, avatar_url):
         content = {"avatar_url": avatar_url}
-        self._send("PUT", "/profile/%s/displayname" % user_id, content)
+        self._send("PUT", "/profile/%s/avatar_url" % user_id, content)
 
     def get_download_url(self, mxcurl):
         if mxcurl.startswith('mxc://'):
