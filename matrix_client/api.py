@@ -18,11 +18,9 @@ import re
 import requests
 
 try:
-    import urlparse
     from urllib import quote
 except ImportError:
     from urllib.parse import quote
-    import urllib.parse as urlparse  # For python 3
 
 
 class MatrixError(Exception):
@@ -33,7 +31,7 @@ class MatrixError(Exception):
 class MatrixUnexpectedResponse(MatrixError):
     """The home server gave an unexpected response. """
     def __init__(self, content=""):
-        super(MatrixRequestError, self).__init__(content)
+        super(MatrixError, self).__init__(content)
         self.content = content
 
 
@@ -379,9 +377,7 @@ class MatrixHttpApi(object):
 
     def get_display_name(self, user_id):
         content = self._send("GET", "/profile/%s/displayname" % user_id)
-        if "displayname" not in content.keys():
-            raise MatrixUnexpectedResponse("'displayname' missing")
-        return content['displayname']
+        return content.get('displayname', None)
 
     def set_display_name(self, user_id, display_name):
         content = {"displayname": display_name}
@@ -389,13 +385,11 @@ class MatrixHttpApi(object):
 
     def get_avatar_url(self, user_id):
         content = self._send("GET", "/profile/%s/avatar_url" % user_id)
-        if "avatar_url" not in content.keys():
-            raise MatrixUnexpectedResponse("'avatar_url' missing")
-        return content['avatar_url']
+        return content.get('avatar_url', None)
 
     def set_avatar_url(self, user_id, avatar_url):
         content = {"avatar_url": avatar_url}
-        self._send("PUT", "/profile/%s/displayname" % user_id, content)
+        self._send("PUT", "/profile/%s/avatar_url" % user_id, content)
 
     def get_download_url(self, mxcurl):
         if mxcurl.startswith('mxc://'):

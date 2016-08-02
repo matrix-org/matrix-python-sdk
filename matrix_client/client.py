@@ -15,8 +15,6 @@
 from .api import MatrixHttpApi, MatrixRequestError, MatrixUnexpectedResponse
 from threading import Thread
 import sys
-# TODO: Finish implementing this.
-
 
 class MatrixClient(object):
     """
@@ -479,11 +477,16 @@ class User(object):
 
     def get_display_name(self):
         """ Get this users display name.
+            See also get_friendly_name()
 
         Returns:
                 string: Display Name
         """
         return self.api.get_display_name(self.user_id)
+
+    def get_friendly_name(self):
+        display_name = self.api.get_display_name(self.user_id)
+        return display_name if display_name is not None else self.user_id
 
     def set_display_name(self, display_name):
         """ Set this users display name.
