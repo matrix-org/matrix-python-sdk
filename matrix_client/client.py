@@ -16,6 +16,7 @@ from .api import MatrixHttpApi, MatrixRequestError, MatrixUnexpectedResponse
 from threading import Thread
 import sys
 
+
 class MatrixClient(object):
     """
     The client API for Matrix. For the raw HTTP calls, see MatrixHttpApi.
