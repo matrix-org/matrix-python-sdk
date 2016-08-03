@@ -292,8 +292,9 @@ class MatrixClient(object):
 
 class Room(object):
     """ The Room class can be used to call room specific functions
-        after joining a room from the Client.
+    after joining a room from the Client.
     """
+
     def __init__(self, client, room_id):
         """ Create a blank Room object
         .
