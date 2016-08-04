@@ -1,18 +1,7 @@
 matrix_client package
 =====================
 
-Submodules
-----------
-
-matrix_client.api module
-------------------------
-
-.. automodule:: matrix_client.api
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-matrix_client.client module
+matrix_client.client
 ---------------------------
 
 .. automodule:: matrix_client.client
@@ -20,11 +9,10 @@ matrix_client.client module
     :undoc-members:
     :show-inheritance:
 
+matrix_client.api
+------------------------
 
-Module contents
----------------
-
-.. automodule:: matrix_client
+.. automodule:: matrix_client.api
     :members:
     :undoc-members:
     :show-inheritance:

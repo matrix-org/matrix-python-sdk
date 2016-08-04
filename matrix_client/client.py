@@ -15,11 +15,10 @@
 from .api import MatrixHttpApi, MatrixRequestError, MatrixUnexpectedResponse
 from threading import Thread
 import sys
-# TODO: Finish implementing this.
 
 
 class MatrixClient(object):
-    """ WORK IN PROGRESS
+    """
     The client API for Matrix. For the raw HTTP calls, see MatrixHttpApi.
 
     Usage (new user):
@@ -52,6 +51,22 @@ class MatrixClient(object):
     """
 
     def __init__(self, base_url, token=None, valid_cert_check=True):
+        """ Create a new Matrix Client object.
+
+        Args:
+            base_url (str): The url of the HS preceding /_matrix.
+                e.g. (ex: https://localhost:8008 )
+            token (Optional[str]): If you have an access token
+                supply it here.
+            valid_cert_check (bool): Check the homeservers
+                certificate on connections?
+
+        Returns:
+            MatrixClient
+
+        Raises:
+            MatrixRequestError
+        """
         self.api = MatrixHttpApi(base_url, token)
         self.api.validate_certificate(valid_cert_check)
         self.listeners = []
@@ -62,6 +77,19 @@ class MatrixClient(object):
             self._sync()
 
     def register_with_password(self, username, password, limit=1):
+        """ Register for a new account on this HS.
+
+        Args:
+            username (str): Account username
+            password (str): Account password
+            limit (int): How many messages to return when syncing.
+
+        Returns:
+            str: Access Token
+
+        Raises:
+            MatrixRequestError
+        """
         response = self.api.register(
             "m.login.password", user=username, password=password
         )
@@ -73,6 +101,19 @@ class MatrixClient(object):
         return self.token
 
     def login_with_password(self, username, password, limit=1):
+        """ Login to the homeserver.
+
+        Args:
+            username (str): Account username
+            password (str): Account password
+            limit (int): How many messages to return when syncing.
+
+        Returns:
+            str: Access token
+
+        Raises:
+            MatrixRequestError
+        """
         response = self.api.login(
             "m.login.password", user=username, password=password
         )
@@ -84,10 +125,31 @@ class MatrixClient(object):
         return self.token
 
     def create_room(self, alias=None, is_public=False, invitees=()):
+        """ Create a new room on the homeserver.
+
+        Args:
+            alias (str): The canonical_alias of the room.
+            is_public (bool):  The public/private visibility of the room.
+            invitees (str[]): A set of user ids to invite into the room.
+
+        Returns:
+            Room
+
+        Raises:
+            MatrixRequestError
+        """
         response = self.api.create_room(alias, is_public, invitees)
         return self._mkroom(response["room_id"])
 
     def join_room(self, room_id_or_alias):
+        """ Join a room.
+
+        Args:
+            room_id_or_alias (str): Room ID or an alias.
+
+        Raises:
+            MatrixRequestError
+        """
         response = self.api.join_room(room_id_or_alias)
         room_id = (
             response["room_id"] if "room_id" in response else room_id_or_alias
@@ -95,13 +157,31 @@ class MatrixClient(object):
         return self._mkroom(room_id)
 
     def get_rooms(self):
+        """ Return a list of Room objects that the user has joined.
+
+        Returns:
+            Room[]: Rooms the user has joined.
+
+        """
         return self.rooms
 
     def add_listener(self, callback):
+        """ Add a listener that will send a callback when the client recieves
+        an event.
+
+        Args:
+            callback (func(roomchunk)): Callback called when an event arrives.
+        """
         self.listeners.append(callback)
 
-    def listen_for_events(self, timeout=30000):
-        response = self.api.event_stream(self.end, timeout)
+    def listen_for_events(self, timeout_ms=30000):
+        """ Listen once for events. Use listen_forever to block indefinitely.
+
+        Args:
+            timeout (int): How long to poll the Home Server for before
+               retrying.
+        """
+        response = self.api.event_stream(self.end, timeout_ms)
         self.end = response["end"]
 
         for chunk in response["chunk"]:
@@ -114,13 +194,25 @@ class MatrixClient(object):
                 for listener in self.rooms[chunk["room_id"]].listeners:
                     listener(chunk)
 
-    def listen_forever(self, timeout=30000):
-        while(True):
-            self.listen_for_events(timeout)
+    def listen_forever(self, timeout_ms=30000):
+        """ Keep listening for events forever.
 
-    def start_listener_thread(self, timeout=30000):
+        Args:
+            timeout (int): How long to poll the Home Server for before
+               retrying.
+        """
+        while(True):
+            self.listen_for_events(timeout_ms)
+
+    def start_listener_thread(self, timeout_ms=30000):
+        """ Start a listener thread to listen for events in the background.
+
+        Args:
+            timeout (int): How long to poll the Home Server for before
+               retrying.
+        """
         try:
-            thread = Thread(target=self.listen_forever, args=(timeout, ))
+            thread = Thread(target=self.listen_forever, args=(timeout_ms, ))
             thread.daemon = True
             thread.start()
         except:
@@ -128,6 +220,16 @@ class MatrixClient(object):
             print("Error: unable to start thread. " + str(e))
 
     def upload(self, content, content_type):
+        """ Upload content to the home server and recieve a MXC url.
+
+        Args:
+            content (bytes): The data of the content.
+            content_type (str): The mimetype of the content.
+
+        Raises:
+            MatrixUnexpectedResponse: If the homeserver gave a strange response
+            MatrixRequestError: If the upload failed for some reason.
+        """
         try:
             response = self.api.media_upload(content, content_type)
             if "content_uri" in response:
@@ -177,12 +279,28 @@ class MatrixClient(object):
             pass
 
     def get_user(self, user_id):
+        """ Return a User by their id.
+
+        NOTE: This function only returns a user object, it does not verify
+            the user with the Home Server.
+
+        Args:
+            user_id (str): The matrix user id of a user.
+        """
         return User(self.api, user_id)
 
 
 class Room(object):
+    """ The Room class can be used to call room specific functions
+    after joining a room from the Client.
+    """
 
     def __init__(self, client, room_id):
+        """ Create a blank Room object.
+
+            NOTE: This should ideally be called from within the Client.
+            NOTE: This does not verify the room with the Home Server.
+        """
         self.room_id = room_id
         self.client = client
         self.listeners = []
@@ -192,9 +310,19 @@ class Room(object):
         self.topic = None
 
     def send_text(self, text):
+        """ Send a plain text message to the room.
+
+        Args:
+            text (str): The message to send
+        """
         return self.client.api.send_message(self.room_id, text)
 
     def send_emote(self, text):
+        """ Send a emote (/me style) message to the room.
+
+        Args:
+            text (str): The message to send
+        """
         return self.client.api.send_emote(self.room_id, text)
 
     def send_notice(self, text):
@@ -203,21 +331,44 @@ class Room(object):
     # See http://matrix.org/docs/spec/r0.0.1/client_server.html#m-image for the
     # imageinfo args.
     def send_image(self, url, name, **imageinfo):
+        """ Send a pre-uploaded image to the room.
+        See http://matrix.org/docs/spec/r0.0.1/client_server.html#m-image
+        for imageinfo
+
+        Args:
+            url (str): The mxc url of the image.
+            name (str): The filename of the image.
+            imageinfo (): Extra information aboutt
+        """
         return self.client.api.send_content(
             self.room_id, url, name, "m.image",
             extra_information=imageinfo
         )
 
     def add_listener(self, callback):
+        """ Add a callback handler for events going to this room.
+
+        Args:
+            callback (func(roomchunk)): Callback called when an event arrives.
+        """
         self.listeners.append(callback)
 
     def get_events(self):
+        """ Get the most recent events for this room.
+
+        Returns:
+            events
+        """
         return self.events
 
     def invite_user(self, user_id):
-        """Invite user to this room
+        """ Invite a user to this room
 
-        Return True if the invitation was sent
+        Args:
+            user_id (str): The matrix user id of a user.
+
+        Returns:
+            boolean: The invitation was sent.
         """
         try:
             self.client.api.invite_user(self.room_id, user_id)
@@ -226,6 +377,14 @@ class Room(object):
             return False
 
     def kick_user(self, user_id, reason=""):
+        """ Kick a user from this room
+
+        Args:
+            user_id (str): The matrix user id of a user.
+
+        Returns:
+            boolean: The user was kicked.
+        """
         try:
             self.client.api.kick_user(self.room_id, user_id)
             return True
@@ -233,13 +392,27 @@ class Room(object):
             return False
 
     def ban_user(self, user_id, reason):
+        """ Ban a user from this room
+
+        Args:
+            user_id (str): The matrix user id of a user.
+            reason  (str): A reason for banning the user.
+
+        Returns:
+            boolean: The user was banned.
+        """
         try:
             self.client.api.ban_user(self.room_id, user_id, reason)
             return True
         except MatrixRequestError:
             return False
 
-    def leave(self, user_id):
+    def leave(self):
+        """ Leave the room.
+
+        Returns:
+            boolean: Leaving the room was successful.
+        """
         try:
             self.client.api.leave_room(self.room_id)
             self.client.rooms.remove(self.room_id)
@@ -248,9 +421,10 @@ class Room(object):
             return False
 
     def update_room_name(self):
-        """Get room name
+        """ Get room name
 
-        Return True if the room name changed, False if not
+        Returns:
+            boolean: True if the room name changed, False if not
         """
         try:
             response = self.client.api.get_room_name(self.room_id)
@@ -263,9 +437,10 @@ class Room(object):
             return False
 
     def update_room_topic(self):
-        """Get room topic
+        """ Get room topic
 
-        Return True if the room topic changed, False if not
+        Returns:
+            boolean: True if the topic changed, False if not
         """
         try:
             response = self.client.api.get_room_topic(self.room_id)
@@ -278,9 +453,10 @@ class Room(object):
             return False
 
     def update_aliases(self):
-        """Get aliases information from room state
+        """ Get aliases information from room state
 
-        Return True if the aliases changed, False if not
+        Returns:
+            boolean: True if the aliases changed, False if not
         """
         try:
             response = self.client.api.get_room_state(self.room_id)
@@ -296,14 +472,19 @@ class Room(object):
 
 
 class User(object):
-
+    """ The User class can be used to call user specific functions.
+    """
     def __init__(self, api, user_id):
         self.user_id = user_id
         self.api = api
 
     def get_display_name(self):
-        '''See also get_friendly_name()
-        '''
+        """ Get this users display name.
+            See also get_friendly_name()
+
+        Returns:
+            str: Display Name
+        """
         return self.api.get_display_name(self.user_id)
 
     def get_friendly_name(self):
@@ -311,6 +492,11 @@ class User(object):
         return display_name if display_name is not None else self.user_id
 
     def set_display_name(self, display_name):
+        """ Set this users display name.
+
+        Args:
+            display_name (str): Display Name
+        """
         return self.api.set_display_name(self.user_id, display_name)
 
     def get_avatar_url(self):
@@ -319,4 +505,9 @@ class User(object):
         return url
 
     def set_avatar_url(self, avatar_url):
+        """ Set this users avatar.
+
+        Args:
+            avatar_url (str): mxc url from previously uploaded
+        """
         return self.api.set_avatar_url(self.user_id, avatar_url)
