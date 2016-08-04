@@ -472,8 +472,8 @@ class Room(object):
 
 
 class User(object):
-""" The User class can be used to call user specific functions.
-"""
+    """ The User class can be used to call user specific functions.
+    """
     def __init__(self, api, user_id):
         self.user_id = user_id
         self.api = api
