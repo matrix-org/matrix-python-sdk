@@ -167,7 +167,8 @@ class MatrixClient(object):
 
     def add_listener(self, callback):
         """ Add a listener that will send a callback when the client recieves
-            an event.
+        an event.
+
         Args:
             callback (func(roomchunk)): Callback called when an event arrives.
         """
@@ -178,7 +179,7 @@ class MatrixClient(object):
 
         Args:
             timeout (int): How long to poll the Home Server for before
-                           retrying.
+               retrying.
         """
         response = self.api.event_stream(self.end, timeout)
         self.end = response["end"]
@@ -198,7 +199,7 @@ class MatrixClient(object):
 
         Args:
             timeout (int): How long to poll the Home Server for before
-                           retrying.
+               retrying.
         """
         while(True):
             self.listen_for_events(timeout)
@@ -208,7 +209,7 @@ class MatrixClient(object):
 
         Args:
             timeout (int): How long to poll the Home Server for before
-                           retrying.
+               retrying.
         """
         try:
             thread = Thread(target=self.listen_forever, args=(timeout, ))
@@ -279,7 +280,8 @@ class MatrixClient(object):
 
     def get_user(self, user_id):
         """ Return a User by their id.
-            NOTE: This function only returns a user object, it does not verify
+
+        NOTE: This function only returns a user object, it does not verify
             the user with the Home Server.
 
         Args:
@@ -290,10 +292,11 @@ class MatrixClient(object):
 
 class Room(object):
     """ The Room class can be used to call room specific functions
-        after joining a room from the Client.
+    after joining a room from the Client.
     """
     def __init__(self, client, room_id):
         """ Create a blank Room object.
+
             NOTE: This should ideally be called from within the Client.
             NOTE: This does not verify the room with the Home Server.
         """
@@ -468,9 +471,8 @@ class Room(object):
 
 
 class User(object):
-    """
-    The User class can be used to call user specific functions.
-    """
+""" The User class can be used to call user specific functions.
+"""
 
     def __init__(self, api, user_id):
         self.user_id = user_id
