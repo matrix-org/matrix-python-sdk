@@ -54,11 +54,11 @@ class MatrixClient(object):
         """ Create a new Matrix Client object.
 
         Args:
-            base_url (string): The url of the HS preceding /_matrix.
+            base_url (str): The url of the HS preceding /_matrix.
                 e.g. (ex: https://localhost:8008 )
-            token (Optional[string]): If you have an access token
+            token (Optional[str]): If you have an access token
                 supply it here.
-            valid_cert_check (Optional[bool]): Check the homeservers
+            valid_cert_check (bool): Check the homeservers
                 certificate on connections?
 
         Returns:
@@ -80,12 +80,12 @@ class MatrixClient(object):
         """ Register for a new account on this HS.
 
         Args:
-            username (string): Account username
-            password (string): Account password
+            username (str): Account username
+            password (str): Account password
             limit (int): How many messages to return when syncing.
 
         Returns:
-            string: Access Token
+            str: Access Token
 
         Raises:
             MatrixRequestError
@@ -104,12 +104,12 @@ class MatrixClient(object):
         """ Login to the homeserver.
 
         Args:
-            username (string): Account username
-            password (string): Account password
+            username (str): Account username
+            password (str): Account password
             limit (int): How many messages to return when syncing.
 
         Returns:
-            string: Access token
+            str: Access token
 
         Raises:
             MatrixRequestError
@@ -128,9 +128,9 @@ class MatrixClient(object):
         """ Create a new room on the homeserver.
 
         Args:
-            alias (string): The canonical_alias of the room.
+            alias (str): The canonical_alias of the room.
             is_public (bool):  The public/private visibility of the room.
-            invitees (string[]): A set of user ids to invite into the room.
+            invitees (str[]): A set of user ids to invite into the room.
 
         Returns:
             Room
@@ -145,7 +145,7 @@ class MatrixClient(object):
         """ Join a room.
 
         Args:
-            room_id_or_alias (string): Room ID or an alias.
+            room_id_or_alias (str): Room ID or an alias.
 
         Raises:
             MatrixRequestError
@@ -174,14 +174,14 @@ class MatrixClient(object):
         """
         self.listeners.append(callback)
 
-    def listen_for_events(self, timeout=30000):
+    def listen_for_events(self, timeout_ms=30000):
         """ Listen once for events. Use listen_forever to block indefinitely.
 
         Args:
             timeout (int): How long to poll the Home Server for before
                retrying.
         """
-        response = self.api.event_stream(self.end, timeout)
+        response = self.api.event_stream(self.end, timeout_ms)
         self.end = response["end"]
 
         for chunk in response["chunk"]:
@@ -194,7 +194,7 @@ class MatrixClient(object):
                 for listener in self.rooms[chunk["room_id"]].listeners:
                     listener(chunk)
 
-    def listen_forever(self, timeout=30000):
+    def listen_forever(self, timeout_ms=30000):
         """ Keep listening for events forever.
 
         Args:
@@ -202,9 +202,9 @@ class MatrixClient(object):
                retrying.
         """
         while(True):
-            self.listen_for_events(timeout)
+            self.listen_for_events(timeout_ms)
 
-    def start_listener_thread(self, timeout=30000):
+    def start_listener_thread(self, timeout_ms=30000):
         """ Start a listener thread to listen for events in the background.
 
         Args:
@@ -212,7 +212,7 @@ class MatrixClient(object):
                retrying.
         """
         try:
-            thread = Thread(target=self.listen_forever, args=(timeout, ))
+            thread = Thread(target=self.listen_forever, args=(timeout_ms, ))
             thread.daemon = True
             thread.start()
         except:
@@ -224,7 +224,7 @@ class MatrixClient(object):
 
         Args:
             content (bytes): The data of the content.
-            content_type (string): The mimetype of the content.
+            content_type (str): The mimetype of the content.
 
         Raises:
             MatrixUnexpectedResponse: If the homeserver gave a strange response
@@ -285,7 +285,7 @@ class MatrixClient(object):
             the user with the Home Server.
 
         Args:
-            user_id (string): The matrix user id of a user.
+            user_id (str): The matrix user id of a user.
         """
         return User(self.api, user_id)
 
@@ -294,6 +294,7 @@ class Room(object):
     """ The Room class can be used to call room specific functions
     after joining a room from the Client.
     """
+
     def __init__(self, client, room_id):
         """ Create a blank Room object.
 
@@ -312,7 +313,7 @@ class Room(object):
         """ Send a plain text message to the room.
 
         Args:
-            text (string): The message to send
+            text (str): The message to send
         """
         return self.client.api.send_message(self.room_id, text)
 
@@ -320,7 +321,7 @@ class Room(object):
         """ Send a emote (/me style) message to the room.
 
         Args:
-            text (string): The message to send
+            text (str): The message to send
         """
         return self.client.api.send_emote(self.room_id, text)
 
@@ -335,8 +336,8 @@ class Room(object):
         for imageinfo
 
         Args:
-            url (string): The mxc url of the image.
-            name (string): The filename of the image.
+            url (str): The mxc url of the image.
+            name (str): The filename of the image.
             imageinfo (): Extra information aboutt
         """
         return self.client.api.send_content(
@@ -364,10 +365,10 @@ class Room(object):
         """ Invite a user to this room
 
         Args:
-            user_id (string): The matrix user id of a user.
+            user_id (str): The matrix user id of a user.
 
         Returns:
-                boolean: The invitation was sent.
+            boolean: The invitation was sent.
         """
         try:
             self.client.api.invite_user(self.room_id, user_id)
@@ -379,10 +380,10 @@ class Room(object):
         """ Kick a user from this room
 
         Args:
-            user_id (string): The matrix user id of a user.
+            user_id (str): The matrix user id of a user.
 
         Returns:
-                boolean: The user was kicked.
+            boolean: The user was kicked.
         """
         try:
             self.client.api.kick_user(self.room_id, user_id)
@@ -394,11 +395,11 @@ class Room(object):
         """ Ban a user from this room
 
         Args:
-            user_id (string): The matrix user id of a user.
-            reason  (string): A reason for banning the user.
+            user_id (str): The matrix user id of a user.
+            reason  (str): A reason for banning the user.
 
         Returns:
-                boolean: The user was banned.
+            boolean: The user was banned.
         """
         try:
             self.client.api.ban_user(self.room_id, user_id, reason)
@@ -410,7 +411,7 @@ class Room(object):
         """ Leave the room.
 
         Returns:
-                boolean: Leaving the room was successful.
+            boolean: Leaving the room was successful.
         """
         try:
             self.client.api.leave_room(self.room_id)
@@ -423,7 +424,7 @@ class Room(object):
         """ Get room name
 
         Returns:
-                boolean: True if the room name changed, False if not
+            boolean: True if the room name changed, False if not
         """
         try:
             response = self.client.api.get_room_name(self.room_id)
@@ -439,7 +440,7 @@ class Room(object):
         """ Get room topic
 
         Returns:
-                boolean: True if the topic changed, False if not
+            boolean: True if the topic changed, False if not
         """
         try:
             response = self.client.api.get_room_topic(self.room_id)
@@ -455,7 +456,7 @@ class Room(object):
         """ Get aliases information from room state
 
         Returns:
-                boolean: True if the aliases changed, False if not
+            boolean: True if the aliases changed, False if not
         """
         try:
             response = self.client.api.get_room_state(self.room_id)
@@ -473,7 +474,6 @@ class Room(object):
 class User(object):
 """ The User class can be used to call user specific functions.
 """
-
     def __init__(self, api, user_id):
         self.user_id = user_id
         self.api = api
@@ -483,7 +483,7 @@ class User(object):
             See also get_friendly_name()
 
         Returns:
-                string: Display Name
+            str: Display Name
         """
         return self.api.get_display_name(self.user_id)
 
@@ -495,7 +495,7 @@ class User(object):
         """ Set this users display name.
 
         Args:
-                display_name (string): Display Name
+            display_name (str): Display Name
         """
         return self.api.set_display_name(self.user_id, display_name)
 
@@ -508,6 +508,6 @@ class User(object):
         """ Set this users avatar.
 
         Args:
-                avatar_url (string): mxc url from previously uploaded
+            avatar_url (str): mxc url from previously uploaded
         """
         return self.api.set_avatar_url(self.user_id, avatar_url)
