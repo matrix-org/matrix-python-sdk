@@ -109,7 +109,7 @@ class MatrixClient(object):
         self.hs = response["home_server"]
         self.api.token = self.token
         self._sync()
-        return self.token  # JIM S: MEDIOGRE
+        return self.token
 
     def login_with_password(self, username, password, limit=1):
         """ Login to the homeserver.
