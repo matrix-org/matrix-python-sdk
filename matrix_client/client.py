@@ -81,10 +81,10 @@ class MatrixClient(object):
         if token:
             self._sync()
 
-    def get_sync_token():
+    def get_sync_token(self):
         return self.sync_token
 
-    def set_sync_token(token):
+    def set_sync_token(self, token):
         self.sync_token = token
 
     def register_with_password(self, username, password, limit=1):
@@ -196,7 +196,7 @@ class MatrixClient(object):
             timeout_ms (int): How long to poll the Home Server for before
                retrying.
         """
-        _sync(timeout_ms)
+        self._sync(timeout_ms)
 
     def listen_forever(self, timeout_ms=30000):
         """ Keep listening for events forever.

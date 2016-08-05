@@ -76,7 +76,7 @@ class MatrixHttpApi(object):
         """
         return self._send("GET", "/initialSync", query_params={"limit": limit})
 
-    def sync(self, since="", timeout_ms=30000,  **kwargs):
+    def sync(self, since="", timeout_ms=30000, **kwargs):
         """ Preform a sync request.
 
         Args:
