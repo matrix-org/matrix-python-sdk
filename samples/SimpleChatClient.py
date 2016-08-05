@@ -13,6 +13,7 @@
 
 import sys
 import samples_common  # Common bits used between samples
+import logging
 
 from matrix_client.client import MatrixClient
 from matrix_client.api import MatrixRequestError
@@ -71,7 +72,7 @@ def main(host, username, password, room_id_alias):
             room.send_text(msg)
 
 if __name__ == '__main__':
-
+    logging.basicConfig(level=logging.WARNING)
     host, username, password = samples_common.get_user_details(sys.argv)
 
     if len(sys.argv) > 4:

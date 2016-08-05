@@ -15,6 +15,7 @@
 from .api import MatrixHttpApi, MatrixRequestError, MatrixUnexpectedResponse
 from threading import Thread
 from time import sleep
+import logging
 import sys
 
 
@@ -72,6 +73,9 @@ class MatrixClient(object):
         self.api.validate_certificate(valid_cert_check)
         self.listeners = []
         self.sync_token = None
+        self.sync_filter = None
+
+        self.logger = logging.getLogger("matrix_client")
 
         """ Time to wait before attempting a /sync request after failing."""
         self.bad_sync_timeout_limit = 60 * 60
@@ -118,6 +122,7 @@ class MatrixClient(object):
             username (str): Account username
             password (str): Account password
             limit (int): Deprecated. How many messages to return when syncing.
+                This will be replaced by a filter API in a later release.
 
         Returns:
             str: Access token
@@ -132,6 +137,10 @@ class MatrixClient(object):
         self.token = response["access_token"]
         self.hs = response["home_server"]
         self.api.token = self.token
+
+        """ Limit Filter """
+        self.sync_filter = '{ "room": { "timeline" : { "limit" : %i } } }' % limit
+
         self._sync()
         return self.token
 
@@ -211,17 +220,17 @@ class MatrixClient(object):
                 self._sync(timeout_ms)
                 bad_sync_timeout = 5
             except MatrixRequestError as e:
-                print("A MatrixRequestError occured during sync.")
+                self.logger.warning("A MatrixRequestError occured during sync.")
                 if e.code >= 500:
-                    print("Problem occured serverside. Waiting",
-                          bad_sync_timeout, " seconds")
+                    self.logger.warning("Problem occured serverside. Waiting %i seconds",
+                                        bad_sync_timeout)
                     sleep(bad_sync_timeout)
                     bad_sync_timeout = min(bad_sync_timeout * 2,
                                            self.bad_sync_timeout_limit)
                 else:
                     raise e
             except Exception as e:
-                print("Exception thrown during sync\n", e)
+                self.logger.error("Exception thrown during sync\n %s", str(e))
 
     def start_listener_thread(self, timeout_ms=30000):
         """ Start a listener thread to listen for events in the background.
@@ -236,7 +245,7 @@ class MatrixClient(object):
             thread.start()
         except:
             e = sys.exc_info()[0]
-            print("Error: unable to start thread. " + str(e))
+            self.logger.error("Error: unable to start thread. %s", str(e))
 
     def upload(self, content, content_type):
         """ Upload content to the home server and recieve a MXC url.
@@ -282,13 +291,12 @@ class MatrixClient(object):
     def _sync(self, timeout_ms=30000):
         # TODO: Deal with presence
         # TODO: Deal with left rooms
-        response = self.api.sync(self.sync_token, timeout_ms)
+        response = self.api.sync(self.sync_token, timeout_ms, filter=self.sync_filter)
         self.sync_token = response["next_batch"]
-        for room_id in response['rooms']['join']:
+        for room_id, sync_room in response['rooms']['join'].items():
             if room_id not in self.rooms:
                 self._mkroom(room_id)
             room = self.rooms[room_id]
-            sync_room = response['rooms']['join'][room_id]
 
             for event in sync_room["state"]["events"]:
                 self._process_state_event(event, room)
