@@ -468,6 +468,31 @@ class Room(object):
         except MatrixRequestError:
             return False
 
+    def get_friendly_name(self):
+        """ Get this room's friendly name:
+            its name, or an alias, if set; otherwise, a name based on its
+            members.
+
+        Returns:
+            str: Friendly Name
+        """
+        if self.name is not None:
+            return self.name
+        if self.aliases:
+            return self.aliases[0]
+        # name the room based on its members (besides the current user)
+        if len(self.members) <= 1:
+            return "Empty Room"
+        members = []
+        for m in self.members.values():
+            if m.user_id != self.client.user_id:
+                members.append(m.get_friendly_name())
+                if len(members) == 2:
+                    break
+        if len(self.members) > 3:
+            members.append("%d others" % (len(self.members) - 3))
+        return '+'.join(members)
+
     def update_room_name(self):
         """ Get room name
 
