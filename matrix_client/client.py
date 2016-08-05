@@ -14,6 +14,7 @@
 # limitations under the License.
 from .api import MatrixHttpApi, MatrixRequestError, MatrixUnexpectedResponse
 from threading import Thread
+from time import sleep
 import sys
 
 
@@ -70,11 +71,21 @@ class MatrixClient(object):
         self.api = MatrixHttpApi(base_url, token)
         self.api.validate_certificate(valid_cert_check)
         self.listeners = []
+        self.sync_token = ""
+
+        """ Time to wait before attempting a /sync request after failing."""
+        self.bad_sync_timeout = 30000
         self.rooms = {
             # room_id: Room
         }
         if token:
             self._sync()
+
+    def get_sync_token():
+        return self.sync_token
+
+    def set_sync_token(token):
+        self.sync_token = token
 
     def register_with_password(self, username, password, limit=1):
         """ Register for a new account on this HS.
@@ -82,7 +93,7 @@ class MatrixClient(object):
         Args:
             username (str): Account username
             password (str): Account password
-            limit (int): How many messages to return when syncing.
+            limit (int): Deprecated. How many messages to return when syncing.
 
         Returns:
             str: Access Token
@@ -97,8 +108,8 @@ class MatrixClient(object):
         self.token = response["access_token"]
         self.hs = response["home_server"]
         self.api.token = self.token
-        self._sync(limit)
-        return self.token
+        self._sync()
+        return self.token  # JIM S: MEDIOGRE
 
     def login_with_password(self, username, password, limit=1):
         """ Login to the homeserver.
@@ -106,7 +117,7 @@ class MatrixClient(object):
         Args:
             username (str): Account username
             password (str): Account password
-            limit (int): How many messages to return when syncing.
+            limit (int): Deprecated. How many messages to return when syncing.
 
         Returns:
             str: Access token
@@ -121,7 +132,7 @@ class MatrixClient(object):
         self.token = response["access_token"]
         self.hs = response["home_server"]
         self.api.token = self.token
-        self._sync(limit)
+        self._sync()
         return self.token
 
     def create_room(self, alias=None, is_public=False, invitees=()):
@@ -146,6 +157,9 @@ class MatrixClient(object):
 
         Args:
             room_id_or_alias (str): Room ID or an alias.
+
+        Returns:
+            Room
 
         Raises:
             MatrixRequestError
@@ -175,34 +189,35 @@ class MatrixClient(object):
         self.listeners.append(callback)
 
     def listen_for_events(self, timeout_ms=30000):
-        """ Listen once for events. Use listen_forever to block indefinitely.
+        """Deprecated. sync now pulls events from the request.
+        This function just calls _sync()
 
         Args:
-            timeout (int): How long to poll the Home Server for before
+            timeout_ms (int): How long to poll the Home Server for before
                retrying.
         """
-        response = self.api.event_stream(self.end, timeout_ms)
-        self.end = response["end"]
-
-        for chunk in response["chunk"]:
-            for listener in self.listeners:
-                listener(chunk)
-            if "room_id" in chunk:
-                if chunk["room_id"] not in self.rooms:
-                    self._mkroom(chunk["room_id"])
-                self.rooms[chunk["room_id"]].events.append(chunk)
-                for listener in self.rooms[chunk["room_id"]].listeners:
-                    listener(chunk)
+        _sync(timeout_ms)
 
     def listen_forever(self, timeout_ms=30000):
         """ Keep listening for events forever.
 
         Args:
-            timeout (int): How long to poll the Home Server for before
+            timeout_ms (int): How long to poll the Home Server for before
                retrying.
         """
         while(True):
-            self.listen_for_events(timeout_ms)
+            try:
+                self._sync(timeout_ms)
+            except MatrixRequestError as e:
+                print("A MatrixRequestError occured during sync.")
+                if e.code >= 500 or e.code == 404:
+                    print("Problem occured serverside. Waiting",
+                          self.bad_sync_timeout, "ms")
+                    sleep(self.bad_sync_timeout)
+                else:
+                    raise e
+            except Exception as e:
+                print("Exception thrown during sync\n", e)
 
     def start_listener_thread(self, timeout_ms=30000):
         """ Start a listener thread to listen for events in the background.
@@ -251,32 +266,31 @@ class MatrixClient(object):
     def _process_state_event(self, state_event, current_room):
         if "type" not in state_event:
             return  # Ignore event
-
         etype = state_event["type"]
 
         if etype == "m.room.name":
-            current_room.name = state_event["content"]["name"]
+            current_room.name = state_event["content"].get("name", None)
         elif etype == "m.room.topic":
-            current_room.topic = state_event["content"]["topic"]
+            current_room.topic = state_event["content"].get("topic", None)
         elif etype == "m.room.aliases":
-            current_room.aliases = state_event["content"]["aliases"]
+            current_room.aliases = state_event["content"].get("aliases", None)
 
-    def _sync(self, limit=1):
-        response = self.api.initial_sync(limit)
-        try:
-            self.end = response["end"]
-            for room in response["rooms"]:
-                self._mkroom(room["room_id"])
+    def _sync(self, timeout_ms=30000):
+        # TODO: Deal with presence
+        # TODO: Deal with left rooms
+        response = self.api.sync(self.sync_token, timeout_ms)
+        self.sync_token = response["next_batch"]
+        for room_id in response['rooms']['join']:
+            if room_id not in self.rooms:
+                self._mkroom(room_id)
+            room = self.rooms[room_id]
+            sync_room = response['rooms']['join'][room_id]
 
-                current_room = self.get_rooms()[room["room_id"]]
-                for chunk in room["messages"]["chunk"]:
-                    current_room.events.append(chunk)
+            for event in sync_room["state"]["events"]:
+                self._process_state_event(event, room)
 
-                for state_event in room["state"]:
-                    self._process_state_event(state_event, current_room)
-
-        except KeyError:
-            pass
+            for event in sync_room["timeline"]["events"]:
+                room._put_event(event)
 
     def get_user(self, user_id):
         """ Return a User by their id.
@@ -305,6 +319,7 @@ class Room(object):
         self.client = client
         self.listeners = []
         self.events = []
+        self.event_history_limit = 20
         self.name = None
         self.aliases = []
         self.topic = None
@@ -352,6 +367,14 @@ class Room(object):
             callback (func(roomchunk)): Callback called when an event arrives.
         """
         self.listeners.append(callback)
+
+    def _put_event(self, event):
+        self.events.append(event)
+        if len(self.events) > self.event_history_limit:
+            self.events.pop(0)
+
+        for listener in self.listeners:
+            listener(event)
 
     def get_events(self):
         """ Get the most recent events for this room.
