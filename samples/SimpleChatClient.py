@@ -43,11 +43,11 @@ def main(host, username, password, room_id_alias):
             sys.exit(4)
         else:
             print("Check your sever details are correct.")
-            sys.exit(3)
+            sys.exit(2)
     except MissingSchema as e:
         print("Bad URL format.")
         print(e)
-        sys.exit(2)
+        sys.exit(3)
 
     try:
         room = client.join_room(room_id_alias)

@@ -28,12 +28,11 @@ except MatrixRequestError as e:
         sys.exit(4)
     else:
         print("Check your sever details are correct.")
-        sys.exit(3)
-
+        sys.exit(2)
 except MissingSchema as e:
     print("Bad URL format.")
     print(e)
-    sys.exit(2)
+    sys.exit(3)
 
 if len(sys.argv) > 4:
     userid = sys.argv[4]
