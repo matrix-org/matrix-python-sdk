@@ -29,11 +29,11 @@ except MatrixRequestError as e:
         sys.exit(4)
     else:
         print("Check your sever details are correct.")
-        sys.exit(3)
+        sys.exit(2)
 except MissingSchema as e:
     print("Bad URL format.")
     print(e)
-    sys.exit(2)
+    sys.exit(3)
 
 user = client.get_user(client.user_id)
 
