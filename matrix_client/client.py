@@ -71,10 +71,10 @@ class MatrixClient(object):
         self.api = MatrixHttpApi(base_url, token)
         self.api.validate_certificate(valid_cert_check)
         self.listeners = []
-        self.sync_token = ""
+        self.sync_token = None
 
         """ Time to wait before attempting a /sync request after failing."""
-        self.bad_sync_timeout = 30000
+        self.bad_sync_timeout_limit = 60 * 60
         self.rooms = {
             # room_id: Room
         }
@@ -205,15 +205,19 @@ class MatrixClient(object):
             timeout_ms (int): How long to poll the Home Server for before
                retrying.
         """
+        bad_sync_timeout = 5000
         while(True):
             try:
                 self._sync(timeout_ms)
+                bad_sync_timeout = 5
             except MatrixRequestError as e:
                 print("A MatrixRequestError occured during sync.")
-                if e.code >= 500 or e.code == 404:
+                if e.code >= 500:
                     print("Problem occured serverside. Waiting",
-                          self.bad_sync_timeout, "ms")
-                    sleep(self.bad_sync_timeout)
+                          bad_sync_timeout, " seconds")
+                    sleep(bad_sync_timeout)
+                    bad_sync_timeout = min(bad_sync_timeout * 2,
+                                           self.bad_sync_timeout_limit)
                 else:
                     raise e
             except Exception as e:
