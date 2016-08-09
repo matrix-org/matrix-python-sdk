@@ -389,7 +389,7 @@ class MatrixHttpApi(object):
         if headers["Content-Type"] == "application/json":
             content = json.dumps(content)
 
-        if self.testing: # Don't send anything if we are unit testing
+        if self.testing:  # Don't send anything if we are unit testing
             return {}
         response = requests.request(
             method, endpoint,
