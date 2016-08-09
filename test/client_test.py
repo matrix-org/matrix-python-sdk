@@ -23,8 +23,10 @@ def test__mkroom():
     assert isinstance(goodRoom, Room)
     assert goodRoom.room_id is roomId
 
-    with pytest.raises(MatrixError):
-        client._mkroom("BAD_ROOM")
+    with pytest.raises(ValueError):
+        client._mkroom("BAD_ROOM:matrix.org")
+        client._mkroom("!BAD_ROOMmatrix.org")
+        client._mkroom("!BAD_ROOM::matrix.org")
 
 
 def test_get_rooms():
@@ -98,8 +100,10 @@ def test_get_user():
 
     assert isinstance(client.get_user("@foobar:matrix.org"), User)
 
-    with pytest.raises(MatrixError):
+    with pytest.raises(ValueError):
         client.get_user("badfoobar:matrix.org")
+        client.get_user("@badfoobarmatrix.org")
+        client.get_user("@badfoobar:::matrix.org")
 
 
 def test_get_download_url():
