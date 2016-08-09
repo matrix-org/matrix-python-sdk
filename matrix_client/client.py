@@ -328,8 +328,12 @@ class Room(object):
             NOTE: This should ideally be called from within the Client.
             NOTE: This does not verify the room with the Home Server.
         """
-        if not (room_id.startswith("!") and room_id.count(":") == 1):
-            raise ValueError("RoomID's start with ! and separated with :")
+        if not room_id.startswith("!"):
+            raise ValueError("RoomIDs start with !")
+
+        if ":" not in room_id:
+            raise ValueError("RoomIDs must have a domain component, seperated by a :")
+
         self.room_id = room_id
         self.client = client
         self.listeners = []
@@ -513,8 +517,12 @@ class User(object):
     """ The User class can be used to call user specific functions.
     """
     def __init__(self, api, user_id):
-        if not (user_id.startswith("@") and user_id.count(":") == 1):
-            raise ValueError("UserID's start with @ and separated with :")
+        if not user_id.startswith("@"):
+            raise ValueError("UserIDs start with @")
+
+        if ":" not in user_id:
+            raise ValueError("UserIDs must have a domain component, seperated by a :")
+
         self.user_id = user_id
         self.api = api
 

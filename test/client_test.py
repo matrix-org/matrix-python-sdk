@@ -1,5 +1,4 @@
 from matrix_client.client import MatrixClient, Room, User
-from matrix_client.api import MatrixError
 import pytest
 
 
