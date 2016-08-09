@@ -49,7 +49,7 @@ class MatrixHttpApi(object):
 
     Usage:
         matrix = MatrixHttpApi("https://matrix.org", token="foobar")
-        response = matrix.initial_sync()
+        response = matrix.sync()
         response = matrix.send_message("!roomid:matrix.org", "Hello!")
 
     For room and sync handling, consider using MatrixClient.
@@ -68,12 +68,46 @@ class MatrixHttpApi(object):
         self.validate_cert = True
 
     def initial_sync(self, limit=1):
-        """Perform /initialSync.
+        """ Deprecated. Use sync instead.
+        Perform /initialSync.
 
         Args:
             limit(int): The limit= param to provide.
         """
         return self._send("GET", "/initialSync", query_params={"limit": limit})
+
+    def sync(self, since=None, timeout_ms=30000, filter=None,
+             full_state=None, set_presence=None):
+        """ Perform a sync request.
+
+        Args:
+            since(str): Optional. A token which specifies where to continue
+                a sync from.
+            timeout_ms(int): Optional. The time in milliseconds to wait.
+            filter (int|str): Either a Filter ID or a JSON string.
+            full_state (bool): Return the full state for every room the user has joined
+                Defaults to false.
+            set_presence (str): Should the client be marked as "online" or" offline"
+        """
+
+        request = {
+            "timeout": timeout_ms
+        }
+
+        if since:
+            request["since"] = since
+
+        if filter:
+            request["filter"] = filter
+
+        if full_state:
+            request["full_state"] = full_state
+
+        if set_presence:
+            request["set_presence"] = set_presence
+
+        return self._send("GET", "/sync", query_params=request,
+                          api_path="/_matrix/client/r0")
 
     def validate_certificate(self, valid):
         self.validate_cert = valid
@@ -140,7 +174,8 @@ class MatrixHttpApi(object):
         return self._send("POST", path)
 
     def event_stream(self, from_token, timeout=30000):
-        """Performs /events
+        """ Deprecated. Use sync instead.
+        Performs /events
 
         Args:
             from_token(str): The 'from' query parameter.
