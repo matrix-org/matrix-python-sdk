@@ -16,7 +16,6 @@
 import json
 import re
 import requests
-from os import environ
 
 try:
     from urllib import quote
@@ -66,7 +65,6 @@ class MatrixHttpApi(object):
         self.base_url = base_url
         self.token = token
         self.txn_id = 0
-        self.testing = environ.get("TESTING") is "unit"
         self.validate_cert = True
 
     def initial_sync(self, limit=1):
@@ -389,8 +387,6 @@ class MatrixHttpApi(object):
         if headers["Content-Type"] == "application/json":
             content = json.dumps(content)
 
-        if self.testing:  # Don't send anything if we are unit testing
-            return {}
         response = requests.request(
             method, endpoint,
             params=query_params,
