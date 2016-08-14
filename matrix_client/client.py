@@ -287,6 +287,9 @@ class MatrixClient(object):
             current_room.topic = state_event["content"].get("topic", None)
         elif etype == "m.room.aliases":
             current_room.aliases = state_event["content"].get("aliases", None)
+        elif etype == "m.room.member":
+            member_id = state_event["user_id"]
+            current_room.members[member_id] = User(self.api, member_id)
 
     def _sync(self, timeout_ms=30000):
         # TODO: Deal with presence
@@ -342,6 +345,9 @@ class Room(object):
         self.name = None
         self.aliases = []
         self.topic = None
+        self.members = {
+            # user_id: User
+        }
 
     def send_text(self, text):
         """ Send a plain text message to the room.
@@ -461,6 +467,31 @@ class Room(object):
             return True
         except MatrixRequestError:
             return False
+
+    def get_friendly_name(self):
+        """ Get this room's friendly name:
+            its name, or an alias, if set; otherwise, a name based on its
+            members.
+
+        Returns:
+            str: Friendly Name
+        """
+        if self.name is not None:
+            return self.name
+        if self.aliases:
+            return self.aliases[0]
+        # name the room based on its members (besides the current user)
+        if len(self.members) <= 1:
+            return "Empty Room"
+        members = []
+        for m in self.members.values():
+            if m.user_id != self.client.user_id:
+                members.append(m.get_friendly_name())
+                if len(members) == 2:
+                    break
+        if len(self.members) > 3:
+            members.append("%d others" % (len(self.members) - 3))
+        return '+'.join(members)
 
     def update_room_name(self):
         """ Get room name
