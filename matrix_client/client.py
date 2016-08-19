@@ -31,7 +31,8 @@ class MatrixClient(object):
         room.send_image(file_like_object)
 
     Usage (logged in):
-        client = MatrixClient("https://matrix.org", token="foobar")
+        client = MatrixClient("https://matrix.org", token="foobar",
+            user_id="@foobar:matrix.org")
         rooms = client.get_rooms()  # NB: From initial sync
         client.add_listener(func)  # NB: event stream callback
         rooms[0].add_listener(func)  # NB: callbacks just for this room.
@@ -52,7 +53,7 @@ class MatrixClient(object):
 
     """
 
-    def __init__(self, base_url, token=None, valid_cert_check=True):
+    def __init__(self, base_url, token=None, user_id=None, valid_cert_check=True):
         """ Create a new Matrix Client object.
 
         Args:
@@ -60,6 +61,9 @@ class MatrixClient(object):
                 e.g. (ex: https://localhost:8008 )
             token (Optional[str]): If you have an access token
                 supply it here.
+            user_id (Optional[str]): You must supply the user_id
+                (as obtained when initially logging in to obtain
+                the token) if supplying a token; otherwise, ignored.
             valid_cert_check (bool): Check the homeservers
                 certificate on connections?
 
@@ -67,8 +71,11 @@ class MatrixClient(object):
             MatrixClient
 
         Raises:
-            MatrixRequestError
+            MatrixRequestError, ValueError
         """
+        if token is not None and user_id is None:
+            raise ValueError("must supply user_id along with token")
+
         self.api = MatrixHttpApi(base_url, token)
         self.api.validate_certificate(valid_cert_check)
         self.listeners = []
@@ -83,6 +90,7 @@ class MatrixClient(object):
             # room_id: Room
         }
         if token:
+            self.user_id = user_id
             self._sync()
 
     def get_sync_token(self):
