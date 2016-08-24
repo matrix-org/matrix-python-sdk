@@ -20,7 +20,13 @@ Client:
     from matrix_client.client import MatrixClient
 
     client = MatrixClient("http://localhost:8008")
+
+    # New user
     token = client.register_with_password(username="foobar", password="monkey")
+
+    # Existing user
+    token = client.login_with_password(username="foobar", password="monkey")
+
     room = client.create_room("my_room_alias")
     room.send_text("Hello!")
 
@@ -32,7 +38,6 @@ API:
     from matrix_client.api import MatrixHttpApi
 
     matrix = MatrixHttpApi("https://matrix.org", token="some_token")
-    response = matrix.initial_sync()
     response = matrix.send_message("!roomid:matrix.org", "Hello!")
 
 
