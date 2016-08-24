@@ -401,7 +401,7 @@ class Room(object):
             self.events.pop(0)
 
         for listener in self.listeners:
-            listener(event)
+            listener(self, event)
 
     def get_events(self):
         """ Get the most recent events for this room.
