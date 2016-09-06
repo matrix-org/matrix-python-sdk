@@ -400,7 +400,12 @@ class Room(object):
         if len(self.events) > self.event_history_limit:
             self.events.pop(0)
 
+        # Dispatch for room-specific listeners
         for listener in self.listeners:
+            listener(self, event)
+
+        # Dispatch for client (global) listeners
+        for listener in self.client.listeners:
             listener(self, event)
 
     def get_events(self):
