@@ -1,8 +1,8 @@
 Matrix Client SDK for Python
 ============================
 
-.. image:: https://pypip.in/version/matrix-client/badge.svg?branch=master
-  :target: https://pypi.python.org/pypi/matrix-client/
+.. image:: https://img.shields.io/pypi/v/matrix-client.svg?maxAge=2592000
+  :target: https://pypi.python.org/pypi/matrix-client
   :alt: Latest Version
 
 This is a Matrix client-server SDK for Python 2.7 and 3.4+
