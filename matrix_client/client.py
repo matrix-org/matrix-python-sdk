@@ -491,6 +491,14 @@ class Room(object):
         except MatrixRequestError:
             return False
 
+    def send_state_event(self, event_type, content, state_key):
+        return self.client.api.send_state_event(
+            self.room_id,
+            event_type,
+            content,
+            state_key
+        )
+
     def update_room_topic(self):
         """ Get room topic
 
