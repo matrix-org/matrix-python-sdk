@@ -123,7 +123,7 @@ class MatrixClient(object):
         self._sync()
         return self.token
 
-    def login_with_password(self, username, password, limit=1):
+    def login_with_password(self, username, password, limit=10):
         """ Login to the homeserver.
 
         Args:
@@ -148,7 +148,6 @@ class MatrixClient(object):
 
         """ Limit Filter """
         self.sync_filter = '{ "room": { "timeline" : { "limit" : %i } } }' % limit
-
         self._sync()
         return self.token
 
