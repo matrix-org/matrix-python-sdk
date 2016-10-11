@@ -79,6 +79,9 @@ class MatrixClient(object):
         self.api = MatrixHttpApi(base_url, token)
         self.api.validate_certificate(valid_cert_check)
         self.listeners = []
+        self.invite_listeners = []
+        self.left_listeners = []
+
         self.sync_token = None
         self.sync_filter = None
 
@@ -205,6 +208,25 @@ class MatrixClient(object):
         """
         self.listeners.append(callback)
 
+    def add_invite_listener(self, callback):
+        """ Add a listener that will send a callback when the client receives
+        an invite.
+
+        Args:
+            callback (func(room_id, state)): Callback called when an invite arrives.
+        """
+        self.invite_listeners.append(callback)
+
+    def add_leave_listener(self, callback):
+        """ Add a listener that will send a callback when the client has left a room.
+        an invite request.
+
+        Args:
+            callback (func(room_id, room)): Callback called when the client
+            has left a room.
+        """
+        self.left_listeners.append(callback)
+
     def listen_for_events(self, timeout_ms=30000):
         """Deprecated. sync now pulls events from the request.
         This function just calls _sync()
@@ -301,6 +323,15 @@ class MatrixClient(object):
         # TODO: Deal with left rooms
         response = self.api.sync(self.sync_token, timeout_ms, filter=self.sync_filter)
         self.sync_token = response["next_batch"]
+
+        for room_id, invite_room in response['rooms']['invite'].items():
+            for listener in self.invite_listeners:
+                listener(room_id, invite_room['invite_state'])
+
+        for room_id, left_room in response['rooms']['leave'].items():
+            for listener in self.left_listeners:
+                listener(room_id, left_room)
+
         for room_id, sync_room in response['rooms']['join'].items():
             if room_id not in self.rooms:
                 self._mkroom(room_id)
