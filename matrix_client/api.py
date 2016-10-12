@@ -216,7 +216,7 @@ class MatrixHttpApi(object):
             txn_id(int): Optional. The transaction ID to use.
         """
         if not txn_id:
-            txn_id = self.txn_id + int(time() * 1000)
+            txn_id = str(self.txn_id) + str(int(time() * 1000))
 
         self.txn_id = self.txn_id + 1
 
