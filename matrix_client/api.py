@@ -16,6 +16,7 @@
 import json
 import re
 import requests
+from time import time
 
 try:
     from urllib import quote
@@ -215,7 +216,7 @@ class MatrixHttpApi(object):
             txn_id(int): Optional. The transaction ID to use.
         """
         if not txn_id:
-            txn_id = self.txn_id
+            txn_id = str(self.txn_id) + str(int(time() * 1000))
 
         self.txn_id = self.txn_id + 1
 
