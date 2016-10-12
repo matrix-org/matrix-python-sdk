@@ -18,8 +18,8 @@ from time import sleep
 import logging
 import sys
 
-
 logger = logging.getLogger(__name__)
+
 
 class MatrixClient(object):
     """
