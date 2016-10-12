@@ -18,6 +18,8 @@ from time import sleep
 import logging
 import sys
 
+logger = logging.getLogger(__name__)
+
 
 class MatrixClient(object):
     """
@@ -84,8 +86,6 @@ class MatrixClient(object):
 
         self.sync_token = None
         self.sync_filter = None
-
-        self.logger = logging.getLogger("matrix_client")
 
         """ Time to wait before attempting a /sync request after failing."""
         self.bad_sync_timeout_limit = 60 * 60
@@ -198,14 +198,20 @@ class MatrixClient(object):
         """
         return self.rooms
 
-    def add_listener(self, callback):
+    def add_listener(self, callback, event_type=None):
         """ Add a listener that will send a callback when the client recieves
         an event.
 
         Args:
             callback (func(roomchunk)): Callback called when an event arrives.
+            event_type (str): The event_type to filter for.
         """
-        self.listeners.append(callback)
+        self.listeners.append(
+            {
+                'callback': callback,
+                'event_type': event_type
+            }
+        )
 
     def add_invite_listener(self, callback):
         """ Add a listener that will send a callback when the client receives
@@ -249,17 +255,17 @@ class MatrixClient(object):
                 self._sync(timeout_ms)
                 bad_sync_timeout = 5
             except MatrixRequestError as e:
-                self.logger.warning("A MatrixRequestError occured during sync.")
+                logger.warning("A MatrixRequestError occured during sync.")
                 if e.code >= 500:
-                    self.logger.warning("Problem occured serverside. Waiting %i seconds",
-                                        bad_sync_timeout)
+                    logger.warning("Problem occured serverside. Waiting %i seconds",
+                                   bad_sync_timeout)
                     sleep(bad_sync_timeout)
                     bad_sync_timeout = min(bad_sync_timeout * 2,
                                            self.bad_sync_timeout_limit)
                 else:
                     raise e
             except Exception as e:
-                self.logger.error("Exception thrown during sync\n %s", str(e))
+                logger.exception("Exception thrown during sync")
 
     def start_listener_thread(self, timeout_ms=30000):
         """ Start a listener thread to listen for events in the background.
@@ -274,7 +280,7 @@ class MatrixClient(object):
             thread.start()
         except:
             e = sys.exc_info()[0]
-            self.logger.error("Error: unable to start thread. %s", str(e))
+            logger.error("Error: unable to start thread. %s", str(e))
 
     def upload(self, content, content_type):
         """ Upload content to the home server and recieve a MXC url.
@@ -317,6 +323,13 @@ class MatrixClient(object):
         elif etype == "m.room.aliases":
             current_room.aliases = state_event["content"].get("aliases", None)
 
+        for listener in current_room.state_listeners:
+            if (
+                listener['event_type'] is None or
+                listener['event_type'] == state_event['type']
+            ):
+                listener['callback'](state_event)
+
     def _sync(self, timeout_ms=30000):
         # TODO: Deal with presence
         # TODO: Deal with left rooms
@@ -341,6 +354,14 @@ class MatrixClient(object):
 
             for event in sync_room["timeline"]["events"]:
                 room._put_event(event)
+
+                # Dispatch for client (global) listeners
+                for listener in self.listeners:
+                    if (
+                        listener['event_type'] is None or
+                        listener['event_type'] == event['type']
+                    ):
+                        listener['callback'](event)
 
     def get_user(self, user_id):
         """ Return a User by their id.
@@ -375,6 +396,7 @@ class Room(object):
         self.room_id = room_id
         self.client = client
         self.listeners = []
+        self.state_listeners = []
         self.events = []
         self.event_history_limit = 20
         self.name = None
@@ -417,13 +439,33 @@ class Room(object):
             extra_information=imageinfo
         )
 
-    def add_listener(self, callback):
+    def add_listener(self, callback, event_type=None):
         """ Add a callback handler for events going to this room.
 
         Args:
             callback (func(roomchunk)): Callback called when an event arrives.
+            event_type (str): The event_type to filter for.
         """
-        self.listeners.append(callback)
+        self.listeners.append(
+            {
+                'callback': callback,
+                'event_type': event_type
+            }
+        )
+
+    def add_state_listener(self, callback, event_type=None):
+        """ Add a callback handler for state events going to this room.
+
+        Args:
+            callback (func(roomchunk)): Callback called when an event arrives.
+            event_type (str): The event_type to filter for.
+        """
+        self.state_listeners.append(
+            {
+                'callback': callback,
+                'event_type': event_type
+            }
+        )
 
     def _put_event(self, event):
         self.events.append(event)
@@ -432,7 +474,8 @@ class Room(object):
 
         # Dispatch for room-specific listeners
         for listener in self.listeners:
-            listener(self, event)
+            if listener['event_type'] is None or listener['event_type'] == event['type']:
+                listener['callback'](self, event)
 
         # Dispatch for client (global) listeners
         for listener in self.client.listeners:
