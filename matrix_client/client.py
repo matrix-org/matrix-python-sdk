@@ -380,7 +380,7 @@ class Room(object):
         Args:
             url (str): The mxc url of the image.
             name (str): The filename of the image.
-            imageinfo (): Extra information aboutt
+            imageinfo (): Extra information about the image.
         """
         return self.client.api.send_content(
             self.room_id, url, name, "m.image",
@@ -492,6 +492,13 @@ class Room(object):
             return False
 
     def send_state_event(self, event_type, content, state_key):
+        """ Send a state event to the room.
+
+        Args:
+            event_type (str): The type of event that you are sending.
+            content (): An object with the content of the message.
+            state_key (str, optional): A unique key to identify the state.
+        """
         return self.client.api.send_state_event(
             self.room_id,
             event_type,
