@@ -19,6 +19,8 @@ import logging
 import sys
 
 
+logger = logging.getLogger(__name__)
+
 class MatrixClient(object):
     """
     The client API for Matrix. For the raw HTTP calls, see MatrixHttpApi.
@@ -81,8 +83,6 @@ class MatrixClient(object):
         self.listeners = []
         self.sync_token = None
         self.sync_filter = None
-
-        self.logger = logging.getLogger("matrix_client")
 
         """ Time to wait before attempting a /sync request after failing."""
         self.bad_sync_timeout_limit = 60 * 60
@@ -234,17 +234,17 @@ class MatrixClient(object):
                 self._sync(timeout_ms)
                 bad_sync_timeout = 5
             except MatrixRequestError as e:
-                self.logger.warning("A MatrixRequestError occured during sync.")
+                logger.warning("A MatrixRequestError occured during sync.")
                 if e.code >= 500:
-                    self.logger.warning("Problem occured serverside. Waiting %i seconds",
-                                        bad_sync_timeout)
+                    logger.warning("Problem occured serverside. Waiting %i seconds",
+                                   bad_sync_timeout)
                     sleep(bad_sync_timeout)
                     bad_sync_timeout = min(bad_sync_timeout * 2,
                                            self.bad_sync_timeout_limit)
                 else:
                     raise e
             except Exception as e:
-                self.logger.error("Exception thrown during sync\n %s", e)
+                logger.exception("Exception thrown during sync")
 
     def start_listener_thread(self, timeout_ms=30000):
         """ Start a listener thread to listen for events in the background.
@@ -259,7 +259,7 @@ class MatrixClient(object):
             thread.start()
         except:
             e = sys.exc_info()[0]
-            self.logger.error("Error: unable to start thread. %s", str(e))
+            logger.error("Error: unable to start thread. %s", str(e))
 
     def upload(self, content, content_type):
         """ Upload content to the home server and recieve a MXC url.
