@@ -33,6 +33,20 @@ class Room(object):
         """
         return self.client.api.send_message(self.room_id, text)
 
+    def get_tags(self):
+        return self.client.api.get_user_tags(self.client.user_id, self.room_id)
+
+    def remove_tag(self, tag):
+        return self.client.api.remove_user_tag(
+            self.client.user_id, self.room_id, tag
+        )
+
+    def add_tag(self, tag, order=None, content=None):
+        return self.client.api.add_user_tag(
+            self.client.user_id, self.room_id,
+            tag, order, content
+        )
+
     def send_emote(self, text):
         """ Send a emote (/me style) message to the room.
 
