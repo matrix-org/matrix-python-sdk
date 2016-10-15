@@ -33,6 +33,10 @@ class Room(object):
         """
         return self.client.api.send_message(self.room_id, text)
 
+    def set_account_data(self, type, account_data):
+        return self.client.api.set_room_account_data(
+            self.client.user_id, self.room_id, type, account_data)
+
     def get_tags(self):
         return self.client.api.get_user_tags(self.client.user_id, self.room_id)
 

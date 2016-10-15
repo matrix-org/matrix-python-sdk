@@ -347,13 +347,15 @@ class MatrixHttpApi(object):
         return self._send("POST", "/rooms/" + room_id + "/ban", body)
 
     def get_user_tags(self, user_id, room_id):
-        return self._send("GET",
+        return self._send(
+            "GET",
             "/user/%s/rooms/%s/tags" % (user_id, room_id),
             api_path="/_matrix/client/r0"
         )
 
     def remove_user_tag(self, user_id, room_id, tag):
-        return self._send("DELETE",
+        return self._send(
+            "DELETE",
             "/user/%s/rooms/%s/tags/%s" % (user_id, room_id, tag),
             api_path="/_matrix/client/r0"
         )
@@ -362,12 +364,29 @@ class MatrixHttpApi(object):
         if body:
             pass
         elif order:
-            body = { "order": order }
+            body = {"order": order}
         else:
             body = {}
-        return self._send("PUT",
+        return self._send(
+            "PUT",
             "/user/%s/rooms/%s/tags/%s" % (user_id, room_id, tag),
             body,
+            api_path="/_matrix/client/r0"
+        )
+
+    def set_account_data(self, user_id, type, account_data):
+        return self._send(
+            "PUT",
+            "/user/%s/account_data/%s" % (user_id, type),
+            account_data,
+            api_path="/_matrix/client/r0"
+        )
+
+    def set_room_account_data(self, user_id, room_id, type, account_data):
+        return self._send(
+            "PUT",
+            "/user/%s/rooms/%s/account_data/%s" % (user_id, room_id, type),
+            account_data,
             api_path="/_matrix/client/r0"
         )
 
