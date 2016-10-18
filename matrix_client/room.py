@@ -186,7 +186,7 @@ class Room(object):
         """
         try:
             self.client.api.leave_room(self.room_id)
-            self.client.rooms.remove(self.room_id)
+            del self.client.rooms[self.room_id]
             return True
         except MatrixRequestError:
             return False
