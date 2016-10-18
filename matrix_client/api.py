@@ -283,6 +283,17 @@ class MatrixHttpApi(object):
         """
         return self._send("GET", "/rooms/" + room_id + "/state/m.room.topic")
 
+    def set_room_topic(self, room_id, topic):
+        """Perform PUT /rooms/$room_id/state/m.room.topic
+        Args:
+            room_id(str): The room ID
+            topic(str): The new room topic
+        """
+        body = {
+            "topic": topic
+        }
+        return self._send("PUT", "/rooms/" + room_id + "/state/m.room.topic", body)
+
     def leave_room(self, room_id):
         """Perform POST /rooms/$room_id/leave
         Args:
