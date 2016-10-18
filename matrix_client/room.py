@@ -252,6 +252,20 @@ class Room(object):
         except MatrixRequestError:
             return False
 
+    def set_room_topic(self, topic):
+        """ Set room topic
+            topic (str): The new topic for the room
+
+        Returns:
+            boolean: True if the topic changed, False if not
+        """
+        try:
+            self.client.api.set_room_topic(self.room_id, topic)
+            self.topic = topic
+            return True
+        except MatrixRequestError:
+            return False
+
     def update_aliases(self):
         """ Get aliases information from room state
 
