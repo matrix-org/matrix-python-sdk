@@ -1,3 +1,6 @@
+from .errors import MatrixRequestError
+
+
 class Room(object):
     """ The Room class can be used to call room specific functions
     after joining a room from the Client.

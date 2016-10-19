@@ -12,7 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from .api import MatrixHttpApi, MatrixRequestError, MatrixUnexpectedResponse
+from .api import MatrixHttpApi
+from .errors import MatrixRequestError, MatrixUnexpectedResponse
 from .room import Room
 from .user import User
 from threading import Thread
