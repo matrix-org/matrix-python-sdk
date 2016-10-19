@@ -17,32 +17,12 @@ import json
 import re
 import requests
 from time import time
+from .errors import MatrixError, MatrixRequestError
 
 try:
     from urllib import quote
 except ImportError:
     from urllib.parse import quote
-
-
-class MatrixError(Exception):
-    """A generic Matrix error. Specific errors will subclass this."""
-    pass
-
-
-class MatrixUnexpectedResponse(MatrixError):
-    """The home server gave an unexpected response. """
-    def __init__(self, content=""):
-        super(MatrixError, self).__init__(content)
-        self.content = content
-
-
-class MatrixRequestError(MatrixError):
-    """ The home server returned an error response. """
-
-    def __init__(self, code=0, content=""):
-        super(MatrixRequestError, self).__init__("%d: %s" % (code, content))
-        self.code = code
-        self.content = content
 
 
 class MatrixHttpApi(object):
@@ -345,6 +325,50 @@ class MatrixHttpApi(object):
             "reason": reason
         }
         return self._send("POST", "/rooms/" + room_id + "/ban", body)
+
+    def get_user_tags(self, user_id, room_id):
+        return self._send(
+            "GET",
+            "/user/%s/rooms/%s/tags" % (user_id, room_id),
+            api_path="/_matrix/client/r0"
+        )
+
+    def remove_user_tag(self, user_id, room_id, tag):
+        return self._send(
+            "DELETE",
+            "/user/%s/rooms/%s/tags/%s" % (user_id, room_id, tag),
+            api_path="/_matrix/client/r0"
+        )
+
+    def add_user_tag(self, user_id, room_id, tag, order=None, body=None):
+        if body:
+            pass
+        elif order:
+            body = {"order": order}
+        else:
+            body = {}
+        return self._send(
+            "PUT",
+            "/user/%s/rooms/%s/tags/%s" % (user_id, room_id, tag),
+            body,
+            api_path="/_matrix/client/r0"
+        )
+
+    def set_account_data(self, user_id, type, account_data):
+        return self._send(
+            "PUT",
+            "/user/%s/account_data/%s" % (user_id, type),
+            account_data,
+            api_path="/_matrix/client/r0"
+        )
+
+    def set_room_account_data(self, user_id, room_id, type, account_data):
+        return self._send(
+            "PUT",
+            "/user/%s/rooms/%s/account_data/%s" % (user_id, room_id, type),
+            account_data,
+            api_path="/_matrix/client/r0"
+        )
 
     def get_room_state(self, room_id):
         """Perform GET /rooms/$room_id/state
