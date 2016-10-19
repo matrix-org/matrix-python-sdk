@@ -1,0 +1,625 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>matrix_client.api &mdash; Matrix Python SDK v0.0.5</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../genindex.html"/>
+        <link rel="search" title="Search" href="../../search.html"/>
+    <link rel="top" title="Matrix Python SDK v0.0.5" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> Matrix Python SDK
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <!-- Local TOC -->
+                <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">Matrix Python SDK</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+    <li>matrix_client.api</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for matrix_client.api</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1"># Copyright 2015 OpenMarket Ltd</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="k">import</span> <span class="n">time</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">urllib</span> <span class="k">import</span> <span class="n">quote</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="k">import</span> <span class="n">quote</span>
+
+
+<div class="viewcode-block" id="MatrixError"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixError">[docs]</a><span class="k">class</span> <span class="nc">MatrixError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A generic Matrix error. Specific errors will subclass this.&quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="MatrixUnexpectedResponse"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixUnexpectedResponse">[docs]</a><span class="k">class</span> <span class="nc">MatrixUnexpectedResponse</span><span class="p">(</span><span class="n">MatrixError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The home server gave an unexpected response. &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MatrixError</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">content</span></div>
+
+
+<div class="viewcode-block" id="MatrixRequestError"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixRequestError">[docs]</a><span class="k">class</span> <span class="nc">MatrixRequestError</span><span class="p">(</span><span class="n">MatrixError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; The home server returned an error response. &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MatrixRequestError</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%d</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">content</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">code</span> <span class="o">=</span> <span class="n">code</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">content</span></div>
+
+
+<div class="viewcode-block" id="MatrixHttpApi"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi">[docs]</a><span class="k">class</span> <span class="nc">MatrixHttpApi</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Contains all raw Matrix HTTP Client-Server API calls.</span>
+
+<span class="sd">    Usage:</span>
+<span class="sd">        matrix = MatrixHttpApi(&quot;https://matrix.org&quot;, token=&quot;foobar&quot;)</span>
+<span class="sd">        response = matrix.sync()</span>
+<span class="sd">        response = matrix.send_message(&quot;!roomid:matrix.org&quot;, &quot;Hello!&quot;)</span>
+
+<span class="sd">    For room and sync handling, consider using MatrixClient.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_url</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Construct and configure the HTTP API.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            base_url(str): The home server URL e.g. &#39;http://localhost:8008&#39;</span>
+<span class="sd">            token(str): Optional. The client&#39;s access token.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span> <span class="o">=</span> <span class="n">base_url</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">token</span> <span class="o">=</span> <span class="n">token</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">txn_id</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_cert</span> <span class="o">=</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="MatrixHttpApi.initial_sync"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.initial_sync">[docs]</a>    <span class="k">def</span> <span class="nf">initial_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Deprecated. Use sync instead.</span>
+<span class="sd">        Perform /initialSync.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            limit(int): The limit= param to provide.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;/initialSync&quot;</span><span class="p">,</span> <span class="n">query_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;limit&quot;</span><span class="p">:</span> <span class="n">limit</span><span class="p">})</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.sync"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.sync">[docs]</a>    <span class="k">def</span> <span class="nf">sync</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">since</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeout_ms</span><span class="o">=</span><span class="mi">30000</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">full_state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">set_presence</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Perform a sync request.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            since(str): Optional. A token which specifies where to continue</span>
+<span class="sd">                a sync from.</span>
+<span class="sd">            timeout_ms(int): Optional. The time in milliseconds to wait.</span>
+<span class="sd">            filter (int|str): Either a Filter ID or a JSON string.</span>
+<span class="sd">            full_state (bool): Return the full state for every room the user has joined</span>
+<span class="sd">                Defaults to false.</span>
+<span class="sd">            set_presence (str): Should the client be marked as &quot;online&quot; or&quot; offline&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">request</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;timeout&quot;</span><span class="p">:</span> <span class="n">timeout_ms</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">since</span><span class="p">:</span>
+            <span class="n">request</span><span class="p">[</span><span class="s2">&quot;since&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">since</span>
+
+        <span class="k">if</span> <span class="nb">filter</span><span class="p">:</span>
+            <span class="n">request</span><span class="p">[</span><span class="s2">&quot;filter&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">filter</span>
+
+        <span class="k">if</span> <span class="n">full_state</span><span class="p">:</span>
+            <span class="n">request</span><span class="p">[</span><span class="s2">&quot;full_state&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">full_state</span>
+
+        <span class="k">if</span> <span class="n">set_presence</span><span class="p">:</span>
+            <span class="n">request</span><span class="p">[</span><span class="s2">&quot;set_presence&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">set_presence</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;/sync&quot;</span><span class="p">,</span> <span class="n">query_params</span><span class="o">=</span><span class="n">request</span><span class="p">,</span>
+                          <span class="n">api_path</span><span class="o">=</span><span class="s2">&quot;/_matrix/client/r0&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.validate_certificate"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.validate_certificate">[docs]</a>    <span class="k">def</span> <span class="nf">validate_certificate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">valid</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_cert</span> <span class="o">=</span> <span class="n">valid</span>
+        <span class="k">return</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.register"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.register">[docs]</a>    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">login_type</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Performs /register.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            login_type(str): The value for the &#39;type&#39; key.</span>
+<span class="sd">            **kwargs: Additional key/values to add to the JSON submitted.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">login_type</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">content</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="s2">&quot;/register&quot;</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.login"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.login">[docs]</a>    <span class="k">def</span> <span class="nf">login</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">login_type</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform /login.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            login_type(str): The value for the &#39;type&#39; key.</span>
+<span class="sd">            **kwargs: Additional key/values to add to the JSON submitted.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">login_type</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">content</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="s2">&quot;/login&quot;</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.create_room"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.create_room">[docs]</a>    <span class="k">def</span> <span class="nf">create_room</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_public</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">invitees</span><span class="o">=</span><span class="p">()):</span>
+        <span class="sd">&quot;&quot;&quot;Perform /createRoom.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            alias(str): Optional. The room alias name to set for this room.</span>
+<span class="sd">            is_public(bool): Optional. The public/private visibility.</span>
+<span class="sd">            invitees(list&lt;str&gt;): Optional. The list of user IDs to invite.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;visibility&quot;</span><span class="p">:</span> <span class="s2">&quot;public&quot;</span> <span class="k">if</span> <span class="n">is_public</span> <span class="k">else</span> <span class="s2">&quot;private&quot;</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">alias</span><span class="p">:</span>
+            <span class="n">content</span><span class="p">[</span><span class="s2">&quot;room_alias_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">alias</span>
+        <span class="k">if</span> <span class="n">invitees</span><span class="p">:</span>
+            <span class="n">content</span><span class="p">[</span><span class="s2">&quot;invite&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">invitees</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="s2">&quot;/createRoom&quot;</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.join_room"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.join_room">[docs]</a>    <span class="k">def</span> <span class="nf">join_room</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room_id_or_alias</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Performs /join/$room_id</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            room_id_or_alias(str): The room ID or room alias to join.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">room_id_or_alias</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">MatrixError</span><span class="p">(</span><span class="s2">&quot;No alias or room ID to join.&quot;</span><span class="p">)</span>
+
+        <span class="n">path</span> <span class="o">=</span> <span class="s2">&quot;/join/</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">quote</span><span class="p">(</span><span class="n">room_id_or_alias</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.event_stream"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.event_stream">[docs]</a>    <span class="k">def</span> <span class="nf">event_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_token</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">30000</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Deprecated. Use sync instead.</span>
+<span class="sd">        Performs /events</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            from_token(str): The &#39;from&#39; query parameter.</span>
+<span class="sd">            timeout(int): Optional. The &#39;timeout&#39; query parameter.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="s2">&quot;/events&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span>
+            <span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">query_params</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;timeout&quot;</span><span class="p">:</span> <span class="n">timeout</span><span class="p">,</span>
+                <span class="s2">&quot;from&quot;</span><span class="p">:</span> <span class="n">from_token</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.send_state_event"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.send_state_event">[docs]</a>    <span class="k">def</span> <span class="nf">send_state_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room_id</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">state_key</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform /rooms/$room_id/state/$event_type</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            room_id(str): The room ID to send the state event in.</span>
+<span class="sd">            event_type(str): The state event type to send.</span>
+<span class="sd">            content(dict): The JSON content to send.</span>
+<span class="sd">            state_key(str): Optional. The state key for the event.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="s2">&quot;/rooms/</span><span class="si">%s</span><span class="s2">/state/</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="n">quote</span><span class="p">(</span><span class="n">room_id</span><span class="p">),</span> <span class="n">quote</span><span class="p">(</span><span class="n">event_type</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">state_key</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">+=</span> <span class="s2">&quot;/</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">quote</span><span class="p">(</span><span class="n">state_key</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="s2">&quot;PUT&quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.send_message_event"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.send_message_event">[docs]</a>    <span class="k">def</span> <span class="nf">send_message_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room_id</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">txn_id</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform /rooms/$room_id/send/$event_type</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            room_id(str): The room ID to send the message event in.</span>
+<span class="sd">            event_type(str): The event type to send.</span>
+<span class="sd">            content(dict): The JSON content to send.</span>
+<span class="sd">            txn_id(int): Optional. The transaction ID to use.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">txn_id</span><span class="p">:</span>
+            <span class="n">txn_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">txn_id</span><span class="p">)</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="p">()</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">txn_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">txn_id</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="n">path</span> <span class="o">=</span> <span class="s2">&quot;/rooms/</span><span class="si">%s</span><span class="s2">/send/</span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="n">quote</span><span class="p">(</span><span class="n">room_id</span><span class="p">),</span> <span class="n">quote</span><span class="p">(</span><span class="n">event_type</span><span class="p">),</span> <span class="n">quote</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">txn_id</span><span class="p">)),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="s2">&quot;PUT&quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span></div>
+
+    <span class="c1"># content_type can be a image,audio or video</span>
+    <span class="c1"># extra information should be supplied, see</span>
+    <span class="c1"># https://matrix.org/docs/spec/r0.0.1/client_server.html</span>
+<div class="viewcode-block" id="MatrixHttpApi.send_content"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.send_content">[docs]</a>    <span class="k">def</span> <span class="nf">send_content</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room_id</span><span class="p">,</span> <span class="n">item_url</span><span class="p">,</span> <span class="n">item_name</span><span class="p">,</span> <span class="n">msg_type</span><span class="p">,</span>
+                     <span class="n">extra_information</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">extra_information</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">extra_information</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">content_pack</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="n">item_url</span><span class="p">,</span>
+            <span class="s2">&quot;msgtype&quot;</span><span class="p">:</span> <span class="n">msg_type</span><span class="p">,</span>
+            <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="n">item_name</span><span class="p">,</span>
+            <span class="s2">&quot;info&quot;</span><span class="p">:</span> <span class="n">extra_information</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_message_event</span><span class="p">(</span><span class="n">room_id</span><span class="p">,</span> <span class="s2">&quot;m.room.message&quot;</span><span class="p">,</span> <span class="n">content_pack</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.send_message"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.send_message">[docs]</a>    <span class="k">def</span> <span class="nf">send_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room_id</span><span class="p">,</span> <span class="n">text_content</span><span class="p">,</span> <span class="n">msgtype</span><span class="o">=</span><span class="s2">&quot;m.text&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform /rooms/$room_id/send/m.room.message</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            room_id(str): The room ID to send the event in.</span>
+<span class="sd">            text_content(str): The m.text body to send.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_message_event</span><span class="p">(</span>
+            <span class="n">room_id</span><span class="p">,</span> <span class="s2">&quot;m.room.message&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_text_body</span><span class="p">(</span><span class="n">text_content</span><span class="p">,</span> <span class="n">msgtype</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.send_emote"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.send_emote">[docs]</a>    <span class="k">def</span> <span class="nf">send_emote</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room_id</span><span class="p">,</span> <span class="n">text_content</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform /rooms/$room_id/send/m.room.message with m.emote msgtype</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            room_id(str): The room ID to send the event in.</span>
+<span class="sd">            text_content(str): The m.emote body to send.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_message_event</span><span class="p">(</span>
+            <span class="n">room_id</span><span class="p">,</span> <span class="s2">&quot;m.room.message&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_emote_body</span><span class="p">(</span><span class="n">text_content</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.send_notice"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.send_notice">[docs]</a>    <span class="k">def</span> <span class="nf">send_notice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room_id</span><span class="p">,</span> <span class="n">text_content</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform /rooms/$room_id/send/m.room.message with m.notice msgtype</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            room_id(str): The room ID to send the event in.</span>
+<span class="sd">            text_content(str): The m.notice body to send.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;msgtype&quot;</span><span class="p">:</span> <span class="s2">&quot;m.notice&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="n">text_content</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_message_event</span><span class="p">(</span><span class="n">room_id</span><span class="p">,</span> <span class="s2">&quot;m.room.message&quot;</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.get_room_name"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.get_room_name">[docs]</a>    <span class="k">def</span> <span class="nf">get_room_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform GET /rooms/$room_id/state/m.room.name</span>
+<span class="sd">        Args:</span>
+<span class="sd">            room_id(str): The room ID</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;/rooms/&quot;</span> <span class="o">+</span> <span class="n">room_id</span> <span class="o">+</span> <span class="s2">&quot;/state/m.room.name&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.get_room_topic"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.get_room_topic">[docs]</a>    <span class="k">def</span> <span class="nf">get_room_topic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform GET /rooms/$room_id/state/m.room.topic</span>
+<span class="sd">        Args:</span>
+<span class="sd">            room_id(str): The room ID</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;/rooms/&quot;</span> <span class="o">+</span> <span class="n">room_id</span> <span class="o">+</span> <span class="s2">&quot;/state/m.room.topic&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.leave_room"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.leave_room">[docs]</a>    <span class="k">def</span> <span class="nf">leave_room</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform POST /rooms/$room_id/leave</span>
+<span class="sd">        Args:</span>
+<span class="sd">            room_id(str): The room ID</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="s2">&quot;/rooms/&quot;</span> <span class="o">+</span> <span class="n">room_id</span> <span class="o">+</span> <span class="s2">&quot;/leave&quot;</span><span class="p">,</span> <span class="p">{})</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.invite_user"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.invite_user">[docs]</a>    <span class="k">def</span> <span class="nf">invite_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room_id</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform POST /rooms/$room_id/invite</span>
+<span class="sd">        Args:</span>
+<span class="sd">            room_id(str): The room ID</span>
+<span class="sd">            user_id(str): The user ID of the invitee</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="n">user_id</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="s2">&quot;/rooms/&quot;</span> <span class="o">+</span> <span class="n">room_id</span> <span class="o">+</span> <span class="s2">&quot;/invite&quot;</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.kick_user"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.kick_user">[docs]</a>    <span class="k">def</span> <span class="nf">kick_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room_id</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calls set_membership with membership=&quot;leave&quot; for the user_id provided</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_membership</span><span class="p">(</span><span class="n">room_id</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="s2">&quot;leave&quot;</span><span class="p">,</span> <span class="n">reason</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.set_membership"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.set_membership">[docs]</a>    <span class="k">def</span> <span class="nf">set_membership</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room_id</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">membership</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform PUT /rooms/$room_id/state/m.room.member/$user_id</span>
+<span class="sd">        Args:</span>
+<span class="sd">            room_id(str): The room ID</span>
+<span class="sd">            user_id(str): The user ID</span>
+<span class="sd">            membership(str): New membership value</span>
+<span class="sd">            reason(str): The reason</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;membership&quot;</span><span class="p">:</span> <span class="n">membership</span><span class="p">,</span>
+            <span class="s2">&quot;reason&quot;</span><span class="p">:</span> <span class="n">reason</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span>
+            <span class="s2">&quot;PUT&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;/rooms/</span><span class="si">%s</span><span class="s2">/state/m.room.member/</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">room_id</span><span class="p">,</span> <span class="n">user_id</span><span class="p">),</span>
+            <span class="n">body</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.ban_user"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.ban_user">[docs]</a>    <span class="k">def</span> <span class="nf">ban_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room_id</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform POST /rooms/$room_id/ban</span>
+<span class="sd">        Args:</span>
+<span class="sd">            room_id(str): The room ID</span>
+<span class="sd">            user_id(str): The user ID of the banee(sic)</span>
+<span class="sd">            reason(str): The reason for this ban</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="n">user_id</span><span class="p">,</span>
+            <span class="s2">&quot;reason&quot;</span><span class="p">:</span> <span class="n">reason</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="s2">&quot;/rooms/&quot;</span> <span class="o">+</span> <span class="n">room_id</span> <span class="o">+</span> <span class="s2">&quot;/ban&quot;</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.get_room_state"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.get_room_state">[docs]</a>    <span class="k">def</span> <span class="nf">get_room_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform GET /rooms/$room_id/state</span>
+<span class="sd">        Args:</span>
+<span class="sd">            room_id(str): The room ID</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;/rooms/&quot;</span> <span class="o">+</span> <span class="n">room_id</span> <span class="o">+</span> <span class="s2">&quot;/state&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.get_text_body"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.get_text_body">[docs]</a>    <span class="k">def</span> <span class="nf">get_text_body</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">msgtype</span><span class="o">=</span><span class="s2">&quot;m.text&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;msgtype&quot;</span><span class="p">:</span> <span class="n">msgtype</span><span class="p">,</span>
+            <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="n">text</span>
+        <span class="p">}</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.get_html_body"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.get_html_body">[docs]</a>    <span class="k">def</span> <span class="nf">get_html_body</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">html</span><span class="p">,</span> <span class="n">msgtype</span><span class="o">=</span><span class="s2">&quot;m.text&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;&lt;[^&lt;]+?&gt;&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">html</span><span class="p">),</span>
+            <span class="s2">&quot;msgtype&quot;</span><span class="p">:</span> <span class="n">msgtype</span><span class="p">,</span>
+            <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;org.matrix.custom.html&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;formatted_body&quot;</span><span class="p">:</span> <span class="n">html</span>
+        <span class="p">}</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.get_emote_body"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.get_emote_body">[docs]</a>    <span class="k">def</span> <span class="nf">get_emote_body</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;msgtype&quot;</span><span class="p">:</span> <span class="s2">&quot;m.emote&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="n">text</span>
+        <span class="p">}</span></div>
+
+    <span class="k">def</span> <span class="nf">_send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">query_params</span><span class="o">=</span><span class="p">{},</span> <span class="n">headers</span><span class="o">=</span><span class="p">{},</span>
+              <span class="n">api_path</span><span class="o">=</span><span class="s2">&quot;/_matrix/client/api/v1&quot;</span><span class="p">):</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;PUT&quot;</span><span class="p">,</span> <span class="s2">&quot;DELETE&quot;</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="n">MatrixError</span><span class="p">(</span><span class="s2">&quot;Unsupported HTTP method: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">method</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">&quot;Content-Type&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
+            <span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;application/json&quot;</span>
+
+        <span class="n">query_params</span><span class="p">[</span><span class="s2">&quot;access_token&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span>
+        <span class="n">endpoint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span> <span class="o">+</span> <span class="n">api_path</span> <span class="o">+</span> <span class="n">path</span>
+
+        <span class="k">if</span> <span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;application/json&quot;</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">request</span><span class="p">(</span>
+            <span class="n">method</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="n">query_params</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">content</span><span class="p">,</span>
+            <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span>
+            <span class="n">verify</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">validate_cert</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">&lt;</span> <span class="mi">200</span> <span class="ow">or</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">&gt;=</span> <span class="mi">300</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">MatrixRequestError</span><span class="p">(</span>
+                <span class="n">code</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">text</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+
+<div class="viewcode-block" id="MatrixHttpApi.media_upload"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.media_upload">[docs]</a>    <span class="k">def</span> <span class="nf">media_upload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">content_type</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span>
+            <span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">,</span>
+            <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="n">content_type</span><span class="p">},</span>
+            <span class="n">api_path</span><span class="o">=</span><span class="s2">&quot;/_matrix/media/r0/upload&quot;</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.get_display_name"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.get_display_name">[docs]</a>    <span class="k">def</span> <span class="nf">get_display_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;/profile/</span><span class="si">%s</span><span class="s2">/displayname&quot;</span> <span class="o">%</span> <span class="n">user_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;displayname&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.set_display_name"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.set_display_name">[docs]</a>    <span class="k">def</span> <span class="nf">set_display_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">display_name</span><span class="p">):</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;displayname&quot;</span><span class="p">:</span> <span class="n">display_name</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="s2">&quot;PUT&quot;</span><span class="p">,</span> <span class="s2">&quot;/profile/</span><span class="si">%s</span><span class="s2">/displayname&quot;</span> <span class="o">%</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.get_avatar_url"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.get_avatar_url">[docs]</a>    <span class="k">def</span> <span class="nf">get_avatar_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;/profile/</span><span class="si">%s</span><span class="s2">/avatar_url&quot;</span> <span class="o">%</span> <span class="n">user_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;avatar_url&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.set_avatar_url"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.set_avatar_url">[docs]</a>    <span class="k">def</span> <span class="nf">set_avatar_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">avatar_url</span><span class="p">):</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;avatar_url&quot;</span><span class="p">:</span> <span class="n">avatar_url</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="s2">&quot;PUT&quot;</span><span class="p">,</span> <span class="s2">&quot;/profile/</span><span class="si">%s</span><span class="s2">/avatar_url&quot;</span> <span class="o">%</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixHttpApi.get_download_url"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.get_download_url">[docs]</a>    <span class="k">def</span> <span class="nf">get_download_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mxcurl</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">mxcurl</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;mxc://&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span> <span class="o">+</span> <span class="s2">&quot;/_matrix/media/r0/download/&quot;</span> <span class="o">+</span> <span class="n">mxcurl</span><span class="p">[</span><span class="mi">6</span><span class="p">:]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;MXC URL did not begin with &#39;mxc://&#39;&quot;</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, matrix.org.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.0.5',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
