@@ -207,6 +207,20 @@ class Room(object):
         except MatrixRequestError:
             return False
 
+    def set_room_name(self, name):
+        """ Set room name
+            name (str): The new name for the room
+
+        Returns:
+            boolean: True if the name changed, False if not
+        """
+        try:
+            self.client.api.set_room_name(self.room_id, name)
+            self.name = name
+            return True
+        except MatrixRequestError:
+            return False
+
     def send_state_event(self, event_type, content, state_key):
         """ Send a state event to the room.
 
@@ -235,6 +249,20 @@ class Room(object):
                 return True
             else:
                 return False
+        except MatrixRequestError:
+            return False
+
+    def set_room_topic(self, topic):
+        """ Set room topic
+            topic (str): The new topic for the room
+
+        Returns:
+            boolean: True if the topic changed, False if not
+        """
+        try:
+            self.client.api.set_room_topic(self.room_id, topic)
+            self.topic = topic
+            return True
         except MatrixRequestError:
             return False
 
