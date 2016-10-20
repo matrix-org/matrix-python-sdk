@@ -120,10 +120,6 @@ class Room(object):
             if listener['event_type'] is None or listener['event_type'] == event['type']:
                 listener['callback'](self, event)
 
-        # Dispatch for client (global) listeners
-        for listener in self.client.listeners:
-            listener(self, event)
-
     def get_events(self):
         """ Get the most recent events for this room.
 
