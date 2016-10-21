@@ -47,7 +47,7 @@ setup(
         'requests'
     ],
     extras_require={
-        'test': ['tox', 'pytest', 'flake8'],
+        'test': ['tox', 'pytest', 'flake8', 'responses'],
         'doc': ['Sphinx==1.4.6', 'sphinx-rtd-theme==0.1.9', 'sphinxcontrib-napoleon==0.5.3'],
     }
 )
