@@ -353,9 +353,11 @@ class MatrixClient(object):
             room = self.rooms[room_id]
 
             for event in sync_room["state"]["events"]:
+                event['room_id'] = room_id
                 self._process_state_event(event, room)
 
             for event in sync_room["timeline"]["events"]:
+                event['room_id'] = room_id
                 room._put_event(event)
 
                 # Dispatch for client (global) listeners
