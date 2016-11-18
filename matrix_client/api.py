@@ -498,3 +498,8 @@ class MatrixHttpApi(object):
         content = self._send("GET", "/directory/room/{}".format(quote(room_alias)),
                              api_path="/_matrix/client/r0")
         return content.get("room_id", None)
+
+    def get_public_rooms(self):
+        """List the public rooms on the server
+        """
+        return self._send("GET", "/publicRooms", api_path="/_matrix/client/r0")

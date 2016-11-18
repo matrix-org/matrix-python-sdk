@@ -379,3 +379,12 @@ class MatrixClient(object):
         """
 
         return User(self.api, user_id)
+
+    def get_public_rooms_ids(self):
+        """List the ids of the public rooms on the server
+
+        Returns:
+            str[]: List of ids
+        """
+        response = self.api.get_public_rooms()
+        return [room['room_id'] for room in response['chunk']]
