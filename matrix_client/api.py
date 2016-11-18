@@ -485,3 +485,16 @@ class MatrixHttpApi(object):
             return self.base_url + "/_matrix/media/r0/download/" + mxcurl[6:]
         else:
             raise ValueError("MXC URL did not begin with 'mxc://'")
+
+    def get_room_id(self, room_alias):
+        """Get room id from its alias
+
+        Args:
+            room_alias(str): The room alias name.
+
+        Returns:
+            Wanted room's id.
+        """
+        content = self._send("GET", "/directory/room/{}".format(quote(room_alias)),
+                             api_path="/_matrix/client/r0")
+        return content.get("room_id", None)
