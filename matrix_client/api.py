@@ -503,3 +503,17 @@ class MatrixHttpApi(object):
         """List the public rooms on the server
         """
         return self._send("GET", "/publicRooms", api_path="/_matrix/client/r0")
+
+    def set_room_alias(self, room_id, room_alias):
+        """Set alias to room id
+
+        Args:
+            room_id(str): The room id.
+            room_alias(str): The room wanted alias name.
+        """
+        data = {
+            "room_id": room_id
+        }
+
+        return self._send("PUT", "/directory/room/{}".format(quote(room_alias)),
+                          content=data, api_path="/_matrix/client/r0")

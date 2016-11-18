@@ -279,3 +279,18 @@ class Room(object):
                         return False
         except MatrixRequestError:
             return False
+
+    def add_room_alias(self, room_alias):
+        """Add an alias to the room
+
+        Args:
+            room_alias(str): Room wanted alias name.
+
+        Returns:
+            bool: True if the alias was added, False otherwise.
+        """
+        try:
+            self.client.api.set_room_alias(self.room_id, room_alias)
+            return True
+        except MatrixRequestError:
+            return False
