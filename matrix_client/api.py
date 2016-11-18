@@ -517,3 +517,15 @@ class MatrixHttpApi(object):
 
         return self._send("PUT", "/directory/room/{}".format(quote(room_alias)),
                           content=data, api_path="/_matrix/client/r0")
+
+    def remove_room_alias(self, room_alias):
+        """Remove mapping of an alias
+
+        Args:
+            room_alias(str): The alias to be removed.
+
+        Raises:
+            MatrixRequestError
+        """
+        return self._send("DELETE", "/directory/room/{}".format(quote(room_alias)),
+                          api_path="/_matrix/client/r0")
