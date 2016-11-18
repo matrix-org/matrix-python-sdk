@@ -498,3 +498,17 @@ class MatrixHttpApi(object):
         content = self._send("GET", "/directory/room/{}".format(quote(room_alias)),
                              api_path="/_matrix/client/r0")
         return content.get("room_id", None)
+
+    def set_room_alias(self, room_id, room_alias):
+        """Set alias to room id
+
+        Args:
+            room_id(str): The room id.
+            room_alias(str): The room wanted alias name.
+        """
+        data = {
+            "room_id": room_id
+        }
+
+        return self._send("PUT", "/directory/room/{}".format(quote(room_alias)),
+                          content=data, api_path="/_matrix/client/r0")
