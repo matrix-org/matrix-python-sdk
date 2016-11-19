@@ -498,3 +498,34 @@ class MatrixHttpApi(object):
         content = self._send("GET", "/directory/room/{}".format(quote(room_alias)),
                              api_path="/_matrix/client/r0")
         return content.get("room_id", None)
+
+    def get_public_rooms(self):
+        """List the public rooms on the server
+        """
+        return self._send("GET", "/publicRooms", api_path="/_matrix/client/r0")
+
+    def set_room_alias(self, room_id, room_alias):
+        """Set alias to room id
+
+        Args:
+            room_id(str): The room id.
+            room_alias(str): The room wanted alias name.
+        """
+        data = {
+            "room_id": room_id
+        }
+
+        return self._send("PUT", "/directory/room/{}".format(quote(room_alias)),
+                          content=data, api_path="/_matrix/client/r0")
+
+    def remove_room_alias(self, room_alias):
+        """Remove mapping of an alias
+
+        Args:
+            room_alias(str): The alias to be removed.
+
+        Raises:
+            MatrixRequestError
+        """
+        return self._send("DELETE", "/directory/room/{}".format(quote(room_alias)),
+                          api_path="/_matrix/client/r0")

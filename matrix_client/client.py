@@ -379,3 +379,27 @@ class MatrixClient(object):
         """
 
         return User(self.api, user_id)
+
+    def get_public_rooms_ids(self):
+        """List the ids of the public rooms on the server
+
+        Returns:
+            str[]: List of ids
+        """
+        response = self.api.get_public_rooms()
+        return [room['room_id'] for room in response['chunk']]
+
+    def remove_room_alias(self, room_alias):
+        """Remove mapping of an alias
+
+        Args:
+            room_alias(str): The alias to be removed.
+
+        Returns:
+            bool: True if the alias is removed, False otherwise.
+        """
+        try:
+            self.api.remove_room_alias(room_alias)
+            return True
+        except MatrixRequestError:
+            return False
