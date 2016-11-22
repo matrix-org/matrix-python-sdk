@@ -89,6 +89,8 @@ class MatrixClient(object):
 
         self.sync_token = None
         self.sync_filter = None
+        self.sync_thread = None
+        self.should_listen = False
 
         """ Time to wait before attempting a /sync request after failing."""
         self.bad_sync_timeout_limit = 60 * 60
@@ -156,6 +158,12 @@ class MatrixClient(object):
         self.sync_filter = '{ "room": { "timeline" : { "limit" : %i } } }' % limit
         self._sync()
         return self.token
+
+    def logout(self):
+        """ Logout from the homeserver.
+        """
+        self.stop_listener_thread()
+        self.api.logout()
 
     def create_room(self, alias=None, is_public=False, invitees=()):
         """ Create a new room on the homeserver.
@@ -253,7 +261,7 @@ class MatrixClient(object):
                retrying.
         """
         bad_sync_timeout = 5000
-        while(True):
+        while (self.should_listen):
             try:
                 self._sync(timeout_ms)
                 bad_sync_timeout = 5
@@ -280,10 +288,20 @@ class MatrixClient(object):
         try:
             thread = Thread(target=self.listen_forever, args=(timeout_ms, ))
             thread.daemon = True
+            self.sync_thread = thread
+            self.should_listen = True
             thread.start()
         except:
             e = sys.exc_info()[0]
             logger.error("Error: unable to start thread. %s", str(e))
+
+    def stop_listener_thread(self):
+        """ Stop listener thread running in the background
+        """
+        if self.sync_thread:
+            self.should_listen = False
+            self.sync_thread.join()
+            self.sync_thread = None
 
     def upload(self, content, content_type):
         """ Upload content to the home server and recieve a MXC url.
