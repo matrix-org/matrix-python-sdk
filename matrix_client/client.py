@@ -379,3 +379,18 @@ class MatrixClient(object):
         """
 
         return User(self.api, user_id)
+
+    def remove_room_alias(self, room_alias):
+        """Remove mapping of an alias
+
+        Args:
+            room_alias(str): The alias to be removed.
+
+        Returns:
+            bool: True if the alias is removed, False otherwise.
+        """
+        try:
+            self.api.remove_room_alias(room_alias)
+            return True
+        except MatrixRequestError:
+            return False
