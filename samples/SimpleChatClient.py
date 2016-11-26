@@ -71,6 +71,7 @@ def main(host, username, password, room_id_alias):
         else:
             room.send_text(msg)
 
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.WARNING)
     host, username, password = samples_common.get_user_details(sys.argv)
