@@ -346,6 +346,8 @@ class MatrixClient(object):
         for room_id, left_room in response['rooms']['leave'].items():
             for listener in self.left_listeners:
                 listener(room_id, left_room)
+            if room_id in self.rooms:
+                del self.rooms[room_id]
 
         for room_id, sync_room in response['rooms']['join'].items():
             if room_id not in self.rooms:
