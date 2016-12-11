@@ -86,6 +86,7 @@ class MatrixClient(object):
         self.listeners = []
         self.invite_listeners = []
         self.left_listeners = []
+        self.ephemeral_listeners = []
 
         self.sync_token = None
         self.sync_filter = None
@@ -210,6 +211,21 @@ class MatrixClient(object):
             event_type (str): The event_type to filter for.
         """
         self.listeners.append(
+            {
+                'callback': callback,
+                'event_type': event_type
+            }
+        )
+
+    def add_ephemeral_listener(self, callback, event_type=None):
+        """ Add an ephemeral listener that will send a callback when the client recieves
+        an ephemeral event.
+
+        Args:
+            callback (func(roomchunk)): Callback called when an ephemeral event arrives.
+            event_type (str): The event_type to filter for.
+        """
+        self.ephemeral_listeners.append(
             {
                 'callback': callback,
                 'event_type': event_type
@@ -362,6 +378,17 @@ class MatrixClient(object):
 
                 # Dispatch for client (global) listeners
                 for listener in self.listeners:
+                    if (
+                        listener['event_type'] is None or
+                        listener['event_type'] == event['type']
+                    ):
+                        listener['callback'](event)
+
+            for event in sync_room['ephemeral']['events']:
+                event['room_id'] = room_id
+                room._put_ephemeral_event(event)
+
+                for listener in self.ephemeral_listeners:
                     if (
                         listener['event_type'] is None or
                         listener['event_type'] == event['type']
