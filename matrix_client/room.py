@@ -22,6 +22,7 @@ class Room(object):
         self.client = client
         self.listeners = []
         self.state_listeners = []
+        self.ephemeral_listeners = []
         self.events = []
         self.event_history_limit = 20
         self.name = None
@@ -96,6 +97,20 @@ class Room(object):
             }
         )
 
+    def add_ephemeral_listener(self, callback, event_type=None):
+        """ Add a callback handler for ephemeral events going to this room.
+
+        Args:
+            callback (func(roomchunk)): Callback called when an ephemeral event arrives.
+            event_type (str): The event_type to filter for.
+        """
+        self.ephemeral_listeners.append(
+            {
+                'callback': callback,
+                'event_type': event_type
+            }
+        )
+
     def add_state_listener(self, callback, event_type=None):
         """ Add a callback handler for state events going to this room.
 
@@ -117,6 +132,12 @@ class Room(object):
 
         # Dispatch for room-specific listeners
         for listener in self.listeners:
+            if listener['event_type'] is None or listener['event_type'] == event['type']:
+                listener['callback'](self, event)
+
+    def _put_ephemeral_event(self, event):
+        # Dispatch for room-specific listeners
+        for listener in self.ephemeral_listeners:
             if listener['event_type'] is None or listener['event_type'] == event['type']:
                 listener['callback'](self, event)
 
