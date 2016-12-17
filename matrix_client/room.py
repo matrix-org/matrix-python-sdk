@@ -1,4 +1,5 @@
 from .errors import MatrixRequestError
+from uuid import uuid4
 
 
 class Room(object):
@@ -89,13 +90,27 @@ class Room(object):
         Args:
             callback (func(roomchunk)): Callback called when an event arrives.
             event_type (str): The event_type to filter for.
+        Returns:
+            uuid.UUID: Unique id of the listener, can be used to identify the listener.
         """
+        listener_id = uuid4()
         self.listeners.append(
             {
+                'uid': listener_id,
                 'callback': callback,
                 'event_type': event_type
             }
         )
+        return listener_id
+
+    def remove_listener(self, uid):
+        """ Remove listener with given uid.
+
+        Args:
+            uuid.UUID: Unique id of the listener to remove.
+        """
+        self.listeners[:] = (listener for listener in self.listeners
+                             if listener['uid'] != uid)
 
     def add_ephemeral_listener(self, callback, event_type=None):
         """ Add a callback handler for ephemeral events going to this room.
@@ -103,13 +118,27 @@ class Room(object):
         Args:
             callback (func(roomchunk)): Callback called when an ephemeral event arrives.
             event_type (str): The event_type to filter for.
+        Returns:
+            uuid.UUID: Unique id of the listener, can be used to identify the listener.
         """
+        listener_id = uuid4()
         self.ephemeral_listeners.append(
             {
+                'uid': listener_id,
                 'callback': callback,
                 'event_type': event_type
             }
         )
+        return listener_id
+
+    def remove_ephemeral_listener(self, uid):
+        """ Remove ephemeral listener with given uid.
+
+        Args:
+            uuid.UUID: Unique id of the listener to remove.
+        """
+        self.ephemeral_listeners[:] = (listener for listener in self.ephemeral_listeners
+                                       if listener['uid'] != uid)
 
     def add_state_listener(self, callback, event_type=None):
         """ Add a callback handler for state events going to this room.
