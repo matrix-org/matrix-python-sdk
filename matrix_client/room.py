@@ -83,6 +83,36 @@ class Room(object):
             extra_information=imageinfo
         )
 
+    # See http://matrix.org/docs/spec/client_server/r0.2.0.html#m-video for the
+    # videoinfo args.
+    def send_video(self, url, name, **videoinfo):
+        """ Send a pre-uploaded video to the room.
+        See http://matrix.org/docs/spec/client_server/r0.2.0.html#m-video
+        for videoinfo
+
+        Args:
+            url (str): The mxc url of the video.
+            name (str): The filename of the video.
+            videoinfo (): Extra information about the video.
+        """
+        return self.client.api.send_content(self.room_id, url, name, "m.video",
+                                            extra_information=videoinfo)
+
+    # See http://matrix.org/docs/spec/client_server/r0.2.0.html#m-audio for the
+    # audioinfo args.
+    def send_audio(self, url, name, **audioinfo):
+        """ Send a pre-uploaded audio to the room.
+        See http://matrix.org/docs/spec/client_server/r0.2.0.html#m-audio
+        for audioinfo
+
+        Args:
+            url (str): The mxc url of the audio.
+            name (str): The filename of the audio.
+            audioinfo (): Extra information about the audio.
+        """
+        return self.client.api.send_content(self.room_id, url, name, "m.audio",
+                                            extra_information=audioinfo)
+
     def add_listener(self, callback, event_type=None):
         """ Add a callback handler for events going to this room.
 
