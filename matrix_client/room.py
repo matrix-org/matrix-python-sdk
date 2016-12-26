@@ -29,6 +29,7 @@ class Room(object):
         self.name = None
         self.aliases = []
         self.topic = None
+        self._prev_batch = None
 
     def send_text(self, text):
         """ Send a plain text message to the room.
@@ -374,3 +375,22 @@ class Room(object):
             return True
         except MatrixRequestError:
             return False
+
+    def backfill_previous_messages(self, limit=10):
+        """Backfill handling of previous messages.
+
+        Args:
+            limit (int): Number of messages to go back.
+        """
+        res = self.client.api.get_room_messages(self.room_id, self.prev_batch,
+                                                direction="b", limit=limit)
+        for event in res["chunk"]:
+            self._put_event(event)
+
+    @property
+    def prev_batch(self):
+        return self._prev_batch
+
+    @prev_batch.setter
+    def prev_batch(self, prev_batch):
+        self._prev_batch = prev_batch
