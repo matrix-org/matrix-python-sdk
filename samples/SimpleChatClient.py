@@ -21,7 +21,7 @@ from requests.exceptions import MissingSchema
 
 
 # Called when a message is recieved.
-def on_message(event):
+def on_message(room, event):
     if event['type'] == "m.room.member":
         if event['membership'] == "join":
             print("{0} joined".format(event['content']['displayname']))
