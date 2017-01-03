@@ -117,7 +117,7 @@ class Room(object):
         """ Add a callback handler for events going to this room.
 
         Args:
-            callback (func(roomchunk)): Callback called when an event arrives.
+            callback (func(room, event)): Callback called when an event arrives.
             event_type (str): The event_type to filter for.
         """
         self.listeners.append(
@@ -131,7 +131,7 @@ class Room(object):
         """ Add a callback handler for ephemeral events going to this room.
 
         Args:
-            callback (func(roomchunk)): Callback called when an ephemeral event arrives.
+            callback (func(room, event)): Callback called when an ephemeral event arrives.
             event_type (str): The event_type to filter for.
         """
         self.ephemeral_listeners.append(
