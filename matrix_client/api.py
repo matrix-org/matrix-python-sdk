@@ -24,6 +24,7 @@ try:
 except ImportError:
     from urllib.parse import quote
 
+MATRIX_V2_API_PATH = "/_matrix/client/r0"
 
 class MatrixHttpApi(object):
     """Contains all raw Matrix HTTP Client-Server API calls.
@@ -446,6 +447,19 @@ class MatrixHttpApi(object):
             "msgtype": "m.emote",
             "body": text
         }
+
+    def get_filter(self, user_id, filter_id):
+        return self._send("GET",
+            "/user/{userId}/filter/{filterId}".format(userId=user_id, filterId=filter_id),
+            api_path=MATRIX_V2_API_PATH
+        )
+
+    def create_filter(self, user_id, filter_params):
+        return self._send("POST",
+            "/user/{userId}/filter".format(userId=user_id),
+            filter_params,
+            api_path=MATRIX_V2_API_PATH
+        )
 
     def _send(self, method, path, content=None, query_params={}, headers={},
               api_path="/_matrix/client/api/v1"):
