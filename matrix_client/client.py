@@ -251,7 +251,6 @@ class MatrixClient(object):
 
     def add_leave_listener(self, callback):
         """ Add a listener that will send a callback when the client has left a room.
-        an invite request.
 
         Args:
             callback (func(room_id, room)): Callback called when the client
