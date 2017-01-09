@@ -529,3 +529,12 @@ class MatrixHttpApi(object):
         """
         return self._send("DELETE", "/directory/room/{}".format(quote(room_alias)),
                           api_path="/_matrix/client/r0")
+
+    def get_room_members(self, room_id):
+        """Get the list of members for this room.
+
+        Args:
+            room_id (str): The room to get the member events for.
+        """
+        return self._send("GET", "/rooms/{}/members".format(quote(room_id)),
+                          api_path='/_matrix/client/r0')
