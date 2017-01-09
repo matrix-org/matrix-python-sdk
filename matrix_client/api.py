@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import json
-import re
 import requests
 from time import time, sleep
 from .errors import MatrixError, MatrixRequestError
@@ -408,14 +407,6 @@ class MatrixHttpApi(object):
         return {
             "msgtype": msgtype,
             "body": text
-        }
-
-    def get_html_body(self, html, msgtype="m.text"):
-        return {
-            "body": re.sub('<[^<]+?>', '', html),
-            "msgtype": msgtype,
-            "format": "org.matrix.custom.html",
-            "formatted_body": html
         }
 
     def get_emote_body(self, text):
