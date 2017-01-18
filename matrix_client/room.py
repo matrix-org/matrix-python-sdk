@@ -376,6 +376,21 @@ class Room(object):
         except MatrixRequestError:
             return False
 
+    def get_joined_members(self):
+        """Query joined members of this room.
+
+        Returns:
+            {user_id: {"displayname": str or None}}: Dictionary of joined members.
+        """
+        response = self.client.api.get_room_members(self.room_id)
+        rtn = {
+            event["state_key"]: {
+                "displayname": event["content"].get("displayname"),
+            } for event in response["chunk"] if event["content"]["membership"] == "join"
+        }
+
+        return rtn
+      
     def backfill_previous_messages(self, limit=10):
         """Backfill handling of previous messages.
 
