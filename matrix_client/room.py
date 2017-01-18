@@ -390,7 +390,7 @@ class Room(object):
         }
 
         return rtn
-      
+
     def backfill_previous_messages(self, limit=10):
         """Backfill handling of previous messages.
 
