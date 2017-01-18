@@ -418,6 +418,7 @@ class MatrixClient(object):
             if room_id not in self.rooms:
                 self._mkroom(room_id)
             room = self.rooms[room_id]
+            room.prev_batch = sync_room["timeline"]["prev_batch"]
 
             for event in sync_room["state"]["events"]:
                 event['room_id'] = room_id
