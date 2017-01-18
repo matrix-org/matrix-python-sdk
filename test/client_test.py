@@ -112,3 +112,28 @@ def test_get_download_url():
 
     with pytest.raises(ValueError):
         client.api.get_download_url("http://foobar")
+
+
+def test_remove_listener():
+    def dummy_listener():
+        pass
+
+    client = MatrixClient("http://example.com")
+    handler = client.add_listener(dummy_listener)
+
+    found_listener = False
+    for listener in client.listeners:
+        if listener["uid"] == handler:
+            found_listener = True
+            break
+
+    assert found_listener, "listener was not added properly"
+
+    client.remove_listener(handler)
+    found_listener = False
+    for listener in client.listeners:
+        if listener["uid"] == handler:
+            found_listener = True
+            break
+
+    assert not found_listener, "listener was not removed properly"
