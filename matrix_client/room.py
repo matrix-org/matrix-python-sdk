@@ -391,15 +391,20 @@ class Room(object):
 
         return rtn
 
-    def backfill_previous_messages(self, limit=10):
+    def backfill_previous_messages(self, reverse=False, limit=10):
         """Backfill handling of previous messages.
 
         Args:
+            reverse (bool): When false messages will be backfilled in their original
+                order (old to new), otherwise the order will be reversed (new to old).
             limit (int): Number of messages to go back.
         """
         res = self.client.api.get_room_messages(self.room_id, self.prev_batch,
                                                 direction="b", limit=limit)
-        for event in res["chunk"]:
+        events = res["chunk"]
+        if not reverse:
+            events = reversed(events)
+        for event in events:
             self._put_event(event)
 
     @property
