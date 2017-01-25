@@ -98,7 +98,7 @@ class Room(object):
         """
         return self.client.api.send_location(self.room_id, geo_uri, name,
                                              thumb_url, thumb_info)
-      
+
     # See http://matrix.org/docs/spec/client_server/r0.2.0.html#m-video for the
     # videoinfo args.
     def send_video(self, url, name, **videoinfo):
