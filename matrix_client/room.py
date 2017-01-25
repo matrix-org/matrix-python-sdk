@@ -85,6 +85,20 @@ class Room(object):
             extra_information=imageinfo
         )
 
+    def send_location(self, geo_uri, name, thumb_url=None, **thumb_info):
+        """ Send a location to the room.
+        See http://matrix.org/docs/spec/client_server/r0.2.0.html#m-location
+        for thumb_info
+
+        Args:
+            geo_uri (str): The geo uri representing the location.
+            name (str): Description for the location.
+            thumb_url (str): URL to the thumbnail of the location.
+            thumb_info (): Metadata about the thumbnail, type ImageInfo.
+        """
+        return self.client.api.send_location(self.room_id, geo_uri, name,
+                                             thumb_url, thumb_info)
+
     # See http://matrix.org/docs/spec/client_server/r0.2.0.html#m-video for the
     # videoinfo args.
     def send_video(self, url, name, **videoinfo):

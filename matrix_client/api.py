@@ -226,6 +226,29 @@ class MatrixHttpApi(object):
         }
         return self.send_message_event(room_id, "m.room.message", content_pack)
 
+    # http://matrix.org/docs/spec/client_server/r0.2.0.html#m-location
+    def send_location(self, room_id, geo_uri, name, thumb_url=None, thumb_info=None):
+        """Send m.location message event
+
+        Args:
+            room_id(str): The room ID to send the event in.
+            geo_uri(str): The geo uri representing the location.
+            name(str): Description for the location.
+            thumb_url(str): URL to the thumbnail of the location.
+            thumb_info(dict): Metadata about the thumbnail, type ImageInfo.
+        """
+        content_pack = {
+            "geo_uri": geo_uri,
+            "msgtype": "m.location",
+            "body": name,
+        }
+        if thumb_url:
+            content_pack["thumbnail_url"] = thumb_url
+        if thumb_info:
+            content_pack["thumbnail_info"] = thumb_info
+
+        return self.send_message_event(room_id, "m.room.message", content_pack)
+
     def send_message(self, room_id, text_content, msgtype="m.text"):
         """Perform /rooms/$room_id/send/m.room.message
 
