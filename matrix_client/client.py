@@ -308,6 +308,7 @@ class MatrixClient(object):
                retrying.
         """
         bad_sync_timeout = 5000
+        self.should_listen = True
         while (self.should_listen):
             try:
                 self._sync(timeout_ms)
