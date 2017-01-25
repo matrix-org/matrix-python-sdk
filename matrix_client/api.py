@@ -124,6 +124,11 @@ class MatrixHttpApi(object):
 
         return self._send("POST", "/login", content)
 
+    def logout(self):
+        """Perform /logout.
+        """
+        return self._send("POST", "/logout", api_path="/_matrix/client/r0")
+
     def create_room(self, alias=None, is_public=False, invitees=()):
         """Perform /createRoom.
 
@@ -280,6 +285,29 @@ class MatrixHttpApi(object):
             "body": text_content
         }
         return self.send_message_event(room_id, "m.room.message", body)
+
+    def get_room_messages(self, room_id, token, direction, limit=10, to=None):
+        """Perform GET /rooms/{roomId}/messages.
+
+        Args:
+            room_id (str): The room's id.
+            token (str): The token to start returning events from.
+            direction (str):  The direction to return events from. One of: ["b", "f"].
+            limit (int): The maximum number of events to return.
+            to (str): The token to stop returning events at.
+        """
+        query = {
+            "roomId": room_id,
+            "from": token,
+            "dir": direction,
+            "limit": limit,
+        }
+
+        if to:
+            query["to"] = to
+
+        return self._send("GET", "/rooms/{}/messages".format(quote(room_id)),
+                          query_params=query, api_path="/_matrix/client/r0")
 
     def get_room_name(self, room_id):
         """Perform GET /rooms/$room_id/state/m.room.name
@@ -547,3 +575,12 @@ class MatrixHttpApi(object):
         """
         return self._send("DELETE", "/directory/room/{}".format(quote(room_alias)),
                           api_path="/_matrix/client/r0")
+
+    def get_room_members(self, room_id):
+        """Get the list of members for this room.
+
+        Args:
+            room_id (str): The room to get the member events for.
+        """
+        return self._send("GET", "/rooms/{}/members".format(quote(room_id)),
+                          api_path='/_matrix/client/r0')

@@ -18,6 +18,7 @@ from .room import Room
 from .user import User
 from threading import Thread
 from time import sleep
+from uuid import uuid4
 import logging
 import sys
 
@@ -86,9 +87,12 @@ class MatrixClient(object):
         self.listeners = []
         self.invite_listeners = []
         self.left_listeners = []
+        self.ephemeral_listeners = []
 
         self.sync_token = None
         self.sync_filter = None
+        self.sync_thread = None
+        self.should_listen = False
 
         """ Time to wait before attempting a /sync request after failing."""
         self.bad_sync_timeout_limit = 60 * 60
@@ -157,6 +161,12 @@ class MatrixClient(object):
         self._sync()
         return self.token
 
+    def logout(self):
+        """ Logout from the homeserver.
+        """
+        self.stop_listener_thread()
+        self.api.logout()
+
     def create_room(self, alias=None, is_public=False, invitees=()):
         """ Create a new room on the homeserver.
 
@@ -193,10 +203,10 @@ class MatrixClient(object):
         return self._mkroom(room_id)
 
     def get_rooms(self):
-        """ Return a list of Room objects that the user has joined.
+        """ Return a dict of {room_id: Room objects} that the user has joined.
 
         Returns:
-            Room[]: Rooms the user has joined.
+            Room{}: Rooms the user has joined.
 
         """
         return self.rooms
@@ -208,13 +218,58 @@ class MatrixClient(object):
         Args:
             callback (func(roomchunk)): Callback called when an event arrives.
             event_type (str): The event_type to filter for.
+
+        Returns:
+            uuid.UUID: Unique id of the listener, can be used to identify the listener.
         """
+        listener_uid = uuid4()
         self.listeners.append(
             {
+                'uid': listener_uid,
                 'callback': callback,
                 'event_type': event_type
             }
         )
+        return listener_uid
+
+    def remove_listener(self, uid):
+        """ Remove listener with given uid.
+
+        Args:
+            uuid.UUID: Unique id of the listener to remove.
+        """
+        self.listeners[:] = (listener for listener in self.listeners
+                             if listener['uid'] != uid)
+
+    def add_ephemeral_listener(self, callback, event_type=None):
+        """ Add an ephemeral listener that will send a callback when the client recieves
+        an ephemeral event.
+
+        Args:
+            callback (func(roomchunk)): Callback called when an ephemeral event arrives.
+            event_type (str): The event_type to filter for.
+
+        Returns:
+            uuid.UUID: Unique id of the listener, can be used to identify the listener.
+        """
+        listener_id = uuid4()
+        self.ephemeral_listeners.append(
+            {
+                'uid': listener_id,
+                'callback': callback,
+                'event_type': event_type
+            }
+        )
+        return listener_id
+
+    def remove_ephemeral_listener(self, uid):
+        """ Remove ephemeral listener with given uid.
+
+        Args:
+            uuid.UUID: Unique id of the listener to remove.
+        """
+        self.ephemeral_listeners[:] = (listener for listener in self.ephemeral_listeners
+                                       if listener['uid'] != uid)
 
     def add_invite_listener(self, callback):
         """ Add a listener that will send a callback when the client receives
@@ -253,7 +308,8 @@ class MatrixClient(object):
                retrying.
         """
         bad_sync_timeout = 5000
-        while(True):
+        self.should_listen = True
+        while (self.should_listen):
             try:
                 self._sync(timeout_ms)
                 bad_sync_timeout = 5
@@ -280,10 +336,20 @@ class MatrixClient(object):
         try:
             thread = Thread(target=self.listen_forever, args=(timeout_ms, ))
             thread.daemon = True
+            self.sync_thread = thread
+            self.should_listen = True
             thread.start()
         except:
             e = sys.exc_info()[0]
             logger.error("Error: unable to start thread. %s", str(e))
+
+    def stop_listener_thread(self):
+        """ Stop listener thread running in the background
+        """
+        if self.sync_thread:
+            self.should_listen = False
+            self.sync_thread.join()
+            self.sync_thread = None
 
     def upload(self, content, content_type):
         """ Upload content to the home server and recieve a MXC url.
@@ -346,11 +412,14 @@ class MatrixClient(object):
         for room_id, left_room in response['rooms']['leave'].items():
             for listener in self.left_listeners:
                 listener(room_id, left_room)
+            if room_id in self.rooms:
+                del self.rooms[room_id]
 
         for room_id, sync_room in response['rooms']['join'].items():
             if room_id not in self.rooms:
                 self._mkroom(room_id)
             room = self.rooms[room_id]
+            room.prev_batch = sync_room["timeline"]["prev_batch"]
 
             for event in sync_room["state"]["events"]:
                 event['room_id'] = room_id
@@ -362,6 +431,17 @@ class MatrixClient(object):
 
                 # Dispatch for client (global) listeners
                 for listener in self.listeners:
+                    if (
+                        listener['event_type'] is None or
+                        listener['event_type'] == event['type']
+                    ):
+                        listener['callback'](event)
+
+            for event in sync_room['ephemeral']['events']:
+                event['room_id'] = room_id
+                room._put_ephemeral_event(event)
+
+                for listener in self.ephemeral_listeners:
                     if (
                         listener['event_type'] is None or
                         listener['event_type'] == event['type']

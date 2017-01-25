@@ -1,4 +1,5 @@
 from .errors import MatrixRequestError
+from uuid import uuid4
 
 
 class Room(object):
@@ -22,11 +23,13 @@ class Room(object):
         self.client = client
         self.listeners = []
         self.state_listeners = []
+        self.ephemeral_listeners = []
         self.events = []
         self.event_history_limit = 20
         self.name = None
         self.aliases = []
         self.topic = None
+        self._prev_batch = None
 
     def send_text(self, text):
         """ Send a plain text message to the room.
@@ -95,20 +98,92 @@ class Room(object):
         """
         return self.client.api.send_location(self.room_id, geo_uri, name,
                                              thumb_url, thumb_info)
+      
+    # See http://matrix.org/docs/spec/client_server/r0.2.0.html#m-video for the
+    # videoinfo args.
+    def send_video(self, url, name, **videoinfo):
+        """ Send a pre-uploaded video to the room.
+        See http://matrix.org/docs/spec/client_server/r0.2.0.html#m-video
+        for videoinfo
+
+        Args:
+            url (str): The mxc url of the video.
+            name (str): The filename of the video.
+            videoinfo (): Extra information about the video.
+        """
+        return self.client.api.send_content(self.room_id, url, name, "m.video",
+                                            extra_information=videoinfo)
+
+    # See http://matrix.org/docs/spec/client_server/r0.2.0.html#m-audio for the
+    # audioinfo args.
+    def send_audio(self, url, name, **audioinfo):
+        """ Send a pre-uploaded audio to the room.
+        See http://matrix.org/docs/spec/client_server/r0.2.0.html#m-audio
+        for audioinfo
+
+        Args:
+            url (str): The mxc url of the audio.
+            name (str): The filename of the audio.
+            audioinfo (): Extra information about the audio.
+        """
+        return self.client.api.send_content(self.room_id, url, name, "m.audio",
+                                            extra_information=audioinfo)
 
     def add_listener(self, callback, event_type=None):
         """ Add a callback handler for events going to this room.
 
         Args:
-            callback (func(roomchunk)): Callback called when an event arrives.
+            callback (func(room, event)): Callback called when an event arrives.
             event_type (str): The event_type to filter for.
+        Returns:
+            uuid.UUID: Unique id of the listener, can be used to identify the listener.
         """
+        listener_id = uuid4()
         self.listeners.append(
             {
+                'uid': listener_id,
                 'callback': callback,
                 'event_type': event_type
             }
         )
+        return listener_id
+
+    def remove_listener(self, uid):
+        """ Remove listener with given uid.
+
+        Args:
+            uuid.UUID: Unique id of the listener to remove.
+        """
+        self.listeners[:] = (listener for listener in self.listeners
+                             if listener['uid'] != uid)
+
+    def add_ephemeral_listener(self, callback, event_type=None):
+        """ Add a callback handler for ephemeral events going to this room.
+
+        Args:
+            callback (func(room, event)): Callback called when an ephemeral event arrives.
+            event_type (str): The event_type to filter for.
+        Returns:
+            uuid.UUID: Unique id of the listener, can be used to identify the listener.
+        """
+        listener_id = uuid4()
+        self.ephemeral_listeners.append(
+            {
+                'uid': listener_id,
+                'callback': callback,
+                'event_type': event_type
+            }
+        )
+        return listener_id
+
+    def remove_ephemeral_listener(self, uid):
+        """ Remove ephemeral listener with given uid.
+
+        Args:
+            uuid.UUID: Unique id of the listener to remove.
+        """
+        self.ephemeral_listeners[:] = (listener for listener in self.ephemeral_listeners
+                                       if listener['uid'] != uid)
 
     def add_state_listener(self, callback, event_type=None):
         """ Add a callback handler for state events going to this room.
@@ -131,6 +206,12 @@ class Room(object):
 
         # Dispatch for room-specific listeners
         for listener in self.listeners:
+            if listener['event_type'] is None or listener['event_type'] == event['type']:
+                listener['callback'](self, event)
+
+    def _put_ephemeral_event(self, event):
+        # Dispatch for room-specific listeners
+        for listener in self.ephemeral_listeners:
             if listener['event_type'] is None or listener['event_type'] == event['type']:
                 listener['callback'](self, event)
 
@@ -308,3 +389,37 @@ class Room(object):
             return True
         except MatrixRequestError:
             return False
+
+    def get_joined_members(self):
+        """Query joined members of this room.
+
+        Returns:
+            {user_id: {"displayname": str or None}}: Dictionary of joined members.
+        """
+        response = self.client.api.get_room_members(self.room_id)
+        rtn = {
+            event["state_key"]: {
+                "displayname": event["content"].get("displayname"),
+            } for event in response["chunk"] if event["content"]["membership"] == "join"
+        }
+
+        return rtn
+
+    def backfill_previous_messages(self, limit=10):
+        """Backfill handling of previous messages.
+
+        Args:
+            limit (int): Number of messages to go back.
+        """
+        res = self.client.api.get_room_messages(self.room_id, self.prev_batch,
+                                                direction="b", limit=limit)
+        for event in res["chunk"]:
+            self._put_event(event)
+
+    @property
+    def prev_batch(self):
+        return self._prev_batch
+
+    @prev_batch.setter
+    def prev_batch(self, prev_batch):
+        self._prev_batch = prev_batch
