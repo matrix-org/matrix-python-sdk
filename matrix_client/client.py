@@ -180,8 +180,7 @@ class MatrixClient(object):
 
         """ Limit Filter """
         self.sync_filter = '{ "room": { "timeline" : { "limit" : %i } } }' % limit
-        if should_sync:
-            self._sync()
+        self._sync()
         return token
 
     def logout(self):
