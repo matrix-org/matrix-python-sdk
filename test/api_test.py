@@ -62,3 +62,19 @@ class TestAccountDataApi:
         req = responses.calls[0].request
         assert req.url == account_data_url
         assert req.method == 'PUT'
+
+class TestUnbanApi:
+    cli = client.MatrixClient("http://example.com")
+    user_id = "@user:matrix.org"
+    room_id = "#foo:matrix.org"
+    
+    @responses.activate
+    def test_unban(self):
+        unban_url = "http://example.com" \
+                "/_matrix/client/api/v1/rooms/#foo:matrix.org/unban"
+        body = '{"user_id": "'+ self.user_id + '"}'
+        responses.add(responses.POST, unban_url, body=body)
+        self.cli.api.unban_user(self.room_id, self.user_id)
+        req = responses.calls[0].request
+        assert req.url == unban_url
+        assert req.method == 'POST'
