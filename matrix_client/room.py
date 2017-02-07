@@ -269,6 +269,21 @@ class Room(object):
         except MatrixRequestError:
             return False
 
+    def unban_user(self, user_id):
+        """ Unban a user from this room
+
+        Args:
+            user_id (str): The matrix user id of a user.
+
+        Returns:
+            boolean: The user was unbanned.
+        """
+        try:
+            self.client.api.unban_user(self.room_id, user_id)
+            return True
+        except MatrixRequestError:
+            return False
+
     def leave(self):
         """ Leave the room.
 
