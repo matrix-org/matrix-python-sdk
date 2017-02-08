@@ -270,7 +270,7 @@ class Room(object):
             return False
 
     def unban_user(self, user_id):
-        """ Unban a user from this room
+        """Unban a user from this room
 
         Args:
             user_id (str): The matrix user id of a user.
