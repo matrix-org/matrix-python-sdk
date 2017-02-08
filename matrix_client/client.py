@@ -109,6 +109,9 @@ class MatrixClient(object):
     def set_sync_token(self, token):
         self.sync_token = token
 
+    def set_user_id(self, user_id):
+        self.user_id = user_id
+
     def register_with_password(self, username, password, limit=1):
         """ Register for a new account on this HS.
 
@@ -130,10 +133,11 @@ class MatrixClient(object):
         self.token = response["access_token"]
         self.hs = response["home_server"]
         self.api.token = self.token
+        self.sync_filter = '{ "room": { "timeline" : { "limit" : %i } } }' % limit
         self._sync()
         return self.token
 
-    def login_with_password(self, username, password, limit=10):
+    def login_with_password_no_sync(self, username, password):
         """ Login to the homeserver.
 
         Args:
@@ -155,11 +159,29 @@ class MatrixClient(object):
         self.token = response["access_token"]
         self.hs = response["home_server"]
         self.api.token = self.token
+        return self.token
+
+    def login_with_password(self, username, password, limit=10):
+        """ Login to the homeserver.
+
+        Args:
+            username (str): Account username
+            password (str): Account password
+            limit (int): Deprecated. How many messages to return when syncing.
+                This will be replaced by a filter API in a later release.
+
+        Returns:
+            str: Access token
+
+        Raises:
+            MatrixRequestError
+        """
+        token = self.login_with_password_no_sync(username, password)
 
         """ Limit Filter """
         self.sync_filter = '{ "room": { "timeline" : { "limit" : %i } } }' % limit
         self._sync()
-        return self.token
+        return token
 
     def logout(self):
         """ Logout from the homeserver.

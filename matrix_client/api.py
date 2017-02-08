@@ -368,7 +368,18 @@ class MatrixHttpApi(object):
         """
         self.set_membership(room_id, user_id, "leave", reason)
 
-    def set_membership(self, room_id, user_id, membership, reason=""):
+    def get_membership(self, room_id, user_id):
+        """Perform GET /rooms/$room_id/state/m.room.member/$user_id
+        Args:
+            room_id(str): The room ID
+            user_id(str): The user ID
+        """
+        return self._send(
+            "GET",
+            "/rooms/%s/state/m.room.member/%s" % (room_id, user_id)
+        )
+
+    def set_membership(self, room_id, user_id, membership, reason="", profile={}):
         """Perform PUT /rooms/$room_id/state/m.room.member/$user_id
         Args:
             room_id(str): The room ID
@@ -380,6 +391,11 @@ class MatrixHttpApi(object):
             "membership": membership,
             "reason": reason
         }
+        if 'displayname' in profile:
+            body["displayname"] = profile["displayname"]
+        if 'avatar_url' in profile:
+            body["avatar_url"] = profile["avatar_url"]
+
         return self._send(
             "PUT",
             "/rooms/%s/state/m.room.member/%s" % (room_id, user_id),
