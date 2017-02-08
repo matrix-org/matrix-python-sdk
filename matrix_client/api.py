@@ -356,7 +356,7 @@ class MatrixHttpApi(object):
             "/rooms/%s/state/m.room.member/%s" % (room_id, user_id)
         )
 
-    def set_membership(self, room_id, user_id, membership, profile={}, reason=""):
+    def set_membership(self, room_id, user_id, membership, reason="", profile={}):
         """Perform PUT /rooms/$room_id/state/m.room.member/$user_id
         Args:
             room_id(str): The room ID
