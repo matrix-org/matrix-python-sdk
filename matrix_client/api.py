@@ -399,6 +399,17 @@ class MatrixHttpApi(object):
         }
         return self._send("POST", "/rooms/" + room_id + "/ban", body)
 
+    def unban_user(self, room_id, user_id):
+        """Perform POST /rooms/$room_id/unban
+        Args:
+            room_id(str): The room ID
+            user_id(str): The user ID of the banee(sic)
+        """
+        body = {
+            "user_id": user_id
+        }
+        return self._send("POST", "/rooms/" + room_id + "/unban", body)
+
     def get_user_tags(self, user_id, room_id):
         return self._send(
             "GET",
