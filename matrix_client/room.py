@@ -31,8 +31,10 @@ class Room(object):
         self.topic = None
         self._prev_batch = None
 
-    def set_user_profile(self, displayname=None, avatar_url=None,
-        reason="Modifying room profile"):
+    def set_user_profile(self,
+                         displayname=None,
+                         avatar_url=None,
+                         reason="Changing room profile information"):
         member = self.client.api.get_membership(self.room_id, self.client.user_id)
         if member["membership"] != "join":
             raise Exception("Can't set profile if you have not joined the room.")
@@ -40,13 +42,15 @@ class Room(object):
             displayname = member["displayname"]
         if avatar_url is None:
             avatar_url = member["avatar_url"]
-        self.client.api.set_membership(self.room_id,
-        self.client.user_id,
-        'join',
-        reason, {
-            "displayname": displayname,
-            "avatar_url": avatar_url
-        })
+        self.client.api.set_membership(
+            self.room_id,
+            self.client.user_id,
+            'join',
+            reason, {
+                "displayname": displayname,
+                "avatar_url": avatar_url
+            }
+        )
 
     def send_text(self, text):
         """ Send a plain text message to the room.
