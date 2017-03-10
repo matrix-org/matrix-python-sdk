@@ -23,6 +23,8 @@ try:
 except ImportError:
     from urllib.parse import quote
 
+MATRIX_V2_API_PATH = "/_matrix/client/r0"
+
 
 class MatrixHttpApi(object):
     """Contains all raw Matrix HTTP Client-Server API calls.
@@ -87,7 +89,7 @@ class MatrixHttpApi(object):
             request["set_presence"] = set_presence
 
         return self._send("GET", "/sync", query_params=request,
-                          api_path="/_matrix/client/r0")
+                          api_path=MATRIX_V2_API_PATH)
 
     def validate_certificate(self, valid):
         self.validate_cert = valid
@@ -126,7 +128,7 @@ class MatrixHttpApi(object):
     def logout(self):
         """Perform /logout.
         """
-        return self._send("POST", "/logout", api_path="/_matrix/client/r0")
+        return self._send("POST", "/logout", api_path=MATRIX_V2_API_PATH)
 
     def create_room(self, alias=None, is_public=False, invitees=()):
         """Perform /createRoom.
@@ -429,14 +431,14 @@ class MatrixHttpApi(object):
         return self._send(
             "GET",
             "/user/%s/rooms/%s/tags" % (user_id, room_id),
-            api_path="/_matrix/client/r0"
+            api_path=MATRIX_V2_API_PATH
         )
 
     def remove_user_tag(self, user_id, room_id, tag):
         return self._send(
             "DELETE",
             "/user/%s/rooms/%s/tags/%s" % (user_id, room_id, tag),
-            api_path="/_matrix/client/r0"
+            api_path=MATRIX_V2_API_PATH
         )
 
     def add_user_tag(self, user_id, room_id, tag, order=None, body=None):
@@ -450,7 +452,7 @@ class MatrixHttpApi(object):
             "PUT",
             "/user/%s/rooms/%s/tags/%s" % (user_id, room_id, tag),
             body,
-            api_path="/_matrix/client/r0"
+            api_path=MATRIX_V2_API_PATH
         )
 
     def set_account_data(self, user_id, type, account_data):
@@ -458,7 +460,7 @@ class MatrixHttpApi(object):
             "PUT",
             "/user/%s/account_data/%s" % (user_id, type),
             account_data,
-            api_path="/_matrix/client/r0"
+            api_path=MATRIX_V2_API_PATH
         )
 
     def set_room_account_data(self, user_id, room_id, type, account_data):
@@ -466,7 +468,7 @@ class MatrixHttpApi(object):
             "PUT",
             "/user/%s/rooms/%s/account_data/%s" % (user_id, room_id, type),
             account_data,
-            api_path="/_matrix/client/r0"
+            api_path=MATRIX_V2_API_PATH
         )
 
     def get_room_state(self, room_id):
@@ -487,6 +489,17 @@ class MatrixHttpApi(object):
             "msgtype": "m.emote",
             "body": text
         }
+
+    def get_filter(self, user_id, filter_id):
+        return self._send("GET", "/user/{userId}/filter/{filterId}"
+                          .format(userId=user_id, filterId=filter_id),
+                          api_path=MATRIX_V2_API_PATH)
+
+    def create_filter(self, user_id, filter_params):
+        return self._send("POST",
+                          "/user/{userId}/filter".format(userId=user_id),
+                          filter_params,
+                          api_path=MATRIX_V2_API_PATH)
 
     def _send(self, method, path, content=None, query_params={}, headers={},
               api_path="/_matrix/client/api/v1"):
@@ -565,7 +578,7 @@ class MatrixHttpApi(object):
             Wanted room's id.
         """
         content = self._send("GET", "/directory/room/{}".format(quote(room_alias)),
-                             api_path="/_matrix/client/r0")
+                             api_path=MATRIX_V2_API_PATH)
         return content.get("room_id", None)
 
     def set_room_alias(self, room_id, room_alias):
@@ -580,7 +593,7 @@ class MatrixHttpApi(object):
         }
 
         return self._send("PUT", "/directory/room/{}".format(quote(room_alias)),
-                          content=data, api_path="/_matrix/client/r0")
+                          content=data, api_path=MATRIX_V2_API_PATH)
 
     def remove_room_alias(self, room_alias):
         """Remove mapping of an alias
@@ -592,7 +605,7 @@ class MatrixHttpApi(object):
             MatrixRequestError
         """
         return self._send("DELETE", "/directory/room/{}".format(quote(room_alias)),
-                          api_path="/_matrix/client/r0")
+                          api_path=MATRIX_V2_API_PATH)
 
     def get_room_members(self, room_id):
         """Get the list of members for this room.
@@ -601,4 +614,4 @@ class MatrixHttpApi(object):
             room_id (str): The room to get the member events for.
         """
         return self._send("GET", "/rooms/{}/members".format(quote(room_id)),
-                          api_path='/_matrix/client/r0')
+                          api_path=MATRIX_V2_API_PATH)
