@@ -106,6 +106,24 @@ class Room(object):
         """
         return self.client.api.send_emote(self.room_id, text)
 
+    # See http://matrix.org/docs/spec/r0.0.1/client_server.html#m-file for the
+    # fileinfo args.
+    def send_file(self, url, name, **fileinfo):
+        """ Send a pre-uploaded file to the room.
+        See http://matrix.org/docs/spec/r0.2.0/client_server.html#m-file for
+        fileinfo
+
+        Args:
+            url (str): The mxc url of the file.
+            name (str): The filename of the image.
+            fileinfo (): Extra information about the file
+        """
+
+        return self.client.api.send_content(
+                self.room_id, url, name, "m.file",
+                extra_information=fileinfo
+        )
+
     def send_notice(self, text):
         return self.client.api.send_notice(self.room_id, text)
 
