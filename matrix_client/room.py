@@ -118,8 +118,8 @@ class Room(object):
         """
 
         return self.client.api.send_content(
-                self.room_id, url, name, "m.file",
-                extra_information=fileinfo
+            self.room_id, url, name, "m.file",
+            extra_information=fileinfo
         )
 
     def send_notice(self, text):
