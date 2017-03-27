@@ -75,7 +75,7 @@ class OlmDevice(object):
 
     @property
     def user_id(self):
-        return self._device_id
+        return self._user_id
 
     @property
     def device_id(self):
@@ -229,7 +229,7 @@ class OlmDevice(object):
 
     def send_encrypted_message_to_session(self, room_id, session, plaintext):
         message_body = self.prepare_message_body(self.user_id, room_id, session, plaintext)
-        encrypted_msg_type, encrypted_msg = outbound_session.encrypt(message_body)
+        encrypted_msg_type, encrypted_msg = session.encrypt(message_body)
         sender_key = self.olm_account.identity_keys()['curve25519']
         # It should be possible to send to multiple sessions in one event
         # otherwise session.to_identity_key wouldn't serve as much purpose..
