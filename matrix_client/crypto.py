@@ -12,6 +12,23 @@ SUPPORTED_ALGORITHMS = ["m.olm.curve25519-aes-sha256"]
 DEFAULT_PICKLE_KEY = "DEFAULT_PICKLE_KEY"
 OLM_ALGORITHM = "m.olm.v1.curve25519-aes-sha2"
 
+class OlmAccount(olm.Account):
+    def __init__(self, pickle_key=DEFAULT_PICKLE_KEY):
+        super(OlmAccount, self).__init__()
+        self._pickle_key = pickle_key.encode('utf-8')
+
+    def __setstate__(self, state):
+        account_buff = state.pop('account_buff')
+        # pickle does not call __init__ but we need the underlying Olm.Session
+        # to create a new buffer.
+        self.__init__()
+        self.unpickle(self._pickle_key, account_buff)
+
+    def __getstate__(self):
+        # interesting thing is the pickle is very large compared to the c-types buff
+        # size, example: len(account.buff) ==
+        return {'account_buff': self.pickle(self._pickle_key)}
+
 class OlmSession(olm.Session):
     def __init__(self, user_id, device_info, pickle_key=DEFAULT_PICKLE_KEY):
         super(OlmSession, self).__init__()
@@ -52,10 +69,9 @@ class OlmDevice(object):
         self._pickle_key = pickle_key.encode('utf-8')
         self.sessions = {}
         self.device_keys = {}
-        if olm_account:
-            self.olm_account = olm_account
-        else:
-            self.load_or_create_olm_account()
+        if not olm_account:
+            self.olm_account = OlmAccount()
+            self.olm_account.create()
 
     @property
     def user_id(self):
@@ -65,35 +81,64 @@ class OlmDevice(object):
     def device_id(self):
         return self._device_id
 
-    def load_or_create_olm_account(self):
-        self.olm_account = olm.Account()
-        device_file_path = self.get_device_file_path()
+    # def __setstate__(self, state):
+    #     session_buff = state.pop('session_buff')
+    #     # pickle does not call __init__ but we need the underlying Olm.Session
+    #     # to create a new buffer.
+    #     self.__init__(state['to_user_id'], state['to_device_info'])
+
+    def __getstate__(self):
+        state = self.__dict__
+        return { key: state[key] for key in ['_user_id', '_device_id', 'sessions', 'device_keys', 'olm_account'] }
+
+    @classmethod
+    def load_or_create_olm_device(cls, api, user_id, device_id):
+        device_file_path = cls.get_device_file_path(device_id)
         if os.path.exists(device_file_path):
             with open(device_file_path, 'rb') as rfile:
-                olm_device_info = pickle.load(rfile)
-                self.olm_account.unpickle(
-                    self._pickle_key, olm_device_info['olm_account']
-                )
+                olm_device = pickle.load(rfile)
+                olm_device.api = api
+                return olm_device
         else:
-            self.olm_account.create()
-            self.persist_account()
+            olm_device = OlmDevice(api, user_id, device_id)
+            # olm_device.persist_olm_device()
+            return olm_device
 
-    # TODO persist sessions
-    def persist_account(self, persist_sessions=True):
-        olm_account_buff = self.olm_account.pickle(self._pickle_key)
-        with open(self.get_device_file_path(), 'wb') as wfile:
-            pickle.dump({
-                    'olm_account': olm_account_buff
-                }, wfile)
+    def persist_olm_device(self):
+        with open(self.get_device_file_path(self.device_id), 'wb') as wfile:
+            pickle.dump(self, wfile)
 
-    def get_device_file_path(self):
+    # Deprecate me
+    # def load_or_create_olm_account(self):
+    #     self.olm_account = OlmAccount()
+    #     device_file_path = self.get_device_file_path(self.device_id)
+    #     if os.path.exists(device_file_path):
+    #         with open(device_file_path, 'rb') as rfile:
+    #             olm_device_info = pickle.load(rfile)
+    #             self.olm_account.unpickle(
+    #                 self._pickle_key, olm_device_info['olm_account']
+    #             )
+    #     else:
+    #         self.olm_account.create()
+    #         self.persist_account()
+
+    # # TODO persist sessions
+    # def persist_account(self, persist_sessions=True):
+    #     olm_account_buff = self.olm_account.pickle(self._pickle_key)
+    #     with open(self.get_device_file_path(), 'wb') as wfile:
+    #         pickle.dump({
+    #                 'olm_account': olm_account_buff
+    #             }, wfile)
+
+    @staticmethod
+    def get_device_file_path(device_id):
         user_data_dir = appdirs.user_data_dir(
             appname='matrix-python-sdk', roaming=True)
         try:
             os.makedirs(user_data_dir)
         except FileExistsError:
             pass # Because python doesn't have make -p
-        return os.path.join(user_data_dir, "%s.pickle" %self.device_id)
+        return os.path.join(user_data_dir, "%s.pickle" % device_id)
 
     def new_outbound_session(self, user_id, device_info, identity_key, one_time_key):
         olm_session = OlmSession(user_id, device_info)
