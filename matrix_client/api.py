@@ -346,6 +346,29 @@ class MatrixHttpApi(object):
         }
         return self._send("PUT", "/rooms/" + room_id + "/state/m.room.topic", body)
 
+    def get_power_levels(self, room_id):
+        """Perform GET /rooms/$room_id/state/m.room.power_levels
+        Args:
+            room_id(str): The room ID
+        """
+        return self._send("GET", "/rooms/" + room_id + "/state/m.room.power_levels")
+
+    def set_power_levels(self, room_id, content):
+        """Perform PUT /rooms/$room_id/state/m.room.power_levels
+        Note that any power levels which are not explicitly specified
+         in the content arg are reset to default values.
+        Args:
+            room_id(str): The room ID
+            content(dict): The JSON content to send.
+        """
+        # Synapse returns M_UNKNOWN if body['events'] is omitted,
+        #  as of 2016-10-31
+        if "events" not in content:
+            content["events"] = {}
+
+        return self._send("PUT", "/rooms/" + room_id +
+                          "/state/m.room.power_levels", content)
+
     def leave_room(self, room_id):
         """Perform POST /rooms/$room_id/leave
         Args:
