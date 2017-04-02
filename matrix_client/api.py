@@ -110,7 +110,7 @@ class MatrixHttpApi(object):
         for key in kwargs:
             content[key] = kwargs[key]
 
-        return self._send("POST", "/register", content)
+        return self._send("POST", "/register", content, api_path=MATRIX_V2_API_PATH)
 
     def login(self, login_type, **kwargs):
         """Perform /login.
