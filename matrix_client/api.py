@@ -179,7 +179,7 @@ class MatrixHttpApi(object):
         )
 
     def send_state_event(self, room_id, event_type, content, state_key=""):
-        """Perform /rooms/$room_id/state/$event_type
+        """Perform PUT /rooms/$room_id/state/$event_type
 
         Args:
             room_id(str): The room ID to send the state event in.
@@ -328,7 +328,7 @@ class MatrixHttpApi(object):
         body = {
             "name": name
         }
-        return self._send("PUT", "/rooms/" + room_id + "/state/m.room.name", body)
+        return self.send_state_event(room_id, "m.room.name", body)
 
     def get_room_topic(self, room_id):
         """Perform GET /rooms/$room_id/state/m.room.topic
@@ -346,7 +346,7 @@ class MatrixHttpApi(object):
         body = {
             "topic": topic
         }
-        return self._send("PUT", "/rooms/" + room_id + "/state/m.room.topic", body)
+        return self.send_state_event(room_id, "m.room.topic", body)
 
     def leave_room(self, room_id):
         """Perform POST /rooms/$room_id/leave
@@ -399,11 +399,7 @@ class MatrixHttpApi(object):
         if 'avatar_url' in profile:
             body["avatar_url"] = profile["avatar_url"]
 
-        return self._send(
-            "PUT",
-            "/rooms/%s/state/m.room.member/%s" % (room_id, user_id),
-            body
-        )
+        return self.send_state_event(room_id, "m.room.member", body, state_key=user_id)
 
     def ban_user(self, room_id, user_id, reason=""):
         """Perform POST /rooms/$room_id/ban
