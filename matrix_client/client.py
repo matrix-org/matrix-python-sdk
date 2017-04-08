@@ -321,7 +321,7 @@ class MatrixClient(object):
         """
         self._sync(timeout_ms)
 
-    def listen_forever(self, timeout_ms=30000):
+    def listen_forever(self, timeout_ms=30000, exception_handler=None):
         """ Keep listening for events forever.
 
         Args:
@@ -346,16 +346,24 @@ class MatrixClient(object):
                     raise e
             except Exception as e:
                 logger.exception("Exception thrown during sync")
+                if exception_handler is not None:
+                    exception_handler(e)
+                else:
+                    raise
 
-    def start_listener_thread(self, timeout_ms=30000):
+    def start_listener_thread(self, timeout_ms=30000, exception_handler=None):
         """ Start a listener thread to listen for events in the background.
 
         Args:
             timeout (int): How long to poll the Home Server for before
                retrying.
+            exception_handler (callback function): Optional exception handler
+               function which can be used to handle exceptions in the caller
+               thread.
         """
         try:
-            thread = Thread(target=self.listen_forever, args=(timeout_ms, ))
+            thread = Thread(target=self.listen_forever,
+                            args=(timeout_ms, exception_handler))
             thread.daemon = True
             self.sync_thread = thread
             self.should_listen = True
