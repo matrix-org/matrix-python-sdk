@@ -21,6 +21,7 @@ from time import sleep
 from uuid import uuid4
 import logging
 import sys
+from requests.exceptions import ConnectionError
 
 logger = logging.getLogger(__name__)
 
@@ -344,8 +345,12 @@ class MatrixClient(object):
                                            self.bad_sync_timeout_limit)
                 else:
                     raise e
+            except ConnectionError:
+                logger.error("Server connection error")
+                break
             except Exception as e:
-                logger.exception("Exception thrown during sync")
+                logger.exception("Unexpected exception thrown during sync")
+                break
 
     def start_listener_thread(self, timeout_ms=30000):
         """ Start a listener thread to listen for events in the background.
