@@ -518,7 +518,7 @@ class MatrixHttpApi(object):
 
         endpoint = self.base_url + api_path + path
 
-        if headers["Content-Type"] == "application/json":
+        if headers["Content-Type"] == "application/json" and content is not None:
             content = json.dumps(content)
 
         response = None
