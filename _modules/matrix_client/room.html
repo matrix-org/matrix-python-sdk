@@ -1,0 +1,631 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>matrix_client.room &mdash; Matrix Python SDK v0.0.6</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../genindex.html"/>
+        <link rel="search" title="Search" href="../../search.html"/>
+    <link rel="top" title="Matrix Python SDK v0.0.6" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> Matrix Python SDK
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.6
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Matrix Python SDK</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>matrix_client.room</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for matrix_client.room</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">.errors</span> <span class="k">import</span> <span class="n">MatrixRequestError</span>
+<span class="kn">from</span> <span class="nn">uuid</span> <span class="k">import</span> <span class="n">uuid4</span>
+
+
+<div class="viewcode-block" id="Room"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room">[docs]</a><span class="k">class</span> <span class="nc">Room</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; The Room class can be used to call room specific functions</span>
+<span class="sd">    after joining a room from the Client.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">room_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create a blank Room object.</span>
+
+<span class="sd">            NOTE: This should ideally be called from within the Client.</span>
+<span class="sd">            NOTE: This does not verify the room with the Home Server.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">room_id</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;RoomIDs start with !&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">&quot;:&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">room_id</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;RoomIDs must have a domain component, seperated by a :&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">room_id</span> <span class="o">=</span> <span class="n">room_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">client</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">listeners</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_listeners</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ephemeral_listeners</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_history_limit</span> <span class="o">=</span> <span class="mi">20</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aliases</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">topic</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prev_batch</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="Room.send_text"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.send_text">[docs]</a>    <span class="k">def</span> <span class="nf">send_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send a plain text message to the room.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            text (str): The message to send</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">send_message</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Room.set_account_data"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.set_account_data">[docs]</a>    <span class="k">def</span> <span class="nf">set_account_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">account_data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">set_room_account_data</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">user_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">account_data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Room.get_tags"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.get_tags">[docs]</a>    <span class="k">def</span> <span class="nf">get_tags</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">get_user_tags</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">user_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Room.remove_tag"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.remove_tag">[docs]</a>    <span class="k">def</span> <span class="nf">remove_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">remove_user_tag</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">user_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">,</span> <span class="n">tag</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="Room.add_tag"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.add_tag">[docs]</a>    <span class="k">def</span> <span class="nf">add_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">add_user_tag</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">user_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">,</span>
+            <span class="n">tag</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">content</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="Room.send_emote"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.send_emote">[docs]</a>    <span class="k">def</span> <span class="nf">send_emote</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send a emote (/me style) message to the room.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            text (str): The message to send</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">send_emote</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Room.send_notice"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.send_notice">[docs]</a>    <span class="k">def</span> <span class="nf">send_notice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">send_notice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+
+    <span class="c1"># See http://matrix.org/docs/spec/r0.0.1/client_server.html#m-image for the</span>
+    <span class="c1"># imageinfo args.</span>
+<div class="viewcode-block" id="Room.send_image"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.send_image">[docs]</a>    <span class="k">def</span> <span class="nf">send_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">imageinfo</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send a pre-uploaded image to the room.</span>
+<span class="sd">        See http://matrix.org/docs/spec/r0.0.1/client_server.html#m-image</span>
+<span class="sd">        for imageinfo</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            url (str): The mxc url of the image.</span>
+<span class="sd">            name (str): The filename of the image.</span>
+<span class="sd">            imageinfo (): Extra information about the image.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">send_content</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s2">&quot;m.image&quot;</span><span class="p">,</span>
+            <span class="n">extra_information</span><span class="o">=</span><span class="n">imageinfo</span>
+        <span class="p">)</span></div>
+
+    <span class="c1"># See http://matrix.org/docs/spec/client_server/r0.2.0.html#m-video for the</span>
+    <span class="c1"># videoinfo args.</span>
+<div class="viewcode-block" id="Room.send_video"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.send_video">[docs]</a>    <span class="k">def</span> <span class="nf">send_video</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">videoinfo</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send a pre-uploaded video to the room.</span>
+<span class="sd">        See http://matrix.org/docs/spec/client_server/r0.2.0.html#m-video</span>
+<span class="sd">        for videoinfo</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            url (str): The mxc url of the video.</span>
+<span class="sd">            name (str): The filename of the video.</span>
+<span class="sd">            videoinfo (): Extra information about the video.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">send_content</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s2">&quot;m.video&quot;</span><span class="p">,</span>
+                                            <span class="n">extra_information</span><span class="o">=</span><span class="n">videoinfo</span><span class="p">)</span></div>
+
+    <span class="c1"># See http://matrix.org/docs/spec/client_server/r0.2.0.html#m-audio for the</span>
+    <span class="c1"># audioinfo args.</span>
+<div class="viewcode-block" id="Room.send_audio"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.send_audio">[docs]</a>    <span class="k">def</span> <span class="nf">send_audio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">audioinfo</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send a pre-uploaded audio to the room.</span>
+<span class="sd">        See http://matrix.org/docs/spec/client_server/r0.2.0.html#m-audio</span>
+<span class="sd">        for audioinfo</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            url (str): The mxc url of the audio.</span>
+<span class="sd">            name (str): The filename of the audio.</span>
+<span class="sd">            audioinfo (): Extra information about the audio.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">send_content</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s2">&quot;m.audio&quot;</span><span class="p">,</span>
+                                            <span class="n">extra_information</span><span class="o">=</span><span class="n">audioinfo</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Room.add_listener"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.add_listener">[docs]</a>    <span class="k">def</span> <span class="nf">add_listener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">event_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add a callback handler for events going to this room.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            callback (func(room, event)): Callback called when an event arrives.</span>
+<span class="sd">            event_type (str): The event_type to filter for.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            uuid.UUID: Unique id of the listener, can be used to identify the listener.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">listener_id</span> <span class="o">=</span> <span class="n">uuid4</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">listeners</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s1">&#39;uid&#39;</span><span class="p">:</span> <span class="n">listener_id</span><span class="p">,</span>
+                <span class="s1">&#39;callback&#39;</span><span class="p">:</span> <span class="n">callback</span><span class="p">,</span>
+                <span class="s1">&#39;event_type&#39;</span><span class="p">:</span> <span class="n">event_type</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">listener_id</span></div>
+
+<div class="viewcode-block" id="Room.remove_listener"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.remove_listener">[docs]</a>    <span class="k">def</span> <span class="nf">remove_listener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uid</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Remove listener with given uid.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            uuid.UUID: Unique id of the listener to remove.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">listeners</span><span class="p">[:]</span> <span class="o">=</span> <span class="p">(</span><span class="n">listener</span> <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">listeners</span>
+                             <span class="k">if</span> <span class="n">listener</span><span class="p">[</span><span class="s1">&#39;uid&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">uid</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Room.add_ephemeral_listener"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.add_ephemeral_listener">[docs]</a>    <span class="k">def</span> <span class="nf">add_ephemeral_listener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">event_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add a callback handler for ephemeral events going to this room.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            callback (func(room, event)): Callback called when an ephemeral event arrives.</span>
+<span class="sd">            event_type (str): The event_type to filter for.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            uuid.UUID: Unique id of the listener, can be used to identify the listener.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">listener_id</span> <span class="o">=</span> <span class="n">uuid4</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ephemeral_listeners</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s1">&#39;uid&#39;</span><span class="p">:</span> <span class="n">listener_id</span><span class="p">,</span>
+                <span class="s1">&#39;callback&#39;</span><span class="p">:</span> <span class="n">callback</span><span class="p">,</span>
+                <span class="s1">&#39;event_type&#39;</span><span class="p">:</span> <span class="n">event_type</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">listener_id</span></div>
+
+<div class="viewcode-block" id="Room.remove_ephemeral_listener"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.remove_ephemeral_listener">[docs]</a>    <span class="k">def</span> <span class="nf">remove_ephemeral_listener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uid</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Remove ephemeral listener with given uid.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            uuid.UUID: Unique id of the listener to remove.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ephemeral_listeners</span><span class="p">[:]</span> <span class="o">=</span> <span class="p">(</span><span class="n">listener</span> <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ephemeral_listeners</span>
+                                       <span class="k">if</span> <span class="n">listener</span><span class="p">[</span><span class="s1">&#39;uid&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">uid</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Room.add_state_listener"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.add_state_listener">[docs]</a>    <span class="k">def</span> <span class="nf">add_state_listener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">event_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add a callback handler for state events going to this room.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            callback (func(roomchunk)): Callback called when an event arrives.</span>
+<span class="sd">            event_type (str): The event_type to filter for.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_listeners</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s1">&#39;callback&#39;</span><span class="p">:</span> <span class="n">callback</span><span class="p">,</span>
+                <span class="s1">&#39;event_type&#39;</span><span class="p">:</span> <span class="n">event_type</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_put_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_history_limit</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Dispatch for room-specific listeners</span>
+        <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">listeners</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">listener</span><span class="p">[</span><span class="s1">&#39;event_type&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">listener</span><span class="p">[</span><span class="s1">&#39;event_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">event</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]:</span>
+                <span class="n">listener</span><span class="p">[</span><span class="s1">&#39;callback&#39;</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_put_ephemeral_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="c1"># Dispatch for room-specific listeners</span>
+        <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ephemeral_listeners</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">listener</span><span class="p">[</span><span class="s1">&#39;event_type&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">listener</span><span class="p">[</span><span class="s1">&#39;event_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">event</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]:</span>
+                <span class="n">listener</span><span class="p">[</span><span class="s1">&#39;callback&#39;</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Room.get_events"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.get_events">[docs]</a>    <span class="k">def</span> <span class="nf">get_events</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the most recent events for this room.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            events</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span></div>
+
+<div class="viewcode-block" id="Room.invite_user"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.invite_user">[docs]</a>    <span class="k">def</span> <span class="nf">invite_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Invite a user to this room</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            user_id (str): The matrix user id of a user.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            boolean: The invitation was sent.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">invite_user</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="n">MatrixRequestError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Room.kick_user"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.kick_user">[docs]</a>    <span class="k">def</span> <span class="nf">kick_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Kick a user from this room</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            user_id (str): The matrix user id of a user.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            boolean: The user was kicked.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">kick_user</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="n">MatrixRequestError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Room.ban_user"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.ban_user">[docs]</a>    <span class="k">def</span> <span class="nf">ban_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">reason</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Ban a user from this room</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            user_id (str): The matrix user id of a user.</span>
+<span class="sd">            reason  (str): A reason for banning the user.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            boolean: The user was banned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">ban_user</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">reason</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="n">MatrixRequestError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Room.leave"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.leave">[docs]</a>    <span class="k">def</span> <span class="nf">leave</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Leave the room.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            boolean: Leaving the room was successful.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">leave_room</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">)</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">rooms</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">]</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="n">MatrixRequestError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Room.update_room_name"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.update_room_name">[docs]</a>    <span class="k">def</span> <span class="nf">update_room_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get room name</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            boolean: True if the room name changed, False if not</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">get_room_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;name&quot;</span> <span class="ow">in</span> <span class="n">response</span> <span class="ow">and</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">except</span> <span class="n">MatrixRequestError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Room.set_room_name"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.set_room_name">[docs]</a>    <span class="k">def</span> <span class="nf">set_room_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Set room name</span>
+<span class="sd">            name (str): The new name for the room</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            boolean: True if the name changed, False if not</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">set_room_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="n">MatrixRequestError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Room.send_state_event"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.send_state_event">[docs]</a>    <span class="k">def</span> <span class="nf">send_state_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">state_key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send a state event to the room.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            event_type (str): The type of event that you are sending.</span>
+<span class="sd">            content (): An object with the content of the message.</span>
+<span class="sd">            state_key (str, optional): A unique key to identify the state.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">send_state_event</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">,</span>
+            <span class="n">event_type</span><span class="p">,</span>
+            <span class="n">content</span><span class="p">,</span>
+            <span class="n">state_key</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="Room.update_room_topic"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.update_room_topic">[docs]</a>    <span class="k">def</span> <span class="nf">update_room_topic</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get room topic</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            boolean: True if the topic changed, False if not</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">get_room_topic</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;topic&quot;</span> <span class="ow">in</span> <span class="n">response</span> <span class="ow">and</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;topic&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">topic</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">topic</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;topic&quot;</span><span class="p">]</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">except</span> <span class="n">MatrixRequestError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Room.set_room_topic"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.set_room_topic">[docs]</a>    <span class="k">def</span> <span class="nf">set_room_topic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topic</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Set room topic</span>
+<span class="sd">            topic (str): The new topic for the room</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            boolean: True if the topic changed, False if not</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">set_room_topic</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">,</span> <span class="n">topic</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">topic</span> <span class="o">=</span> <span class="n">topic</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="n">MatrixRequestError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Room.update_aliases"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.update_aliases">[docs]</a>    <span class="k">def</span> <span class="nf">update_aliases</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get aliases information from room state</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            boolean: True if the aliases changed, False if not</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">get_room_state</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s2">&quot;content&quot;</span> <span class="ow">in</span> <span class="n">chunk</span> <span class="ow">and</span> <span class="s2">&quot;aliases&quot;</span> <span class="ow">in</span> <span class="n">chunk</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">chunk</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">][</span><span class="s2">&quot;aliases&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aliases</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">aliases</span> <span class="o">=</span> <span class="n">chunk</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">][</span><span class="s2">&quot;aliases&quot;</span><span class="p">]</span>
+                        <span class="k">return</span> <span class="kc">True</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">except</span> <span class="n">MatrixRequestError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Room.add_room_alias"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.add_room_alias">[docs]</a>    <span class="k">def</span> <span class="nf">add_room_alias</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room_alias</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add an alias to the room</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            room_alias(str): Room wanted alias name.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: True if the alias was added, False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">set_room_alias</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">,</span> <span class="n">room_alias</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="n">MatrixRequestError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Room.get_joined_members"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.get_joined_members">[docs]</a>    <span class="k">def</span> <span class="nf">get_joined_members</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Query joined members of this room.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            {user_id: {&quot;displayname&quot;: str or None}}: Dictionary of joined members.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">get_room_members</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">)</span>
+        <span class="n">rtn</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">event</span><span class="p">[</span><span class="s2">&quot;state_key&quot;</span><span class="p">]:</span> <span class="p">{</span>
+                <span class="s2">&quot;displayname&quot;</span><span class="p">:</span> <span class="n">event</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;displayname&quot;</span><span class="p">),</span>
+            <span class="p">}</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;chunk&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">event</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">][</span><span class="s2">&quot;membership&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;join&quot;</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">rtn</span></div>
+
+<div class="viewcode-block" id="Room.backfill_previous_messages"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.room.Room.backfill_previous_messages">[docs]</a>    <span class="k">def</span> <span class="nf">backfill_previous_messages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Backfill handling of previous messages.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            limit (int): Number of messages to go back.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">get_room_messages</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">room_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">prev_batch</span><span class="p">,</span>
+                                                <span class="n">direction</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">res</span><span class="p">[</span><span class="s2">&quot;chunk&quot;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_put_event</span><span class="p">(</span><span class="n">event</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">prev_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prev_batch</span>
+
+    <span class="nd">@prev_batch</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">prev_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prev_batch</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prev_batch</span> <span class="o">=</span> <span class="n">prev_batch</span></div>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, matrix.org.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.0.6',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
