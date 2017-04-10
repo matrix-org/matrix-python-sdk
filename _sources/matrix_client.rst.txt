@@ -2,6 +2,13 @@
 Client
 ======
 
+Client
+----
+.. automodule:: matrix_client.client
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Room
 ----
 .. automodule:: matrix_client.room

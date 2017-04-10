@@ -174,14 +174,26 @@
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="matrix_client.html#matrix_client.room.Room.add_ephemeral_listener">add_ephemeral_listener() (matrix_client.room.Room method)</a>
+      <li><a href="matrix_client.html#matrix_client.client.MatrixClient.add_ephemeral_listener">add_ephemeral_listener() (matrix_client.client.MatrixClient method)</a>
+
+      <ul>
+        <li><a href="matrix_client.html#matrix_client.room.Room.add_ephemeral_listener">(matrix_client.room.Room method)</a>
 </li>
-      <li><a href="matrix_client.html#matrix_client.room.Room.add_listener">add_listener() (matrix_client.room.Room method)</a>
+      </ul></li>
+      <li><a href="matrix_client.html#matrix_client.client.MatrixClient.add_invite_listener">add_invite_listener() (matrix_client.client.MatrixClient method)</a>
 </li>
-      <li><a href="matrix_client.html#matrix_client.room.Room.add_room_alias">add_room_alias() (matrix_client.room.Room method)</a>
+      <li><a href="matrix_client.html#matrix_client.client.MatrixClient.add_leave_listener">add_leave_listener() (matrix_client.client.MatrixClient method)</a>
 </li>
+      <li><a href="matrix_client.html#matrix_client.client.MatrixClient.add_listener">add_listener() (matrix_client.client.MatrixClient method)</a>
+
+      <ul>
+        <li><a href="matrix_client.html#matrix_client.room.Room.add_listener">(matrix_client.room.Room method)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="matrix_client.html#matrix_client.room.Room.add_room_alias">add_room_alias() (matrix_client.room.Room method)</a>
+</li>
       <li><a href="matrix_client.html#matrix_client.room.Room.add_state_listener">add_state_listener() (matrix_client.room.Room method)</a>
 </li>
       <li><a href="matrix_client.html#matrix_client.room.Room.add_tag">add_tag() (matrix_client.room.Room method)</a>
@@ -211,7 +223,11 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="matrix_client.html#matrix_client.api.MatrixHttpApi.create_room">create_room() (matrix_client.api.MatrixHttpApi method)</a>
+
+      <ul>
+        <li><a href="matrix_client.html#matrix_client.client.MatrixClient.create_room">(matrix_client.client.MatrixClient method)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -248,12 +264,12 @@
 </li>
       <li><a href="matrix_client.html#matrix_client.api.MatrixHttpApi.get_html_body">get_html_body() (matrix_client.api.MatrixHttpApi method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="matrix_client.html#matrix_client.room.Room.get_joined_members">get_joined_members() (matrix_client.room.Room method)</a>
 </li>
       <li><a href="matrix_client.html#matrix_client.api.MatrixHttpApi.get_room_id">get_room_id() (matrix_client.api.MatrixHttpApi method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="matrix_client.html#matrix_client.api.MatrixHttpApi.get_room_members">get_room_members() (matrix_client.api.MatrixHttpApi method)</a>
 </li>
       <li><a href="matrix_client.html#matrix_client.api.MatrixHttpApi.get_room_messages">get_room_messages() (matrix_client.api.MatrixHttpApi method)</a>
@@ -264,9 +280,15 @@
 </li>
       <li><a href="matrix_client.html#matrix_client.api.MatrixHttpApi.get_room_topic">get_room_topic() (matrix_client.api.MatrixHttpApi method)</a>
 </li>
+      <li><a href="matrix_client.html#matrix_client.client.MatrixClient.get_rooms">get_rooms() (matrix_client.client.MatrixClient method)</a>
+</li>
+      <li><a href="matrix_client.html#matrix_client.client.MatrixClient.get_sync_token">get_sync_token() (matrix_client.client.MatrixClient method)</a>
+</li>
       <li><a href="matrix_client.html#matrix_client.room.Room.get_tags">get_tags() (matrix_client.room.Room method)</a>
 </li>
       <li><a href="matrix_client.html#matrix_client.api.MatrixHttpApi.get_text_body">get_text_body() (matrix_client.api.MatrixHttpApi method)</a>
+</li>
+      <li><a href="matrix_client.html#matrix_client.client.MatrixClient.get_user">get_user() (matrix_client.client.MatrixClient method)</a>
 </li>
       <li><a href="matrix_client.html#matrix_client.api.MatrixHttpApi.get_user_tags">get_user_tags() (matrix_client.api.MatrixHttpApi method)</a>
 </li>
@@ -293,7 +315,11 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="matrix_client.html#matrix_client.api.MatrixHttpApi.join_room">join_room() (matrix_client.api.MatrixHttpApi method)</a>
+
+      <ul>
+        <li><a href="matrix_client.html#matrix_client.client.MatrixClient.join_room">(matrix_client.client.MatrixClient method)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -316,12 +342,22 @@
 </li>
       <li><a href="matrix_client.html#matrix_client.api.MatrixHttpApi.leave_room">leave_room() (matrix_client.api.MatrixHttpApi method)</a>
 </li>
+      <li><a href="matrix_client.html#matrix_client.client.MatrixClient.listen_for_events">listen_for_events() (matrix_client.client.MatrixClient method)</a>
+</li>
+      <li><a href="matrix_client.html#matrix_client.client.MatrixClient.listen_forever">listen_forever() (matrix_client.client.MatrixClient method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="matrix_client.html#matrix_client.api.MatrixHttpApi.login">login() (matrix_client.api.MatrixHttpApi method)</a>
 </li>
-      <li><a href="matrix_client.html#matrix_client.api.MatrixHttpApi.logout">logout() (matrix_client.api.MatrixHttpApi method)</a>
+      <li><a href="matrix_client.html#matrix_client.client.MatrixClient.login_with_password">login_with_password() (matrix_client.client.MatrixClient method)</a>
 </li>
+      <li><a href="matrix_client.html#matrix_client.api.MatrixHttpApi.logout">logout() (matrix_client.api.MatrixHttpApi method)</a>
+
+      <ul>
+        <li><a href="matrix_client.html#matrix_client.client.MatrixClient.logout">(matrix_client.client.MatrixClient method)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -330,11 +366,15 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="matrix_client.html#module-matrix_client.api">matrix_client.api (module)</a>
 </li>
+      <li><a href="matrix_client.html#module-matrix_client.client">matrix_client.client (module)</a>
+</li>
       <li><a href="matrix_client.html#module-matrix_client.room">matrix_client.room (module)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="matrix_client.html#module-matrix_client.user">matrix_client.user (module)</a>
+</li>
+      <li><a href="matrix_client.html#matrix_client.client.MatrixClient">MatrixClient (class in matrix_client.client)</a>
 </li>
       <li><a href="matrix_client.html#matrix_client.api.MatrixHttpApi">MatrixHttpApi (class in matrix_client.api)</a>
 </li>
@@ -356,14 +396,28 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="matrix_client.html#matrix_client.api.MatrixHttpApi.register">register() (matrix_client.api.MatrixHttpApi method)</a>
 </li>
-      <li><a href="matrix_client.html#matrix_client.room.Room.remove_ephemeral_listener">remove_ephemeral_listener() (matrix_client.room.Room method)</a>
+      <li><a href="matrix_client.html#matrix_client.client.MatrixClient.register_with_password">register_with_password() (matrix_client.client.MatrixClient method)</a>
 </li>
-      <li><a href="matrix_client.html#matrix_client.room.Room.remove_listener">remove_listener() (matrix_client.room.Room method)</a>
+      <li><a href="matrix_client.html#matrix_client.client.MatrixClient.remove_ephemeral_listener">remove_ephemeral_listener() (matrix_client.client.MatrixClient method)</a>
+
+      <ul>
+        <li><a href="matrix_client.html#matrix_client.room.Room.remove_ephemeral_listener">(matrix_client.room.Room method)</a>
 </li>
+      </ul></li>
+      <li><a href="matrix_client.html#matrix_client.client.MatrixClient.remove_listener">remove_listener() (matrix_client.client.MatrixClient method)</a>
+
+      <ul>
+        <li><a href="matrix_client.html#matrix_client.room.Room.remove_listener">(matrix_client.room.Room method)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="matrix_client.html#matrix_client.api.MatrixHttpApi.remove_room_alias">remove_room_alias() (matrix_client.api.MatrixHttpApi method)</a>
+
+      <ul>
+        <li><a href="matrix_client.html#matrix_client.client.MatrixClient.remove_room_alias">(matrix_client.client.MatrixClient method)</a>
 </li>
+      </ul></li>
       <li><a href="matrix_client.html#matrix_client.room.Room.remove_tag">remove_tag() (matrix_client.room.Room method)</a>
 </li>
       <li><a href="matrix_client.html#matrix_client.api.MatrixHttpApi.remove_user_tag">remove_user_tag() (matrix_client.api.MatrixHttpApi method)</a>
@@ -408,14 +462,14 @@
 </li>
       <li><a href="matrix_client.html#matrix_client.room.Room.send_video">send_video() (matrix_client.room.Room method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="matrix_client.html#matrix_client.api.MatrixHttpApi.set_account_data">set_account_data() (matrix_client.api.MatrixHttpApi method)</a>
 
       <ul>
         <li><a href="matrix_client.html#matrix_client.room.Room.set_account_data">(matrix_client.room.Room method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="matrix_client.html#matrix_client.api.MatrixHttpApi.set_avatar_url">set_avatar_url() (matrix_client.api.MatrixHttpApi method)</a>
 
       <ul>
@@ -446,6 +500,14 @@
         <li><a href="matrix_client.html#matrix_client.room.Room.set_room_topic">(matrix_client.room.Room method)</a>
 </li>
       </ul></li>
+      <li><a href="matrix_client.html#matrix_client.client.MatrixClient.set_sync_token">set_sync_token() (matrix_client.client.MatrixClient method)</a>
+</li>
+      <li><a href="matrix_client.html#matrix_client.client.MatrixClient.should_listen">should_listen (matrix_client.client.MatrixClient attribute)</a>
+</li>
+      <li><a href="matrix_client.html#matrix_client.client.MatrixClient.start_listener_thread">start_listener_thread() (matrix_client.client.MatrixClient method)</a>
+</li>
+      <li><a href="matrix_client.html#matrix_client.client.MatrixClient.stop_listener_thread">stop_listener_thread() (matrix_client.client.MatrixClient method)</a>
+</li>
       <li><a href="matrix_client.html#matrix_client.api.MatrixHttpApi.sync">sync() (matrix_client.api.MatrixHttpApi method)</a>
 </li>
   </ul></td>
@@ -461,6 +523,8 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="matrix_client.html#matrix_client.room.Room.update_room_topic">update_room_topic() (matrix_client.room.Room method)</a>
+</li>
+      <li><a href="matrix_client.html#matrix_client.client.MatrixClient.upload">upload() (matrix_client.client.MatrixClient method)</a>
 </li>
       <li><a href="matrix_client.html#matrix_client.user.User">User (class in matrix_client.user)</a>
 </li>
