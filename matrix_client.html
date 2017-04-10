@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>matrix_client package &mdash; Matrix Python SDK v0.0.6</title>
+  <title>Client &mdash; Matrix Python SDK v0.0.6</title>
   
 
   
@@ -90,11 +90,12 @@
             
               <!-- Local TOC -->
               <div class="local-toc"><ul>
-<li><a class="reference internal" href="#">matrix_client package</a><ul>
-<li><a class="reference internal" href="#module-matrix_client.client">matrix_client.client</a></li>
-<li><a class="reference internal" href="#module-matrix_client.api">matrix_client.api</a></li>
+<li><a class="reference internal" href="#">Client</a><ul>
+<li><a class="reference internal" href="#module-matrix_client.room">Room</a></li>
+<li><a class="reference internal" href="#module-matrix_client.user">User</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#module-matrix_client.api">API</a></li>
 </ul>
 </div>
             
@@ -139,7 +140,7 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>matrix_client package</li>
+      <li>Client</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -158,59 +159,26 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="matrix-client-package">
-<h1>matrix_client package<a class="headerlink" href="#matrix-client-package" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="module-matrix_client.client">
-<span id="matrix-client-client"></span><h2>matrix_client.client<a class="headerlink" href="#module-matrix_client.client" title="Permalink to this headline">¶</a></h2>
+  <div class="section" id="client">
+<h1>Client<a class="headerlink" href="#client" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-matrix_client.room">
+<span id="room"></span><h2>Room<a class="headerlink" href="#module-matrix_client.room" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="matrix_client.client.MatrixClient">
-<em class="property">class </em><code class="descclassname">matrix_client.client.</code><code class="descname">MatrixClient</code><span class="sig-paren">(</span><em>base_url</em>, <em>token=None</em>, <em>user_id=None</em>, <em>valid_cert_check=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient" title="Permalink to this definition">¶</a></dt>
+<dt id="matrix_client.room.Room">
+<em class="property">class </em><code class="descclassname">matrix_client.room.</code><code class="descname">Room</code><span class="sig-paren">(</span><em>client</em>, <em>room_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
-<p>The client API for Matrix. For the raw HTTP calls, see MatrixHttpApi.</p>
-<dl class="docutils">
-<dt>Usage (new user):</dt>
-<dd><p class="first">client = MatrixClient(&#8220;<a class="reference external" href="https://matrix.org">https://matrix.org</a>&#8221;)
-token = client.register_with_password(username=&#8221;foobar&#8221;,</p>
-<blockquote>
-<div>password=&#8221;monkey&#8221;)</div></blockquote>
-<p class="last">room = client.create_room(&#8220;myroom&#8221;)
-room.send_image(file_like_object)</p>
-</dd>
-<dt>Usage (logged in):</dt>
-<dd><dl class="first docutils">
-<dt>client = MatrixClient(&#8220;<a class="reference external" href="https://matrix.org">https://matrix.org</a>&#8221;, token=&#8221;foobar&#8221;,</dt>
-<dd>user_id=&#8221;&#64;foobar:matrix.org&#8221;)</dd>
-</dl>
-<p class="last">rooms = client.get_rooms()  # NB: From initial sync
-client.add_listener(func)  # NB: event stream callback
-rooms[0].add_listener(func)  # NB: callbacks just for this room.
-room = client.join_room(&#8220;#matrix:matrix.org&#8221;)
-response = room.send_text(&#8220;Hello!&#8221;)
-response = room.kick(&#8220;&#64;bob:matrix.org&#8221;)</p>
-</dd>
-</dl>
-<p>Incoming event callbacks (scopes):</p>
-<blockquote>
-<div><dl class="docutils">
-<dt>def user_callback(user, incoming_event):</dt>
-<dd>pass</dd>
-<dt>def room_callback(room, incoming_event):</dt>
-<dd>pass</dd>
-<dt>def global_callback(incoming_event):</dt>
-<dd>pass</dd>
-</dl>
-</div></blockquote>
+<p>The Room class can be used to call room specific functions
+after joining a room from the Client.</p>
 <dl class="method">
-<dt id="matrix_client.client.MatrixClient.add_ephemeral_listener">
-<code class="descname">add_ephemeral_listener</code><span class="sig-paren">(</span><em>callback</em>, <em>event_type=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.add_ephemeral_listener"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.add_ephemeral_listener" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add an ephemeral listener that will send a callback when the client recieves
-an ephemeral event.</p>
+<dt id="matrix_client.room.Room.add_ephemeral_listener">
+<code class="descname">add_ephemeral_listener</code><span class="sig-paren">(</span><em>callback</em>, <em>event_type=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.add_ephemeral_listener"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.add_ephemeral_listener" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a callback handler for ephemeral events going to this room.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>callback</strong> (<em>func</em><em>(</em><em>roomchunk</em><em>)</em><em></em>) &#8211; Callback called when an ephemeral event arrives.</li>
+<li><strong>callback</strong> (<em>func</em><em>(</em><a class="reference internal" href="#module-matrix_client.room" title="matrix_client.room"><em>room</em></a><em>, </em><em>event</em><em>)</em><em></em>) &#8211; Callback called when an ephemeral event arrives.</li>
 <li><strong>event_type</strong> (<em>str</em>) &#8211; The event_type to filter for.</li>
 </ul>
 </td>
@@ -226,83 +194,102 @@ an ephemeral event.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="matrix_client.client.MatrixClient.add_invite_listener">
-<code class="descname">add_invite_listener</code><span class="sig-paren">(</span><em>callback</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.add_invite_listener"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.add_invite_listener" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add a listener that will send a callback when the client receives
-an invite.</p>
+<dt id="matrix_client.room.Room.add_listener">
+<code class="descname">add_listener</code><span class="sig-paren">(</span><em>callback</em>, <em>event_type=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.add_listener"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.add_listener" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a callback handler for events going to this room.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>callback</strong> (<em>func</em><em>(</em><em>room_id</em><em>, </em><em>state</em><em>)</em><em></em>) &#8211; Callback called when an invite arrives.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>callback</strong> (<em>func</em><em>(</em><a class="reference internal" href="#module-matrix_client.room" title="matrix_client.room"><em>room</em></a><em>, </em><em>event</em><em>)</em><em></em>) &#8211; Callback called when an event arrives.</li>
+<li><strong>event_type</strong> (<em>str</em>) &#8211; The event_type to filter for.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Unique id of the listener, can be used to identify the listener.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">uuid.UUID</p>
+</td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="method">
-<dt id="matrix_client.client.MatrixClient.add_leave_listener">
-<code class="descname">add_leave_listener</code><span class="sig-paren">(</span><em>callback</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.add_leave_listener"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.add_leave_listener" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add a listener that will send a callback when the client has left a room.
-an invite request.</p>
+<dt id="matrix_client.room.Room.add_room_alias">
+<code class="descname">add_room_alias</code><span class="sig-paren">(</span><em>room_alias</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.add_room_alias"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.add_room_alias" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add an alias to the room</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_alias</strong> (<em>str</em>) &#8211; Room wanted alias name.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True if the alias was added, False otherwise.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="matrix_client.room.Room.add_state_listener">
+<code class="descname">add_state_listener</code><span class="sig-paren">(</span><em>callback</em>, <em>event_type=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.add_state_listener"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.add_state_listener" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a callback handler for state events going to this room.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>callback</strong> (<em>func</em><em>(</em><em>room_id</em><em>, </em><em>room</em><em>)</em><em></em>) &#8211; Callback called when the client</li>
-<li><strong>left a room.</strong> (<em>has</em>) &#8211; </li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="matrix_client.client.MatrixClient.add_listener">
-<code class="descname">add_listener</code><span class="sig-paren">(</span><em>callback</em>, <em>event_type=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.add_listener"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.add_listener" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add a listener that will send a callback when the client recieves
-an event.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>callback</strong> (<em>func</em><em>(</em><em>roomchunk</em><em>)</em><em></em>) &#8211; Callback called when an event arrives.</li>
 <li><strong>event_type</strong> (<em>str</em>) &#8211; The event_type to filter for.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Unique id of the listener, can be used to identify the listener.</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">uuid.UUID</p>
-</td>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="matrix_client.room.Room.add_tag">
+<code class="descname">add_tag</code><span class="sig-paren">(</span><em>tag</em>, <em>order=None</em>, <em>content=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.add_tag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.add_tag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="matrix_client.room.Room.backfill_previous_messages">
+<code class="descname">backfill_previous_messages</code><span class="sig-paren">(</span><em>limit=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.backfill_previous_messages"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.backfill_previous_messages" title="Permalink to this definition">¶</a></dt>
+<dd><p>Backfill handling of previous messages.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>limit</strong> (<em>int</em>) &#8211; Number of messages to go back.</td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="method">
-<dt id="matrix_client.client.MatrixClient.create_room">
-<code class="descname">create_room</code><span class="sig-paren">(</span><em>alias=None</em>, <em>is_public=False</em>, <em>invitees=()</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.create_room"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.create_room" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new room on the homeserver.</p>
+<dt id="matrix_client.room.Room.ban_user">
+<code class="descname">ban_user</code><span class="sig-paren">(</span><em>user_id</em>, <em>reason</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.ban_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.ban_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ban a user from this room</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>alias</strong> (<em>str</em>) &#8211; The canonical_alias of the room.</li>
-<li><strong>is_public</strong> (<em>bool</em>) &#8211; The public/private visibility of the room.</li>
-<li><strong>invitees</strong> (<em>str</em><em>[</em><em></em><em>]</em><em></em>) &#8211; A set of user ids to invite into the room.</li>
+<li><strong>user_id</strong> (<em>str</em>) &#8211; The matrix user id of a user.</li>
+<li><strong>reason</strong> (<em>str</em>) &#8211; A reason for banning the user.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Room</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The user was banned.</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">MatrixRequestError</span></code></p>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">boolean</p>
 </td>
 </tr>
 </tbody>
@@ -310,159 +297,100 @@ an event.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="matrix_client.client.MatrixClient.get_rooms">
-<code class="descname">get_rooms</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.get_rooms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.get_rooms" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a dict of {room_id: Room objects} that the user has joined.</p>
+<dt id="matrix_client.room.Room.get_events">
+<code class="descname">get_events</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.get_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.get_events" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the most recent events for this room.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Rooms the user has joined.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">Room{}</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">events</td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="method">
-<dt id="matrix_client.client.MatrixClient.get_sync_token">
-<code class="descname">get_sync_token</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.get_sync_token"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.get_sync_token" title="Permalink to this definition">¶</a></dt>
+<dt id="matrix_client.room.Room.get_joined_members">
+<code class="descname">get_joined_members</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.get_joined_members"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.get_joined_members" title="Permalink to this definition">¶</a></dt>
+<dd><p>Query joined members of this room.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">{&#8220;displayname&#8221;: str or None}}: Dictionary of joined members.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">{user_id</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="matrix_client.room.Room.get_tags">
+<code class="descname">get_tags</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.get_tags"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.get_tags" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="matrix_client.client.MatrixClient.get_user">
-<code class="descname">get_user</code><span class="sig-paren">(</span><em>user_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.get_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.get_user" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a User by their id.</p>
-<dl class="docutils">
-<dt>NOTE: This function only returns a user object, it does not verify</dt>
-<dd>the user with the Home Server.</dd>
-</dl>
+<dt id="matrix_client.room.Room.invite_user">
+<code class="descname">invite_user</code><span class="sig-paren">(</span><em>user_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.invite_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.invite_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Invite a user to this room</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>user_id</strong> (<em>str</em>) &#8211; The matrix user id of a user.</td>
 </tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The invitation was sent.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">boolean</td>
+</tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="method">
-<dt id="matrix_client.client.MatrixClient.join_room">
-<code class="descname">join_room</code><span class="sig-paren">(</span><em>room_id_or_alias</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.join_room"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.join_room" title="Permalink to this definition">¶</a></dt>
-<dd><p>Join a room.</p>
+<dt id="matrix_client.room.Room.kick_user">
+<code class="descname">kick_user</code><span class="sig-paren">(</span><em>user_id</em>, <em>reason=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.kick_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.kick_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Kick a user from this room</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_id_or_alias</strong> (<em>str</em>) &#8211; Room ID or an alias.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>user_id</strong> (<em>str</em>) &#8211; The matrix user id of a user.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Room</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The user was kicked.</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">MatrixRequestError</span></code></td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">boolean</td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="method">
-<dt id="matrix_client.client.MatrixClient.listen_for_events">
-<code class="descname">listen_for_events</code><span class="sig-paren">(</span><em>timeout_ms=30000</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.listen_for_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.listen_for_events" title="Permalink to this definition">¶</a></dt>
-<dd><p>Deprecated. sync now pulls events from the request.
-This function just calls _sync()</p>
+<dt id="matrix_client.room.Room.leave">
+<code class="descname">leave</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.leave"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.leave" title="Permalink to this definition">¶</a></dt>
+<dd><p>Leave the room.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout_ms</strong> (<em>int</em>) &#8211; How long to poll the Home Server for before
-retrying.</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Leaving the room was successful.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">boolean</td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
-<dl class="method">
-<dt id="matrix_client.client.MatrixClient.listen_forever">
-<code class="descname">listen_forever</code><span class="sig-paren">(</span><em>timeout_ms=30000</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.listen_forever"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.listen_forever" title="Permalink to this definition">¶</a></dt>
-<dd><p>Keep listening for events forever.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout_ms</strong> (<em>int</em>) &#8211; How long to poll the Home Server for before
-retrying.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
+<dl class="attribute">
+<dt id="matrix_client.room.Room.prev_batch">
+<code class="descname">prev_batch</code><a class="headerlink" href="#matrix_client.room.Room.prev_batch" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
-<dt id="matrix_client.client.MatrixClient.login_with_password">
-<code class="descname">login_with_password</code><span class="sig-paren">(</span><em>username</em>, <em>password</em>, <em>limit=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.login_with_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.login_with_password" title="Permalink to this definition">¶</a></dt>
-<dd><p>Login to the homeserver.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>username</strong> (<em>str</em>) &#8211; Account username</li>
-<li><strong>password</strong> (<em>str</em>) &#8211; Account password</li>
-<li><strong>limit</strong> (<em>int</em>) &#8211; Deprecated. How many messages to return when syncing.
-This will be replaced by a filter API in a later release.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Access token</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">str</p>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">MatrixRequestError</span></code></p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="matrix_client.client.MatrixClient.logout">
-<code class="descname">logout</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.logout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.logout" title="Permalink to this definition">¶</a></dt>
-<dd><p>Logout from the homeserver.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="matrix_client.client.MatrixClient.register_with_password">
-<code class="descname">register_with_password</code><span class="sig-paren">(</span><em>username</em>, <em>password</em>, <em>limit=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.register_with_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.register_with_password" title="Permalink to this definition">¶</a></dt>
-<dd><p>Register for a new account on this HS.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>username</strong> (<em>str</em>) &#8211; Account username</li>
-<li><strong>password</strong> (<em>str</em>) &#8211; Account password</li>
-<li><strong>limit</strong> (<em>int</em>) &#8211; Deprecated. How many messages to return when syncing.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Access Token</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">str</p>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">MatrixRequestError</span></code></p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="matrix_client.client.MatrixClient.remove_ephemeral_listener">
-<code class="descname">remove_ephemeral_listener</code><span class="sig-paren">(</span><em>uid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.remove_ephemeral_listener"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.remove_ephemeral_listener" title="Permalink to this definition">¶</a></dt>
+<dt id="matrix_client.room.Room.remove_ephemeral_listener">
+<code class="descname">remove_ephemeral_listener</code><span class="sig-paren">(</span><em>uid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.remove_ephemeral_listener"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.remove_ephemeral_listener" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove ephemeral listener with given uid.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -475,8 +403,8 @@ This will be replaced by a filter API in a later release.</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="matrix_client.client.MatrixClient.remove_listener">
-<code class="descname">remove_listener</code><span class="sig-paren">(</span><em>uid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.remove_listener"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.remove_listener" title="Permalink to this definition">¶</a></dt>
+<dt id="matrix_client.room.Room.remove_listener">
+<code class="descname">remove_listener</code><span class="sig-paren">(</span><em>uid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.remove_listener"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.remove_listener" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove listener with given uid.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -489,74 +417,211 @@ This will be replaced by a filter API in a later release.</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="matrix_client.client.MatrixClient.remove_room_alias">
-<code class="descname">remove_room_alias</code><span class="sig-paren">(</span><em>room_alias</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.remove_room_alias"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.remove_room_alias" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove mapping of an alias</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_alias</strong> (<em>str</em>) &#8211; The alias to be removed.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True if the alias is removed, False otherwise.</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="matrix_client.client.MatrixClient.set_sync_token">
-<code class="descname">set_sync_token</code><span class="sig-paren">(</span><em>token</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.set_sync_token"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.set_sync_token" title="Permalink to this definition">¶</a></dt>
+<dt id="matrix_client.room.Room.remove_tag">
+<code class="descname">remove_tag</code><span class="sig-paren">(</span><em>tag</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.remove_tag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.remove_tag" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="attribute">
-<dt id="matrix_client.client.MatrixClient.should_listen">
-<code class="descname">should_listen</code><em class="property"> = None</em><a class="headerlink" href="#matrix_client.client.MatrixClient.should_listen" title="Permalink to this definition">¶</a></dt>
-<dd><p>Time to wait before attempting a /sync request after failing.</p>
-</dd></dl>
-
 <dl class="method">
-<dt id="matrix_client.client.MatrixClient.start_listener_thread">
-<code class="descname">start_listener_thread</code><span class="sig-paren">(</span><em>timeout_ms=30000</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.start_listener_thread"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.start_listener_thread" title="Permalink to this definition">¶</a></dt>
-<dd><p>Start a listener thread to listen for events in the background.</p>
+<dt id="matrix_client.room.Room.send_audio">
+<code class="descname">send_audio</code><span class="sig-paren">(</span><em>url</em>, <em>name</em>, <em>**audioinfo</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.send_audio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.send_audio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a pre-uploaded audio to the room.
+See <a class="reference external" href="http://matrix.org/docs/spec/client_server/r0.2.0.html#m-audio">http://matrix.org/docs/spec/client_server/r0.2.0.html#m-audio</a>
+for audioinfo</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout</strong> (<em>int</em>) &#8211; How long to poll the Home Server for before
-retrying.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>url</strong> (<em>str</em>) &#8211; The mxc url of the audio.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; The filename of the audio.</li>
+<li><strong></strong><strong>(</strong><strong></strong><strong>)</strong><strong></strong> (<em>audioinfo</em>) &#8211; Extra information about the audio.</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="method">
-<dt id="matrix_client.client.MatrixClient.stop_listener_thread">
-<code class="descname">stop_listener_thread</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.stop_listener_thread"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.stop_listener_thread" title="Permalink to this definition">¶</a></dt>
-<dd><p>Stop listener thread running in the background</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="matrix_client.client.MatrixClient.upload">
-<code class="descname">upload</code><span class="sig-paren">(</span><em>content</em>, <em>content_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.upload"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.upload" title="Permalink to this definition">¶</a></dt>
-<dd><p>Upload content to the home server and recieve a MXC url.</p>
+<dt id="matrix_client.room.Room.send_emote">
+<code class="descname">send_emote</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.send_emote"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.send_emote" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a emote (/me style) message to the room.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>content</strong> (<em>bytes</em>) &#8211; The data of the content.</li>
-<li><strong>content_type</strong> (<em>str</em>) &#8211; The mimetype of the content.</li>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>text</strong> (<em>str</em>) &#8211; The message to send</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="matrix_client.room.Room.send_image">
+<code class="descname">send_image</code><span class="sig-paren">(</span><em>url</em>, <em>name</em>, <em>**imageinfo</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.send_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.send_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a pre-uploaded image to the room.
+See <a class="reference external" href="http://matrix.org/docs/spec/r0.0.1/client_server.html#m-image">http://matrix.org/docs/spec/r0.0.1/client_server.html#m-image</a>
+for imageinfo</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>url</strong> (<em>str</em>) &#8211; The mxc url of the image.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; The filename of the image.</li>
+<li><strong></strong><strong>(</strong><strong></strong><strong>)</strong><strong></strong> (<em>imageinfo</em>) &#8211; Extra information about the image.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
-<li><code class="xref py py-exc docutils literal"><span class="pre">MatrixUnexpectedResponse</span></code> &#8211; If the homeserver gave a strange response</li>
-<li><code class="xref py py-exc docutils literal"><span class="pre">MatrixRequestError</span></code> &#8211; If the upload failed for some reason.</li>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="matrix_client.room.Room.send_notice">
+<code class="descname">send_notice</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.send_notice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.send_notice" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="matrix_client.room.Room.send_state_event">
+<code class="descname">send_state_event</code><span class="sig-paren">(</span><em>event_type</em>, <em>content</em>, <em>state_key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.send_state_event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.send_state_event" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a state event to the room.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>event_type</strong> (<em>str</em>) &#8211; The type of event that you are sending.</li>
+<li><strong></strong><strong>(</strong><strong></strong><strong>)</strong><strong></strong> (<em>content</em>) &#8211; An object with the content of the message.</li>
+<li><strong>state_key</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; A unique key to identify the state.</li>
 </ul>
 </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="matrix_client.room.Room.send_text">
+<code class="descname">send_text</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.send_text"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.send_text" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a plain text message to the room.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>text</strong> (<em>str</em>) &#8211; The message to send</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="matrix_client.room.Room.send_video">
+<code class="descname">send_video</code><span class="sig-paren">(</span><em>url</em>, <em>name</em>, <em>**videoinfo</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.send_video"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.send_video" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a pre-uploaded video to the room.
+See <a class="reference external" href="http://matrix.org/docs/spec/client_server/r0.2.0.html#m-video">http://matrix.org/docs/spec/client_server/r0.2.0.html#m-video</a>
+for videoinfo</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>url</strong> (<em>str</em>) &#8211; The mxc url of the video.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; The filename of the video.</li>
+<li><strong></strong><strong>(</strong><strong></strong><strong>)</strong><strong></strong> (<em>videoinfo</em>) &#8211; Extra information about the video.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="matrix_client.room.Room.set_account_data">
+<code class="descname">set_account_data</code><span class="sig-paren">(</span><em>type</em>, <em>account_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.set_account_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.set_account_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="matrix_client.room.Room.set_room_name">
+<code class="descname">set_room_name</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.set_room_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.set_room_name" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Set room name</dt>
+<dd>name (str): The new name for the room</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the name changed, False if not</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">boolean</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="matrix_client.room.Room.set_room_topic">
+<code class="descname">set_room_topic</code><span class="sig-paren">(</span><em>topic</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.set_room_topic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.set_room_topic" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Set room topic</dt>
+<dd>topic (str): The new topic for the room</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the topic changed, False if not</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">boolean</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="matrix_client.room.Room.update_aliases">
+<code class="descname">update_aliases</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.update_aliases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.update_aliases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get aliases information from room state</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the aliases changed, False if not</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">boolean</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="matrix_client.room.Room.update_room_name">
+<code class="descname">update_room_name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.update_room_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.update_room_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get room name</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the room name changed, False if not</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">boolean</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="matrix_client.room.Room.update_room_topic">
+<code class="descname">update_room_topic</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.update_room_topic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.update_room_topic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get room topic</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the topic changed, False if not</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">boolean</td>
 </tr>
 </tbody>
 </table>
@@ -565,8 +630,76 @@ retrying.</td>
 </dd></dl>
 
 </div>
+<div class="section" id="module-matrix_client.user">
+<span id="user"></span><h2>User<a class="headerlink" href="#module-matrix_client.user" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="matrix_client.user.User">
+<em class="property">class </em><code class="descclassname">matrix_client.user.</code><code class="descname">User</code><span class="sig-paren">(</span><em>api</em>, <em>user_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/user.html#User"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.user.User" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>The User class can be used to call user specific functions.</p>
+<dl class="method">
+<dt id="matrix_client.user.User.get_avatar_url">
+<code class="descname">get_avatar_url</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/user.html#User.get_avatar_url"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.user.User.get_avatar_url" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="matrix_client.user.User.get_display_name">
+<code class="descname">get_display_name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/user.html#User.get_display_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.user.User.get_display_name" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Get this users display name.</dt>
+<dd>See also get_friendly_name()</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Display Name</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="matrix_client.user.User.get_friendly_name">
+<code class="descname">get_friendly_name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/user.html#User.get_friendly_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.user.User.get_friendly_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="matrix_client.user.User.set_avatar_url">
+<code class="descname">set_avatar_url</code><span class="sig-paren">(</span><em>avatar_url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/user.html#User.set_avatar_url"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.user.User.set_avatar_url" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set this users avatar.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>avatar_url</strong> (<em>str</em>) &#8211; mxc url from previously uploaded</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="matrix_client.user.User.set_display_name">
+<code class="descname">set_display_name</code><span class="sig-paren">(</span><em>display_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/user.html#User.set_display_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.user.User.set_display_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set this users display name.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>display_name</strong> (<em>str</em>) &#8211; Display Name</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
 <div class="section" id="module-matrix_client.api">
-<span id="matrix-client-api"></span><h2>matrix_client.api<a class="headerlink" href="#module-matrix_client.api" title="Permalink to this headline">¶</a></h2>
+<span id="api"></span><h1>API<a class="headerlink" href="#module-matrix_client.api" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="matrix_client.api.MatrixHttpApi">
 <em class="property">class </em><code class="descclassname">matrix_client.api.</code><code class="descname">MatrixHttpApi</code><span class="sig-paren">(</span><em>base_url</em>, <em>token=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/api.html#MatrixHttpApi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.api.MatrixHttpApi" title="Permalink to this definition">¶</a></dt>
@@ -1067,7 +1200,6 @@ Defaults to false.</li>
 </dd></dl>
 
 </div>
-</div>
 
 
            </div>
@@ -1082,7 +1214,7 @@ Defaults to false.</li>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2016, matrix.org.
+        &copy; Copyright 2017, matrix.org.
 
     </p>
   </div>
