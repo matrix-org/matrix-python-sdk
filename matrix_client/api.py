@@ -686,7 +686,7 @@ class MatrixHttpApi(object):
             device_id (str): (Optional) The device_id to upload keys for.
         """
         if device_id:
-            path = "/keys/upload/%s" % urllib.parse.quote(device_id)
+            path = "/keys/upload/%s" % quote(device_id)
         else:
             path = "/keys/upload"
         return self._send(
