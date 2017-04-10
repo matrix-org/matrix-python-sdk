@@ -68,6 +68,6 @@ You can either install the SDK, or run the sample like this:
 Building the Documentation
 ==========================
 
-The documentation can be built by installing ``sphinx`` and ``sphinx_rtd_theme``.
+The documentation can be built by installing ``sphinx``, ``sphinx_rtd_theme`` and ``sphinxcontrib-napoleon`` from ``pip``.
 
-Simple run ``make`` inside ``docs`` which will list the avaliable output formats.
+Simple run ``make html`` inside ``docs`` which will list the avaliable output formats.
