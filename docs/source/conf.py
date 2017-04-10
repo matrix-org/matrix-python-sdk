@@ -57,7 +57,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Matrix Python SDK'
-copyright = '2016, matrix.org'
+copyright = '2017, matrix.org'
 author = 'matrix.org'
 
 
