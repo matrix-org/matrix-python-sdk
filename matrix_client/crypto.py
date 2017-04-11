@@ -60,6 +60,45 @@ class OlmSession(olm.Session):
         state["session_buff"] = self.pickle(self._pickle_key)
         return state
 
+class OlmGroupSession(olm.InboundGroupSession):
+    def __init__(self,
+                 rotation_period_msgs=100,
+                 rotation_period_ms=7 * 24 * 60 * 60 * 1000,
+                 pickle_key=DEFAULT_PICKLE_KEY):
+        self._pickle_key = pickle_key.encode('utf-8')
+        self.outbound_session = olm.OutboundGroupSession()
+        self.inbound_session = olm.InboundGroupSession()
+
+    def __setstate__(self, state):
+        session_buff = state.pop("session_buff")
+        # pickle does not call __init__ but we need the underlying Olm.Session
+        # to create a new buffer.
+        self.__init__()
+        self.unpickle(self._pickle_key, session_buff)
+
+    def __getstate__(self):
+        state= {key: val for key, val in self.__dict__.items() if key not in ["buf", "ptr", "_pickle_key"]}
+        state["session_buff"] = self.pickle(self._pickle_key)
+        return state
+
+    def needsRotation(self):
+        session_lifetime = time.time() - self.creation_time
+        if self.outbound_session.message_index() >= self.rotation_period_msgs or session_lifetime >= self.rotation_period_time:
+            return True
+        return False
+
+    def share_group_session_key_with_devices(self, room_id, from_index=0):
+        payload = {
+            'type': "m.room_key",
+            'content': {
+                'algorithm': MEGOLM_ALGORITHM,
+                'room_id': room_id,
+                'session_id': self.inbound_session.session_id().decode('utf-8'),
+                'session_key': self.inbound_session.export_session(from_index).decode('utf-8'),
+                'chain_index': from_index,
+            },
+        }
+
 class OlmDevice(object):
     def __init__(self, api, user_id, device_id,
                  pickle_key=DEFAULT_PICKLE_KEY,
@@ -108,7 +147,10 @@ class OlmDevice(object):
                 sender_key.encode("utf-8"),
                 encrypted_msg.encode("utf-8")
             )
-            clear_data = inbound_session.decrypt(encrypted_msg_type, encrypted_msg)
+            clear_data = inbound_session.decrypt(
+                encrypted_msg_type,
+                encrypted_msg.encode('utf-8')
+            )
         clear_data = json.loads(clear_data.decode("utf-8"))
         assert(sender == clear_data.get("sender", ""))
         assert(event["room_id"] == clear_data.get("room_id", ""))
@@ -126,6 +168,16 @@ class OlmDevice(object):
         event["clear_data"] = clear_data
         return event
 
+    def new_inbound_group_session(self, room_key_event):
+        inbound_group_session = OlmInboundGroupSession()
+        inbound_group_session.init(room_key_event["content"]["session_key"].encode('utf-8'))
+        self.add_session(
+            room_key_event["sender"],
+            room_key_event["sender_device"],
+            session,
+            "megolm_inbound"
+        )
+        return inbound_group_session
 
     def new_inbound_session(self, user_id, user_key):
         user_device = self.get_device_for_user_key(user_id, user_key)
