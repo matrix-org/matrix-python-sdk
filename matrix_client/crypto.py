@@ -8,7 +8,7 @@ import olm
 
 from .client import MatrixClient
 
-SUPPORTED_ALGORITHMS = ["m.olm.curve25519-aes-sha256"]
+SUPPORTED_ALGORITHMS = ["m.olm.curve25519-aes-sha256", "m.megolm.v1.aes-sha2"]
 DEFAULT_PICKLE_KEY = "DEFAULT_PICKLE_KEY"
 OLM_ALGORITHM = "m.olm.v1.curve25519-aes-sha2"
 # Not Supported at the moment
@@ -60,14 +60,15 @@ class OlmSession(olm.Session):
         state["session_buff"] = self.pickle(self._pickle_key)
         return state
 
-class OlmGroupSession(olm.InboundGroupSession):
+class OlmInboundGroupSession(olm.InboundGroupSession):
     def __init__(self,
                  rotation_period_msgs=100,
                  rotation_period_ms=7 * 24 * 60 * 60 * 1000,
                  pickle_key=DEFAULT_PICKLE_KEY):
+        super(OlmInboundGroupSession, self).__init__()
+        self._rotation_period_msgs = rotation_period_msgs
+        self._rotation_period_ms = rotation_period_ms
         self._pickle_key = pickle_key.encode('utf-8')
-        self.outbound_session = olm.OutboundGroupSession()
-        self.inbound_session = olm.InboundGroupSession()
 
     def __setstate__(self, state):
         session_buff = state.pop("session_buff")
@@ -81,23 +82,41 @@ class OlmGroupSession(olm.InboundGroupSession):
         state["session_buff"] = self.pickle(self._pickle_key)
         return state
 
-    def needsRotation(self):
+class OlmOutboundGroupSession(olm.OutboundGroupSession):
+    def __init__(self,
+                 room_id,
+                 rotation_period_msgs=100,
+                 rotation_period_ms=7 * 24 * 60 * 60 * 1000,
+                 pickle_key=DEFAULT_PICKLE_KEY):
+        super(OlmOutboundGroupSession, self).__init__()
+        self._room_id = room_id
+        self._rotation_period_msgs = rotation_period_msgs
+        self._rotation_period_ms = rotation_period_ms
+        self._pickle_key = pickle_key.encode('utf-8')
+        self.shared_with = set()
+        self.creation_time = time.time()
+
+    @property
+    def room_id(self):
+        return self._room_id
+
+    def __setstate__(self, state):
+        session_buff = state.pop("session_buff")
+        # pickle does not call __init__ but we need the underlying Olm.Session
+        # to create a new buffer.
+        self.__init__()
+        self.unpickle(self._pickle_key, session_buff)
+
+    def __getstate__(self):
+        state= {key: val for key, val in self.__dict__.items() if key not in ["buf", "ptr", "_pickle_key"]}
+        state["session_buff"] = self.pickle(self._pickle_key)
+        return state
+
+    def needs_rotation(self):
         session_lifetime = time.time() - self.creation_time
         if self.outbound_session.message_index() >= self.rotation_period_msgs or session_lifetime >= self.rotation_period_time:
             return True
         return False
-
-    def share_group_session_key_with_devices(self, room_id, from_index=0):
-        payload = {
-            'type': "m.room_key",
-            'content': {
-                'algorithm': MEGOLM_ALGORITHM,
-                'room_id': room_id,
-                'session_id': self.inbound_session.session_id().decode('utf-8'),
-                'session_key': self.inbound_session.export_session(from_index).decode('utf-8'),
-                'chain_index': from_index,
-            },
-        }
 
 class OlmDevice(object):
     def __init__(self, api, user_id, device_id,
@@ -109,6 +128,7 @@ class OlmDevice(object):
         self._device_id = device_id
         self._pickle_key = pickle_key.encode("utf-8")
         self.sessions = {}
+        self.group_sessions = {}
         self.device_keys = {}
         self.persistance = persistance
         self.olm_account = olm_account
@@ -118,7 +138,123 @@ class OlmDevice(object):
         if self.persistance:
             self.persist_olm_device()
 
-    def process_event(self, event):
+    def get_group_session(self, room_id, type):
+        try:
+            return list(self.group_sessions[room_id][type].values())[0]
+        except(KeyError, IndexError):
+            return
+
+    def get_user_devices_in_room(self, room):
+        members = room.get_joined_members()
+        device_keys = self.api.query_keys({user_id: [] for user_id in members.keys()})["device_keys"]
+        for user_id, user_device_keys in device_keys.items():
+            self.device_keys[user_id] = user_device_keys
+        if self.persistance:
+            self.persist_olm_device()
+        return device_keys
+
+    def share_group_session_key_with_devices(self, outbound_group_session, user_devices_for_key_share):
+        message_index = outbound_group_session.message_index()
+        session_key = outbound_group_session.session_key().decode('utf-8')
+        session_id = outbound_group_session.session_id().decode('utf-8')
+        # Ensure an outbound OlmSession exists for each user
+        outbound_sessions = []
+        for user_id, device_ids in user_devices_for_key_share.items():
+            user_outbound_sessions = self.ensure_outbound_sessions_for_user(user_id, device_ids=device_ids)
+            outbound_sessions.extend(user_outbound_sessions)
+
+        key_share_body = {
+            'sender': self.user_id,
+            'type': "m.room_key",
+            'content': {
+                'algorithm': MEGOLM_ALGORITHM,
+                'room_id': outbound_group_session.room_id,
+                'session_id': session_id,
+                'session_key': session_key,
+                'chain_index': message_index,
+            },
+        }
+        messages = {}
+        sender_key = self.olm_account.identity_keys()["curve25519"]
+        shared_with = []
+        for device_sessions in outbound_sessions:
+            # TODO same behavior as riot-web but improve paradigm for session selection
+            session = list(device_sessions.values())[0]
+            # Fill in the user / session specific info
+            key_share_body['recipient'] = session.to_user_id
+            key_share_body['recipient_keys'] = { "ed25519": session.to_ed25519_key }
+            key_share_body_raw = json.dumps(key_share_body).encode('utf-8')
+            encrypted_msg_type, encrypted_msg  = session.encrypt(key_share_body_raw)
+            ciphertext_body = {
+                session.to_curve25519_key: {
+                    "body": encrypted_msg.decode("utf-8"),
+                    "type": encrypted_msg_type
+                }
+            }
+            user_device_content = {
+                'algorithm': OLM_ALGORITHM,
+                'ciphertext': ciphertext_body,
+                'sender_key': sender_key
+            }
+            if session.to_user_id not in messages:
+                messages[session.to_user_id] = {}
+            messages[session.to_user_id][session.to_device_id] = user_device_content
+            shared_with.append(session.to_device_id)
+
+        self.api.send_to_devices("m.room.encrypted", {'messages': messages})
+        # We assume succesful PUT to synapse is a succesful share, but this
+        # could be improved.
+        for device_id in shared_with:
+            outbound_group_session.shared_with.add(device_id)
+
+    def new_outbound_group_session(self, room_id):
+        outbound_group_session = OlmOutboundGroupSession(room_id)
+        session_id = outbound_group_session.session_id().decode('utf-8')
+        if room_id not in self.group_sessions:
+            self.group_sessions[room_id] = {}
+        if 'outbound' not in self.group_sessions[room_id]:
+            self.group_sessions[room_id]['outbound'] = {}
+        self.group_sessions[room_id]['outbound'][session_id] = outbound_group_session
+        if self.persistance:
+            self.persist_olm_device()
+        return outbound_group_session
+
+    def ensure_outbound_group_session(self, room):
+        # Get a list of user_ids->devices in room
+        # TODO (filter list of devices by <verified> or other optional param
+        # For each device if the group_session has not been shared with it
+        # Or if the serssion has been rotated
+        # Send an "m.room_key" via. Olm to share the group session_key
+        user_devices_in_room = self.get_user_devices_in_room(room)
+        outbound_group_session = self.get_group_session(room.room_id, 'outbound')
+        if not outbound_group_session or outbound_group_session.needs_rotation():
+            outbound_group_session = self.new_outbound_group_session(room.room_id)
+            user_devices_for_key_share = { user_id: list(devices.keys()) for user_id, devices in user_devices_in_room.items() }
+        else:
+            user_devices_for_key_share = {}
+            for user_id, devices in user_devices_in_room.items():
+                devices_need_key = [device_id for device_id in devices.keys() if device_id not in outbound_group_session.shared_with]
+                if devices_need_share:
+                    user_devices_for_key_share[user_id] = devices_need_key
+        self.share_group_session_key_with_devices(outbound_group_session, user_devices_for_key_share)
+        return outbound_group_session
+
+    def process_megolm_encrypted(self, room_id, event):
+        if event.get("type", "") != "m.room.encrypted":
+            return
+        content = event["content"]
+        if content.get('algorithm', '') != MEGOLM_ALGORITHM:
+            return
+        inbound_session = self.get_group_session(room_id, 'inbound')
+        if not inbound_session:
+            return
+        # TODO msg_idx is returning cint rather than int fix upstream
+        clear_data_raw, _msg_idx = inbound_session.decrypt(content['ciphertext'].encode('utf-8'))
+        clear_data = json.loads(clear_data_raw.decode('utf-8'))
+        event['clear_data'] = clear_data
+        return event
+
+    def process_olm_encrypted(self, event):
         if event.get("type", "") != "m.room.encrypted":
             return
         content = event["content"]
@@ -171,13 +307,42 @@ class OlmDevice(object):
     def new_inbound_group_session(self, room_key_event):
         inbound_group_session = OlmInboundGroupSession()
         inbound_group_session.init(room_key_event["content"]["session_key"].encode('utf-8'))
-        self.add_session(
-            room_key_event["sender"],
-            room_key_event["sender_device"],
-            session,
-            "megolm_inbound"
-        )
+        room_id = room_key_event["content"]["room_id"]
+        if not room_id in self.group_sessions:
+            self.group_sessions[room_id] = {}
+        if not 'inbound' in self.group_sessions[room_id]:
+             self.group_sessions[room_id]['inbound'] = {}
+        session_id = inbound_group_session.session_id().decode('utf-8')
+        self.group_sessions[room_id]['inbound'][session_id] = inbound_group_session
+        if self.persistance:
+            self.persist_olm_device()
         return inbound_group_session
+
+    @staticmethod
+    def prepare_group_message_body(room_id, plaintext):
+        return json.dumps({
+            "room_id":room_id,
+            "type":"m.room.message",
+            "content": {
+                "msgtype":"m.text",
+                "body": plaintext
+            }
+        }).encode('utf-8')
+
+    def send_megolm_encrypted_message(self, room, plaintext):
+        # TODO we should send claimed keys with the messsage
+        # ref: https://github.com/vector-im/vector-web/issues/2215
+        outbound_group_session = self.ensure_outbound_group_session(room)
+        message_body = self.prepare_group_message_body(room.room_id, plaintext)
+        ciphertext = outbound_group_session.encrypt(message_body).decode('utf-8')
+        content = {
+            "algorithm": MEGOLM_ALGORITHM,
+            "ciphertext": ciphertext,
+            'device_id': self.device_id,
+            'sender_key': self.olm_account.identity_keys()['curve25519'],
+            'session_id': outbound_group_session.session_id().decode('utf-8')
+        }
+        return self.api.send_message_event(room.room_id, "m.room.encrypted", content)
 
     def new_inbound_session(self, user_id, user_key):
         user_device = self.get_device_for_user_key(user_id, user_key)
@@ -315,13 +480,14 @@ class OlmDevice(object):
                 continue
             device_keys_to_engage[device_id] = device_info["keys"]["curve25519:%s" % device_id]
         if not device_keys_to_engage:
-            return self.sessions[user_id]
+            return [device_sessions['outbound'] for device_sessions in self.sessions[user_id].values()]
 
         key_request = self.gen_key_request(user_id, device_keys_to_engage.keys())
         one_time_keys = self.api.claim_keys(key_request)["one_time_keys"]
-        if user_id not in one_time_keys:
+        try:
+            one_time_keys = one_time_keys[user_id]
+        except KeyError:
             raise Exception("Failed to obtain one_time_keys for user %s" %user_id)
-        one_time_keys = one_time_keys[user_id]
         for device_id, info in one_time_keys.items():
             identity_key = device_keys_to_engage[device_id]
             # process signed_curve as well
@@ -330,13 +496,16 @@ class OlmDevice(object):
                 one_time_key = info[[key for key in info.keys() if key.startswith("signed_curve25519")][0]]["key"]
             else:
                 one_time_key = info
-                self.new_outbound_session(
-                    user_id,
-                    user_device_keys[device_id],
-                    identity_key,
-                    one_time_key
-                )
-        return self.sessions[user_id]
+            self.new_outbound_session(
+                user_id,
+                user_device_keys[device_id],
+                identity_key,
+                one_time_key
+            )
+        if device_ids:
+            return [self.sessions[user_id][device_id]['outbound'] for device_id in device_ids]
+        else:
+            return [device_sessions['outbound'] for device_sessions in self.sessions[user_id].values()]
 
     def encrypt_for_device(self, user_id, device_id, content):
         outbound_session = self.sessions[user_id][device_id]["outbound"]
