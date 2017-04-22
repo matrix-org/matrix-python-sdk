@@ -97,20 +97,15 @@ class MatrixHttpApi(object):
         self.validate_cert = valid
         return
 
-    def register(self, login_type, **kwargs):
+    def register(self, content={}, query_params={}):
         """Performs /register.
 
         Args:
-            login_type(str): The value for the 'type' key.
-            **kwargs: Additional key/values to add to the JSON submitted.
+            content(dict): The request payload. Should include "type" such as "m.login.password" for all non-guest registrations.
+            query_params(dict): The query params for the request. Specify "kind": "guest" to register a guest account.
         """
-        content = {
-            "type": login_type
-        }
-        for key in kwargs:
-            content[key] = kwargs[key]
 
-        return self._send("POST", "/register", content, api_path=MATRIX_V2_API_PATH)
+        return self._send("POST", "/register", content=content, query_params=query_params, api_path=MATRIX_V2_API_PATH)
 
     def login(self, login_type, **kwargs):
         """Perform /login.
