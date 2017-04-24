@@ -5,6 +5,7 @@ class MatrixError(Exception):
 
 class MatrixUnexpectedResponse(MatrixError):
     """The home server gave an unexpected response. """
+
     def __init__(self, content=""):
         super(MatrixError, self).__init__(content)
         self.content = content
@@ -17,3 +18,11 @@ class MatrixRequestError(MatrixError):
         super(MatrixRequestError, self).__init__("%d: %s" % (code, content))
         self.code = code
         self.content = content
+
+
+class MatrixHttpLibError(MatrixError):
+    """The library used for http requests raised an exception."""
+
+    def __init__(self, msg, original_exception):
+        super(MatrixHttpLibError, self).__init__(msg + ": {}".format(original_exception))
+        self.original_exception = original_exception

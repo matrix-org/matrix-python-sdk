@@ -16,7 +16,7 @@
 import json
 import requests
 from time import time, sleep
-from .errors import MatrixError, MatrixRequestError
+from .errors import MatrixError, MatrixRequestError, MatrixHttpLibError
 
 try:
     from urllib import quote
@@ -585,13 +585,18 @@ class MatrixHttpApi(object):
 
         response = None
         while True:
-            response = requests.request(
-                method, endpoint,
-                params=query_params,
-                data=content,
-                headers=headers,
-                verify=self.validate_cert
-            )
+            try:
+                response = requests.request(
+                    method, endpoint,
+                    params=query_params,
+                    data=content,
+                    headers=headers,
+                    verify=self.validate_cert
+                )
+            except requests.exceptions.RequestException as e:
+                raise MatrixHttpLibError(
+                    "Something went wrong in sending the request", e
+                )
 
             if response.status_code == 429:
                 sleep(response.json()['retry_after_ms'] / 1000)
