@@ -357,7 +357,7 @@ class MatrixClient(object):
         Args:
             timeout (int): How long to poll the Home Server for before
                retrying.
-            exception_handler (callback function): Optional exception handler
+            exception_handler (func(exception)): Optional exception handler
                function which can be used to handle exceptions in the caller
                thread.
         """
