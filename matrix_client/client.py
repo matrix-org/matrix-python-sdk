@@ -327,6 +327,9 @@ class MatrixClient(object):
         Args:
             timeout_ms (int): How long to poll the Home Server for before
                retrying.
+            exception_handler (func(exception)): Optional exception handler
+               function which can be used to handle exceptions in the caller
+               thread.
         """
         bad_sync_timeout = 5000
         self.should_listen = True
