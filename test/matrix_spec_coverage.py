@@ -75,7 +75,7 @@ class ApiGuide:
     def add_called_missing(self, error,request):
         self.missing.append((error, request.url, request.method, request.body))
 
-    def summary(self):
+    def print_summary(self):
         print("Accessed: %i out of %i endpoints. %0.2f%% Coverage." %
             (len(self.called), self.total_endpoints, len(self.called)*100 / self.total_endpoints)
         )

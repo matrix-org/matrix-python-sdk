@@ -1,5 +1,7 @@
 import pytest
 responses = pytest.responses_with_api_guide
+if not responses:
+    import responses
 from matrix_client import client
 
 class TestTagsApi:
