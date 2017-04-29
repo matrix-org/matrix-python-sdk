@@ -525,7 +525,7 @@ class MatrixHttpApi(object):
                           api_path=MATRIX_V2_API_PATH)
 
     def _send(self, method, path, content=None, query_params={}, headers={},
-              api_path="/_matrix/client/api/v1"):
+              api_path=MATRIX_V2_API_PATH):
         method = method.upper()
         if method not in ["GET", "PUT", "DELETE", "POST"]:
             raise MatrixError("Unsupported HTTP method: %s" % method)
