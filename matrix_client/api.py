@@ -24,6 +24,7 @@ except ImportError:
     from urllib.parse import quote
 
 MATRIX_V2_API_PATH = "/_matrix/client/r0"
+MATRIX_UNSTABLE_API_PATH = "/_matrix/client/unstable"
 
 
 class MatrixHttpApi(object):
@@ -132,6 +133,7 @@ class MatrixHttpApi(object):
         """
         return self._send("POST", "/logout", api_path=MATRIX_V2_API_PATH)
 
+    # TODO Update This
     def create_room(self, alias=None, is_public=False, invitees=()):
         """Perform /createRoom.
 
@@ -641,3 +643,138 @@ class MatrixHttpApi(object):
         """
         return self._send("GET", "/rooms/{}/members".format(quote(room_id)),
                           api_path=MATRIX_V2_API_PATH)
+
+    def get_devices(self):
+        """Retrieves information for all devices for the current user.
+        """
+        return self._send("GET", "/devices",
+                          api_path=MATRIX_UNSTABLE_API_PATH)
+
+    def get_device(self, device_id):
+        """Retrieves information on a single device, by device id.
+        """
+        return self._send("GET", "/devices/%s" % device_id,
+                          api_path=MATRIX_UNSTABLE_API_PATH)
+
+    def update_device_info(self, device_id, display_name):
+        """Update the display name of a device.
+        Args:
+            device_id (str): The device ID of the device to update.
+            display_name (str): New display name for the device.
+        """
+        content = {
+            "display_name": display_name
+        }
+        return self._send(
+            "PUT",
+            "/devices/%s" % device_id,
+            content=content,
+            api_path=MATRIX_UNSTABLE_API_PATH)
+
+    def delete_device(self, auth_body, device_id):
+        """Deletes the given device, and invalidates any access token assoicated with it.
+        Requires Auth.
+        Args:
+            auth_body (dict): Authentication params.
+            device_id (str): The device ID of the device to delete.
+        """
+        content = {
+            "auth": auth_body
+        }
+        return self._send(
+            "DELETE",
+            "/devices/%s" % device_id,
+            content=content,
+            api_path=MATRIX_UNSTABLE_API_PATH)
+
+    def delete_devices(self, auth_body, devices):
+        """Bulk deletion of devices.
+        Requires Auth.
+        Args:
+            auth_body (dict): Authentication params.
+            devices (list): List of device ID"s to delete.
+        """
+        content = {
+            "auth": auth_body,
+            "devices": devices
+        }
+        return self._send(
+            "POST",
+            "/delete_devices",
+            content=content,
+            api_path=MATRIX_UNSTABLE_API_PATH)
+
+    def upload_keys(self, content, device_id=None):
+        """Publishes end-to-end encryption keys for the device.
+
+        Args:
+            content (dict): Content of the post payload.
+            device_id (str): (Optional) The device_id to upload keys for.
+        """
+        if device_id:
+            path = "/keys/upload/%s" % quote(device_id)
+        else:
+            path = "/keys/upload"
+        return self._send(
+            "POST",
+            path,
+            content=content,
+            api_path=MATRIX_UNSTABLE_API_PATH
+        )
+
+    def query_user_keys(self, user_id):
+        return self.query_keys({user_id: []})
+
+    def query_keys(self, user_devices):
+        """Query HS for public keys by user and optionally device.
+        If [<device_ids>] are sent only public keys for those devices are returned.
+        Otherwise all known public keys are returned.
+        Args:
+            user_devices (dict): Should be formatted as <user_id>: [<device_ids>].
+        """
+        return self._send(
+            "POST",
+            "/keys/query",
+            content={"device_keys": user_devices},
+            api_path=MATRIX_UNSTABLE_API_PATH)
+
+    def claim_key(self, user_id, device_id, format="curve25519"):
+        return self.claim_keys({ user_id: { device_id: format }})
+
+    def claim_keys(self, key_request):
+        """Claims one-time keys for use in pre-key messages.
+        Args:
+            key_request (dict): format should be <user_id>: { <device_id>: <algorithm> }.
+        """
+        content = {
+            "timeout": 10000, # who cares?
+            "one_time_keys": key_request
+        }
+        return self._send("POST",
+            "/keys/claim",
+            content=content,
+            api_path=MATRIX_UNSTABLE_API_PATH)
+
+    def send_to_devices(self, event_type, content):
+        '''
+        Args:
+            event_type (str): The event_type of the event.
+            messages (dict): {<str>: {<str>: <event_content>}}
+
+        The messages to send. A map from user ID, to a map from device ID to message body. The device ID may also be *, meaning all known devices for the user.
+        example:
+        {
+          "messages": {
+            "@alice:example.com": {
+              "TLLBEANAAG": {
+                "example_content_key": "value"
+              }
+            }
+          }
+        }'''
+        self.txn_id = self.txn_id + 1
+        return self._send("PUT",
+            "/sendToDevice/%s/%s" % (event_type, self.txn_id),
+            content=content,
+            api_path=MATRIX_UNSTABLE_API_PATH,
+        )
