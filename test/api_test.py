@@ -1,5 +1,8 @@
 import responses
-from matrix_client import client
+from matrix_client import client, api
+import json
+import re
+from future.moves.urllib.parse import quote
 
 
 class TestTagsApi:
@@ -78,3 +81,41 @@ class TestUnbanApi:
         req = responses.calls[0].request
         assert req.url == unban_url
         assert req.method == 'POST'
+
+
+class TestASApi:
+    user = "@user:example.com"
+    url = "http://example.com"
+    api = api.MatrixASHttpAPI(user, url, token="foobar")
+
+    @responses.activate
+    def test_register(self):
+        register_url = self.url + "/_matrix/client/api/v1/register"
+        req_body = {"username": "user",
+                    "type": "m.login.application_service"}
+        responses.add(responses.POST, register_url, body="{}",status=200)
+
+        self.api.register()
+        req = responses.calls[0].request
+        assert req.url == register_url + "?access_token=foobar"
+        assert req.method == "POST"
+        assert json.loads(req.body) == req_body
+
+    @responses.activate
+    def test_send_message(self):
+        room = "!123:example.com"
+        quoted_room = quote(room)
+        msg_url_re = re.compile(self.url + "/_matrix/client/api/v1/rooms/" +
+                                quoted_room + "/send/m.room.message/[0-9]+")
+        req_body = {"msgtype": "m.text", "body": "Hello!"}
+        responses.add(responses.PUT, msg_url_re, body="{}", status=200)
+
+        self.api.send_message(room, "Hello!")
+        req = responses.calls[0].request
+        # Multiple parameters with no way of knowing order
+        main_req_url, params = req.url.split("?")
+        params_dict = dict([p.split("=") for p in params.split("&")])
+        assert msg_url_re.search(main_req_url)
+        assert req.method == "PUT"
+        assert json.loads(req.body) == req_body
+        assert params_dict == {"access_token": "foobar", "user_id": quote(self.user)}

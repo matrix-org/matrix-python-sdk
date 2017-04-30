@@ -641,3 +641,42 @@ class MatrixHttpApi(object):
         """
         return self._send("GET", "/rooms/{}/members".format(quote(room_id)),
                           api_path=MATRIX_V2_API_PATH)
+
+
+class MatrixASHttpAPI(MatrixHttpApi):
+    """Wraps methods of MatrixHttpApi to use AS identity assertion.
+
+    Usage:
+        matrixAS = MatrixASHttpAPI("@ex:matrix.org", "https://matrix.org", token="foobar")
+        response = matrixAS.sync()
+        response = matrixAS.send_message("!roomid:matrix.org", "Hello!")
+
+        matrixAS.user_id = "@ex2:matrix.org"
+        response = matrixAS.sync()
+    """
+
+    def __init__(self, user_id, *args, **kwargs):
+        """Construct and configure the HTTP API.
+
+        Args:
+            user_id (str): The desired user ID to act as.
+            *args: Arguments to pass to MatrixHttpApi's __init__ method.
+            **kwargs: Keyword arguments to pass to MatrixHttpApi's __init__ method.
+        """
+        # Runs the __init__method of MatrixHttpApi
+        super(MatrixASHttpAPI, self).__init__(*args, **kwargs)
+        self.user_id = user_id
+
+    def _send(self, *args, **kwargs):
+        if "query_params" not in kwargs:
+            kwargs["query_params"] = dict()
+        kwargs["query_params"]["user_id"] = self.user_id
+
+        super(MatrixASHttpAPI, self)._send(*args, **kwargs)
+
+    def register(self):
+        """Performs /register using AS admin permissions."""
+        content = {"username": self.user_id.strip("@").split(":")[0],
+                   "type": "m.login.application_service"}
+        return super(MatrixASHttpAPI, self)._send("POST", "/register", content,
+                                                  api_path=MATRIX_V2_API_PATH)
