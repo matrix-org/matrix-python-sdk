@@ -112,6 +112,23 @@ class MatrixClient(object):
     def set_user_id(self, user_id):
         self.user_id = user_id
 
+    def register_as_guest(self):
+        """ Register a guest account on this HS.
+        Note: HS must have guest registration enabled.
+        Returns:
+            str: Access Token
+        Raises:
+            MatrixRequestError
+        """
+        response = self.api.register(query_params={'kind': 'guest'})
+        self.user_id = response["user_id"]
+        self.token = response["access_token"]
+        self.hs = response["home_server"]
+        self.api.token = self.token
+        self.sync_filter = '{ "room": { "timeline" : { "limit" : 20 } } }'
+        self._sync()
+        return self.token
+
     def register_with_password(self, username, password, limit=1):
         """ Register for a new account on this HS.
 
@@ -127,7 +144,7 @@ class MatrixClient(object):
             MatrixRequestError
         """
         response = self.api.register(
-            "m.login.password", user=username, password=password
+            {'type': "m.login.password", 'user': username, 'password': password}
         )
         self.user_id = response["user_id"]
         self.token = response["access_token"]
