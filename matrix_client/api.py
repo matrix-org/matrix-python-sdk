@@ -595,7 +595,7 @@ class MatrixHttpApi(object):
                 )
             except requests.exceptions.RequestException as e:
                 raise MatrixHttpLibError(
-                    "Something went wrong in sending the request", e
+                    "Something went wrong in {} requesting {}".format(method, endpoint), e
                 )
 
             if response.status_code == 429:
