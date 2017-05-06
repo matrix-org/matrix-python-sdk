@@ -26,19 +26,14 @@ except ImportError:
 MATRIX_V2_API_PATH = "/_matrix/client/r0"
 
 
-class MatrixHttpApi(object):
-    """Contains all raw Matrix HTTP Client-Server API calls.
+class MatrixApi(object):
+    """Contains transport-agnostic Matrix Client-Server API calls.
 
-    Usage:
-        matrix = MatrixHttpApi("https://matrix.org", token="foobar")
-        response = matrix.sync()
-        response = matrix.send_message("!roomid:matrix.org", "Hello!")
-
-    For room and sync handling, consider using MatrixClient.
+    For usage, MatrixApi must be subclassed with a valid _send method.
     """
 
     def __init__(self, base_url, token=None, identity=None):
-        """Construct and configure the HTTP API.
+        """Construct and configure the API.
 
         Args:
             base_url(str): The home server URL e.g. 'http://localhost:8008'
@@ -524,45 +519,8 @@ class MatrixHttpApi(object):
                           filter_params,
                           api_path=MATRIX_V2_API_PATH)
 
-    def _send(self, method, path, content=None, query_params={}, headers={},
-              api_path="/_matrix/client/api/v1"):
-        method = method.upper()
-        if method not in ["GET", "PUT", "DELETE", "POST"]:
-            raise MatrixError("Unsupported HTTP method: %s" % method)
-
-        if "Content-Type" not in headers:
-            headers["Content-Type"] = "application/json"
-
-        query_params["access_token"] = self.token
-        if self.identity:
-            query_params["user_id"] = self.identity
-
-        endpoint = self.base_url + api_path + path
-
-        if headers["Content-Type"] == "application/json" and content is not None:
-            content = json.dumps(content)
-
-        response = None
-        while True:
-            response = requests.request(
-                method, endpoint,
-                params=query_params,
-                data=content,
-                headers=headers,
-                verify=self.validate_cert
-            )
-
-            if response.status_code == 429:
-                sleep(response.json()['retry_after_ms'] / 1000)
-            else:
-                break
-
-        if response.status_code < 200 or response.status_code >= 300:
-            raise MatrixRequestError(
-                code=response.status_code, content=response.text
-            )
-
-        return response.json()
+    def _send(self, *args, **kwargs):
+        raise NotImplementedError("MatrixApi must be subclassed by a transport class.")
 
     def media_upload(self, content, content_type):
         return self._send(
@@ -641,3 +599,55 @@ class MatrixHttpApi(object):
         """
         return self._send("GET", "/rooms/{}/members".format(quote(room_id)),
                           api_path=MATRIX_V2_API_PATH)
+
+
+class MatrixHttpApi(MatrixApi):
+    """Contains all Matrix Client-Server API calls with Http transport.
+
+    Usage:
+        matrix = MatrixHttpApi("https://matrix.org", token="foobar")
+        response = matrix.sync()
+        response = matrix.send_message("!roomid:matrix.org", "Hello!")
+
+    For room and sync handling, consider using MatrixClient.
+    """
+
+    def _send(self, method, path, content=None, query_params={}, headers={},
+              api_path="/_matrix/client/api/v1"):
+        method = method.upper()
+        if method not in ["GET", "PUT", "DELETE", "POST"]:
+            raise MatrixError("Unsupported HTTP method: %s" % method)
+
+        if "Content-Type" not in headers:
+            headers["Content-Type"] = "application/json"
+
+        query_params["access_token"] = self.token
+        if self.identity:
+            query_params["user_id"] = self.identity
+
+        endpoint = self.base_url + api_path + path
+
+        if headers["Content-Type"] == "application/json" and content is not None:
+            content = json.dumps(content)
+
+        response = None
+        while True:
+            response = requests.request(
+                method, endpoint,
+                params=query_params,
+                data=content,
+                headers=headers,
+                verify=self.validate_cert
+            )
+
+            if response.status_code == 429:
+                sleep(response.json()['retry_after_ms'] / 1000)
+            else:
+                break
+
+        if response.status_code < 200 or response.status_code >= 300:
+            raise MatrixRequestError(
+                code=response.status_code, content=response.text
+            )
+
+        return response.json()
