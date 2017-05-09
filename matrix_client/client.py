@@ -59,7 +59,8 @@ class MatrixClient(object):
 
     """
 
-    def __init__(self, base_url, token=None, user_id=None, valid_cert_check=True):
+    def __init__(self, base_url, token=None, user_id=None,
+                 valid_cert_check=True, sync_filter_limit=20):
         """ Create a new Matrix Client object.
 
         Args:
@@ -90,7 +91,8 @@ class MatrixClient(object):
         self.ephemeral_listeners = []
 
         self.sync_token = None
-        self.sync_filter = None
+        self.sync_filter = '{ "room": { "timeline" : { "limit" : %i } } }' \
+            % sync_filter_limit
         self.sync_thread = None
         self.should_listen = False
 
@@ -112,13 +114,23 @@ class MatrixClient(object):
     def set_user_id(self, user_id):
         self.user_id = user_id
 
-    def register_with_password(self, username, password, limit=1):
+    def register_as_guest(self):
+        """ Register a guest account on this HS.
+        Note: HS must have guest registration enabled.
+        Returns:
+            str: Access Token
+        Raises:
+            MatrixRequestError
+        """
+        response = self.api.register(kind='guest')
+        return self._post_registration(response)
+
+    def register_with_password(self, username, password):
         """ Register for a new account on this HS.
 
         Args:
             username (str): Account username
             password (str): Account password
-            limit (int): Deprecated. How many messages to return when syncing.
 
         Returns:
             str: Access Token
@@ -127,13 +139,19 @@ class MatrixClient(object):
             MatrixRequestError
         """
         response = self.api.register(
-            "m.login.password", user=username, password=password
+            {
+                "auth": {"type": "m.login.dummy"},
+                "username": username,
+                "password": password
+            }
         )
+        return self._post_registration(response)
+
+    def _post_registration(self, response):
         self.user_id = response["user_id"]
         self.token = response["access_token"]
         self.hs = response["home_server"]
         self.api.token = self.token
-        self.sync_filter = '{ "room": { "timeline" : { "limit" : %i } } }' % limit
         self._sync()
         return self.token
 
