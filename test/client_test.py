@@ -1,6 +1,11 @@
-from matrix_client.client import MatrixClient, Room, User
 import pytest
+import responses
+import json
+from unittest.mock import MagicMock
+from matrix_client.client import MatrixClient, Room, User
+from matrix_client.api import MATRIX_V2_API_PATH
 
+HOSTNAME = "http://example.com"
 
 def test_create_client():
     MatrixClient("http://example.com")
@@ -137,3 +142,26 @@ def test_remove_listener():
             break
 
     assert not found_listener, "listener was not removed properly"
+
+class TestClientRegister:
+    cli = MatrixClient(HOSTNAME)
+
+    @responses.activate
+    def test_register_as_guest(self):
+        cli = self.cli
+        def _sync(self):
+            self._sync_called = True
+        cli.__dict__[_sync.__name__] = _sync.__get__(cli, cli.__class__)
+        register_guest_url = HOSTNAME + MATRIX_V2_API_PATH + "/register"
+        response_body = json.dumps({
+            'access_token': 'EXAMPLE_ACCESS_TOKEN',
+            'device_id': 'guest_device',
+            'home_server': 'example.com',
+            'user_id': '@455:example.com'
+        })
+        responses.add(responses.POST, register_guest_url, body=response_body)
+        cli.register_as_guest()
+        assert cli.token == cli.api.token == 'EXAMPLE_ACCESS_TOKEN'
+        assert cli.hs == 'example.com'
+        assert cli.user_id == '@455:example.com'
+        assert cli._sync_called
