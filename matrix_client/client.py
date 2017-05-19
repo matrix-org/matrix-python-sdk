@@ -161,6 +161,27 @@ class MatrixClient(object):
         self.api.token = self.token
         return self.token
 
+    def login_with_jwt_no_sync(self, jwt):
+        """ Login to the homeserver using a JSON Web Token.
+
+        Args:
+            jwt (str): JWT
+
+        Returns:
+            str: Access token
+
+        Raises:
+            MatrixRequestError
+        """
+        response = self.api.login(
+            "m.login.jwt", token=jwt
+        )
+        self.user_id = response["user_id"]
+        self.token = response["access_token"]
+        self.hs = response["home_server"]
+        self.api.token = self.token
+        return self.token
+
     def login_with_password(self, username, password, limit=10):
         """ Login to the homeserver.
 
@@ -177,6 +198,27 @@ class MatrixClient(object):
             MatrixRequestError
         """
         token = self.login_with_password_no_sync(username, password)
+
+        """ Limit Filter """
+        self.sync_filter = '{ "room": { "timeline" : { "limit" : %i } } }' % limit
+        self._sync()
+        return token
+
+    def login_with_jwt(self, jwt, limit=10):
+        """ Login to the homeserver using a JSON Web Token.
+
+        Args:
+            token (str): JWT
+            limit (int): Deprecated. How many messages to return when syncing.
+                This will be replaced by a filter API in a later release.
+
+        Returns:
+            str: Access token
+
+        Raises:
+            MatrixRequestError
+        """
+        token = self.login_with_jwt_no_sync(jwt)
 
         """ Limit Filter """
         self.sync_filter = '{ "room": { "timeline" : { "limit" : %i } } }' % limit
