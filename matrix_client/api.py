@@ -592,7 +592,8 @@ class MatrixHttpApi(object):
             raise ValueError("Presence must be one of: online, offline, unavailable")
         if status_msg is not None:
             content = {"presence": presence}
-        content = {"status_msg": status_msg, "presence": presence}
+        else:
+            content = {"status_msg": status_msg, "presence": presence}
         self._send("PUT", "/presence/%s/status" % user_id, content)
 
     def get_presence_list(self, user_id):
