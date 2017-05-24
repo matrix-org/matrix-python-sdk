@@ -377,6 +377,13 @@ class MatrixHttpApi(object):
         """
         return self._send("POST", "/rooms/" + room_id + "/leave", {})
 
+    def forget_room(self, room_id):
+        """Perform POST /rooms/$room_id/forget
+        Args:
+            room_id(str): The room ID
+        """
+        return self._send("POST", "/rooms/" + room_id + "/forget", {})
+
     def invite_user(self, room_id, user_id):
         """Perform POST /rooms/$room_id/invite
         Args:
