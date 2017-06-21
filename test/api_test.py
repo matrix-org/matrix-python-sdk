@@ -77,4 +77,3 @@ class TestUnbanApi:
         req = responses.calls[0].request
         assert req.url == unban_url
         assert req.method == 'POST'
-

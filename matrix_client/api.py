@@ -97,20 +97,38 @@ class MatrixHttpApi(object):
         self.validate_cert = valid
         return
 
-    def register(self, login_type, **kwargs):
+    def register(self, content={}, kind='user'):
         """Performs /register.
 
         Args:
-            login_type(str): The value for the 'type' key.
-            **kwargs: Additional key/values to add to the JSON submitted.
-        """
-        content = {
-            "type": login_type
-        }
-        for key in kwargs:
-            content[key] = kwargs[key]
+            content(dict): The request payload.
+                Should be specified for all non-guest registrations.
 
-        return self._send("POST", "/register", content)
+                username(string): The local part of the desired Matrix ID.
+                    If omitted, the homeserver MUST generate a Matrix ID local part.
+
+                bind_email(boolean): If true, the server binds the email used for
+                    authentication to the Matrix ID with the ID Server.
+                    *Email Registration not currently supported*
+
+                password(string): Required. The desired password for the account.
+
+                auth(dict): Authentication Data
+                    session(string):  The value of the session key given by the
+                        homeserver.
+
+                    type(string):  Required. The login type that the client is attempting
+                        to complete. "m.login.dummy" is the only non-interactive type.
+
+            kind(str): Specify kind="guest" to register as guest.
+        """
+
+        return self._send(
+            "POST",
+            "/register",
+            content=content,
+            query_params={'kind': kind}
+        )
 
     def login(self, login_type, **kwargs):
         """Perform /login.
