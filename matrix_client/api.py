@@ -75,7 +75,7 @@ class MatrixHttpApi(object):
         """
 
         request = {
-            "timeout": timeout_ms
+            "timeout": timeout_ms/1000.0
         }
 
         if since:
