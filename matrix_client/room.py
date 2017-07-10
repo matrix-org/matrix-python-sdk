@@ -186,6 +186,21 @@ class Room(object):
         return self.client.api.send_content(self.room_id, url, name, "m.audio",
                                             extra_information=audioinfo)
 
+    def redact_message(self, event_id, reason=None):
+        """ Redacts the message with specified event_id in the room.
+        See https://matrix.org/docs/spec/r0.0.1/client_server.html#id112
+
+        Args:
+            event_id (str): The id of the event to be redacted.
+            reason (str): Optional. The reason provided for the redaction.
+        """
+        content = {}
+        if reason:
+            content['reason'] = reason
+        return self.client.api.send_redact_event(self.room_id, event_id,
+                content)
+
+
     def add_listener(self, callback, event_type=None):
         """ Add a callback handler for events going to this room.
 
