@@ -437,6 +437,8 @@ class MatrixClient(object):
 
         if etype == "m.room.name":
             current_room.name = state_event["content"].get("name", None)
+        elif etype == "m.room.canonical_alias":
+            current_room.canonical_alias = state_event["content"].get("alias")
         elif etype == "m.room.topic":
             current_room.topic = state_event["content"].get("topic", None)
         elif etype == "m.room.aliases":

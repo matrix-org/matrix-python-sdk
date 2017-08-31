@@ -1,4 +1,5 @@
 import re
+import collections
 from uuid import uuid4
 
 from .errors import MatrixRequestError
@@ -29,6 +30,7 @@ class Room(object):
         self.events = []
         self.event_history_limit = 20
         self.name = None
+        self.canonical_alias = None
         self.aliases = []
         self.topic = None
         self._prev_batch = None
@@ -53,6 +55,28 @@ class Room(object):
                 "avatar_url": avatar_url
             }
         )
+
+    @property
+    def display_name(self):
+        if self.name:
+            return self.name
+        elif self.canonical_alias:
+            return self.canonical_alias
+
+        members = self.get_joined_members()
+        # members without me
+        members = collections.OrderedDict({k: members[k] for k in members if
+                                           self.client.user_id != k})
+        first_two = list(members.values())[:2]
+        if len(first_two) == 1:
+            return first_two[0]["displayname"]
+        elif len(first_two) == 2:
+            return "{0} and {1}".format([x["displayname"] for x in
+                                         first_two])
+        elif len(first_two) > 2:
+            return "{0} and {1} others".format(
+                first_two[0]["displayname"],
+                first_two[1]["displayname"])
 
     def send_text(self, text):
         """ Send a plain text message to the room.
@@ -469,11 +493,11 @@ class Room(object):
             {user_id: {"displayname": str or None}}: Dictionary of joined members.
         """
         response = self.client.api.get_room_members(self.room_id)
-        rtn = {
+        rtn = collections.OrderedDict({
             event["state_key"]: {
                 "displayname": event["content"].get("displayname"),
             } for event in response["chunk"] if event["content"]["membership"] == "join"
-        }
+        })
 
         return rtn
 
