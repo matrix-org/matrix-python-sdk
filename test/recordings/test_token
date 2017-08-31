@@ -1,0 +1,68 @@
+interactions:
+- request:
+    body: '{}'
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      Content-Length: ['2']
+      Content-Type: [application/json]
+      User-Agent: [python-requests/2.18.4]
+    method: POST
+    uri: https://matrix.org/_matrix/client/r0/register?kind=guest
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAEA2WQyW6DMABE/4VzWxkCqsipELKQCBIgGOMLIsaFAA4UwiKq/ntZTlWv80Yzo/nm
+        QkJoXQfPIqMPbs0ZmtKf933rCzsQenKj7/kkOhxLupFawshp4oaQZ9iTRo5LjPQ4FKC0SZXOuKpp
+        6FkxFmCjayA2rKIzNJ33R79+gANGx8+JXxxVMQYLmEPWndn/fJOZJd6ogCI1n3J8z0wxMoe5I93N
+        HTcmN77gTll1tLerW4Z7e1sWUONV4oKvZQ9c9qxgTlZzLyAPmM+M4SH0osZHNk+YGyewMwRXgkp1
+        dRxblJLjBT2q3rq9dghFfXPZSranA5HJ5MS9cEnBaFDTqqXVeBoLn9W9fyuqeETNKAf3aJQ/VqL4
+        LoP1HxzR9k7oYogbWj+DReF+fgGei26djAEAAA==
+    headers:
+      Access-Control-Allow-Headers: ['Origin, X-Requested-With, Content-Type, Accept,
+          Authorization']
+      Access-Control-Allow-Methods: ['GET, POST, PUT, DELETE, OPTIONS']
+      Access-Control-Allow-Origin: ['*']
+      Content-Encoding: [gzip]
+      Content-Type: [application/json]
+      Date: ['Thu, 31 Aug 2017 21:30:26 GMT']
+      Server: ['Synapse/0.22.1 (b=matrix-org-hotfixes,88185fe)']
+    status: {code: 200, message: OK}
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      Content-Type: [application/json]
+      User-Agent: [python-requests/2.18.4]
+    method: GET
+    uri: https://matrix.org/_matrix/client/r0/sync?filter=%7B+%22room%22%3A+%7B+%22timeline%22+%3A+%7B+%22limit%22+%3A+20+%7D+%7D+%7D&timeout=30000&access_token=MDAxOGxvY2F0aW9uIG1hdHJpeC5vcmcKMDAxM2lkZW50aWZpZXIga2V5CjAwMTBjaWQgZ2VuID0gMQowMDI1Y2lkIHVzZXJfaWQgPSBAMzQ0NzkwOm1hdHJpeC5vcmcKMDAxNmNpZCB0eXBlID0gYWNjZXNzCjAwMjFjaWQgbm9uY2UgPSBsdGRrbkZxREpoVD1BcU0qCjAwMTVjaWQgZ3Vlc3QgPSB0cnVlCjAwMmZzaWduYXR1cmUghVwM2U5VArTSSR45hJPXnrxQb-wXXdxuPE5RWI04m9cK
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAEA9VW2Y7iMBD8Fz9HUS7YkKf9D4QskzTBO44d2Q47CPHv252EMAeTYefQah+QsOOj
+        urq6XSdWwUGWwI0G7mUD/AGOjpem054Vp3PARNkPeCW8wBkGB9DesWJ9YqXRHgc0O5wy7KiV2QpF
+        s9MCXFzBTnQKF3vbQcBa4T1YzQqWZtmPVcQCBlpsFVSXFbZTwCUOWdiENAjpOCG1450Dy7VoAHeJ
+        0kujCRDTxsvdkQUn5sBz/xvEA+52GEuFCw9CdYDjC5Dzi3V7We8V/jw7b86bgJkDWCsr3PIa/QR1
+        J5TDaBBZJS84cO9r7I1wGO9zvBXGw0fQG4JzgTZyNN0yUPbsktMTBpuQDimJjQeJsRZDkngjfLmn
+        STji3JiMsHG1P7aAUd7C6bq2teBcj6sE912IrTFN2ECz7UmZgT1gRXKuipH6IP290fZXuL1sGTF8
+        PeTnoLsCSbLyMTS2nqfPeeH76niDuAEU3xnLv0uXk4Z71aFKPyOZv0zATbEM+eN9S/hKoYxymOq9
+        kq5V4jiU/G3d3l77je3Bga5Qu8WamEExD/+w1dzRNd6t51IoFd4j85lKpjOeJ+W+/milrvtaedpE
+        r83x0yIck0ucYaVQAxifm4BJbOMseVGo2PyHXuGcqN+p+hk6+vv6V87QY/cRZi7t+e2X41+RA7q0
+        x9bj4zn7BMzQM53A/w+iro38i/TR4KM36OtdR/GFxfAqjCkPn8/kPRKfCWVzPgesV0zBmrDt3J6T
+        rXFkj/CD4ZPnu3pC+kL2AaNA3/TELNIHDY+eb3tPgq4sWSRRtshXEU/yeJUsk1XK8zyNoxXPlkma
+        L+KIx1G0zLI85XGaLtKcx4s4zvIlj1dZtozJM5JYsWmcmAJxoCvxnl9Goq+kf2MHxf84GI2uko7s
+        K5rTvdA12c01RvoHNKXu9QgLAAA=
+    headers:
+      Access-Control-Allow-Headers: ['Origin, X-Requested-With, Content-Type, Accept,
+          Authorization']
+      Access-Control-Allow-Methods: ['GET, POST, PUT, DELETE, OPTIONS']
+      Access-Control-Allow-Origin: ['*']
+      Content-Encoding: [gzip]
+      Content-Type: [application/json]
+      Date: ['Thu, 31 Aug 2017 21:30:26 GMT']
+      Server: ['Synapse/0.22.1 (b=matrix-org-hotfixes,88185fe)']
+    status: {code: 200, message: OK}
+version: 1
