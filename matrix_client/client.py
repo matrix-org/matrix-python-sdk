@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2015 OpenMarket Ltd
+# Copyright 2015, 2017 OpenMarket Ltd, Adam Beckmeyer
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ from .api import MatrixHttpApi
 from .errors import MatrixRequestError, MatrixUnexpectedResponse
 from .room import Room
 from .user import User
+from .utils import AggregateApi
 from threading import Thread
 from time import sleep
 from uuid import uuid4
@@ -45,6 +46,11 @@ class MatrixClient(object):
         room = client.join_room("#matrix:matrix.org")
         response = room.send_text("Hello!")
         response = room.kick("@bob:matrix.org")
+    Usage (multiple api):
+        # This will create a client that e.g. has device and backup device associated
+        apis = (MatrixHttpApi(token="foo"), MatrixHttpApi(token="bar"))
+        client = MatrixClient("https://matrix.org", token="foobar",
+                              user_id="@foobar:matrix.org", apis=apis)
 
     Incoming event callbacks (scopes):
 
@@ -59,7 +65,8 @@ class MatrixClient(object):
 
     """
 
-    def __init__(self, base_url, token=None, user_id=None, valid_cert_check=True):
+    def __init__(self, base_url, token=None, user_id=None,
+                 valid_cert_check=True, apis=()):
         """ Create a new Matrix Client object.
 
         Args:
@@ -71,7 +78,9 @@ class MatrixClient(object):
                 (as obtained when initially logging in to obtain
                 the token) if supplying a token; otherwise, ignored.
             valid_cert_check (bool): Check the homeservers
-                certificate on connections?
+                certificate on connections (if not specifying apis)?
+            apis (Optional[MatrixApi]): Iterable of MatrixApi objects
+                instantiated with any necessary options
 
         Returns:
             MatrixClient
@@ -82,8 +91,16 @@ class MatrixClient(object):
         if token is not None and user_id is None:
             raise ValueError("must supply user_id along with token")
 
-        self.api = MatrixHttpApi(base_url, token)
-        self.api.validate_certificate(valid_cert_check)
+        # In cases where apis is not specified, assume single Http Api (legacy behavior)
+        if not apis:
+            self.api = MatrixHttpApi(base_url, token=token)
+            self.api.validate_certificate(valid_cert_check)
+        else:
+            for api_object in apis:
+                api_object.base_url = base_url
+                api_object.token = token
+            self.api = AggregateApi(apis)
+
         self.listeners = []
         self.invite_listeners = []
         self.left_listeners = []

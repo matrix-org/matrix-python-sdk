@@ -32,7 +32,7 @@ class MatrixApi(object):
     For usage, MatrixApi must be subclassed with a valid _send method.
     """
 
-    def __init__(self, base_url, token=None, identity=None):
+    def __init__(self, base_url=None, token=None, identity=None):
         """Construct and configure the API.
 
         Args:

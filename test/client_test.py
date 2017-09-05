@@ -1,4 +1,6 @@
 from matrix_client.client import MatrixClient, Room, User
+from matrix_client.api import MatrixApi
+from matrix_client import errors
 import pytest
 
 
@@ -137,3 +139,10 @@ def test_remove_listener():
             break
 
     assert not found_listener, "listener was not removed properly"
+
+
+def test_aggregate_api():
+    api = MatrixApi()
+    with pytest.raises(errors.MatrixApiError):
+        client = MatrixClient("http://example.com", token="foo",
+                              user_id="@bar:example.com", apis=(api,))

@@ -31,6 +31,9 @@ class AggregateApi:
         method_names = (m for m in dir(MatrixApi) if not m.startswith("_"))
         for m in method_names:
             setattr(self, m, functools.partial(self._call_api_methods, m))
+        # Logging in and logging out should occur for all apis
+        setattr(self, "login", functools.partial(self._call_all_api_methods, "login"))
+        setattr(self, "logout", functools.partial(self._call_all_api_methods, "logout"))
 
     def _call_api_methods(self, method_name, *args, **kwargs):
         """Calls method of each listed api until successful.
@@ -41,10 +44,36 @@ class AggregateApi:
             kwargs: To be passed when calling method.
         """
         api_methods = (getattr(api, method_name) for api in self.apis)
+        raised_errors = []
         for method in api_methods:
             try:
                 return method(*args, **kwargs)
-            except NotImplementedError:
-                pass
+            except NotImplementedError as e:
+                raised_errors.append(e)
 
-        raise errors.MatrixApiError('Unable to complete the api method', method_name)
+        raise errors.MatrixApiError('Unable to complete api method', method_name, raised_errors)
+
+    def _call_all_api_methods(self, method_name, *args, **kwargs):
+        """Calls method for all apis in self.apis.
+
+        Args:
+            method_name(str): Method to be called on each object in self.apis
+            args: To be passed when calling method.
+            kwargs: To be passed when calling method.
+        """
+        api_methods = (getattr(api, method_name) for api in self.apis)
+        return_values = []
+        raised_errors = []
+        for method in api_methods:
+            try:
+                return_values.append(method(*args, **kwargs))
+            except NotImplementedError as e:
+                raised_errors.append(e)
+
+        # Check that method has completed for all apis
+        if len(return_values) == len(self.apis):
+            return return_values
+        else:
+            raise errors.MatrixApiError(
+                'Not able to complete method for all apis', method_name, raised_errors
+            )

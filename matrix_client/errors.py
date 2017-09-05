@@ -23,6 +23,8 @@ class MatrixRequestError(MatrixError):
 class MatrixApiError(MatrixError):
     """An Api method was unable to be completed successfully."""
 
-    def __init__(self, content="", api_method=""):
+    def __init__(self, content="", api_method="", raised_errors=""):
         self.content = content
-        super(MatrixError, self).__init__("{}: {}".format(content, api_method))
+        super(MatrixError, self).__init__(
+            "{}: {}\nErrors raised: {}".format(content, api_method, raised_errors)
+        )
