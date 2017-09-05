@@ -1,3 +1,19 @@
+# -*- coding: utf-8 -*-
+# Copyright 2015 OpenMarket Ltd
+# Copyright 2017 Adam Beckmeyer
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import re
 from uuid import uuid4
 
@@ -5,12 +21,12 @@ from .errors import MatrixRequestError
 
 
 class Room(object):
-    """ The Room class can be used to call room specific functions
+    """The Room class can be used to call room specific functions
     after joining a room from the Client.
     """
 
     def __init__(self, client, room_id):
-        """ Create a blank Room object.
+        """Create a blank Room object.
 
             NOTE: This should ideally be called from within the Client.
             NOTE: This does not verify the room with the Home Server.
@@ -23,6 +39,7 @@ class Room(object):
 
         self.room_id = room_id
         self.client = client
+        self._call = client._call
         self.listeners = []
         self.state_listeners = []
         self.ephemeral_listeners = []
@@ -37,7 +54,14 @@ class Room(object):
                          displayname=None,
                          avatar_url=None,
                          reason="Changing room profile information"):
-        member = self.client.api.get_membership(self.room_id, self.client.user_id)
+        # TODO: docstring
+        self._call(
+            partial(self.client.api.get_membership, self.room_id, self.client.user_id),
+            partial(self._set_membership, displayname, avatar_url, reason)
+        )
+
+    def _set_membership(self, displayname, avatar_url, reason, member):
+        """Wraps `api.set_membership` for use with `set_user_profile`"""
         if member["membership"] != "join":
             raise Exception("Can't set profile if you have not joined the room.")
         if displayname is None:
@@ -55,14 +79,18 @@ class Room(object):
         )
 
     def send_text(self, text):
-        """ Send a plain text message to the room.
+        """Send a plain text message to the room.
 
         Args:
             text (str): The message to send
         """
-        return self.client.api.send_message(self.room_id, text)
+        return self._call(
+            partial(self.client.api.send_message, self.room_id, text),
+            lambda x: x
+        )
 
     def get_html_content(self, html, body=None, msgtype="m.text"):
+        # TODO: docstring
         return {
             "body": body if body else re.sub('<[^<]+?>', '', html),
             "msgtype": msgtype,
@@ -77,37 +105,59 @@ class Room(object):
             html (str): The html formatted message to be sent.
             body (str): The body of the message to be sent (unformatted).
         """
-        return self.client.api.send_message_event(
-            self.room_id, "m.room.message", self.get_html_content(html, body, msgtype))
+        return self._call(
+            partial(self.client.api.send_message_event,
+                    self.room_id, "m.room.message",
+                    self.get_html_content(html, body, msgtype)),
+            lambda x: x
+        )
 
     def set_account_data(self, type, account_data):
-        return self.client.api.set_room_account_data(
-            self.client.user_id, self.room_id, type, account_data)
+        # TODO: docstring
+        return self._call(
+            # TODO: api.set_room_account_data doesn't exist?
+            partial(self.client.api.set_room_account_data,
+                    self.client.user_id, self.room_id, type, account_data),
+            lambda x: x
+        )
 
     def get_tags(self):
-        return self.client.api.get_user_tags(self.client.user_id, self.room_id)
+        # TODO: docstring
+        return self._call(
+            partial(self.client.api.get_user_tags,
+                    self.client.user_id, self.room_id),
+            lambda x: x
+        )
 
     def remove_tag(self, tag):
-        return self.client.api.remove_user_tag(
-            self.client.user_id, self.room_id, tag
+        # TODO: docstring
+        return self._call(
+            partial(self.client.api.remove_user_tag,
+                    self.client.user_id, self.room_id, tag),
+            lambda x: x
         )
 
     def add_tag(self, tag, order=None, content=None):
-        return self.client.api.add_user_tag(
-            self.client.user_id, self.room_id,
-            tag, order, content
+        # TODO: docstring
+        return self._call(
+            partial(self.client.api.add_user_tag,
+                    self.client.user_id, self.room_id, tag, order, content),
+            lambda x: x
         )
 
     def send_emote(self, text):
-        """ Send a emote (/me style) message to the room.
+        """Send a emote (/me style) message to the room.
 
         Args:
             text (str): The message to send
         """
-        return self.client.api.send_emote(self.room_id, text)
+        return self._call(
+            partial(self.client.api.send_emote, self.room_id, text),
+            lambda x: x
+        )
 
     def send_file(self, url, name, **fileinfo):
-        """ Send a pre-uploaded file to the room.
+        """Send a pre-uploaded file to the room.
         See http://matrix.org/docs/spec/r0.2.0/client_server.html#m-file for
         fileinfo
 
@@ -116,19 +166,23 @@ class Room(object):
             name (str): The filename of the image.
             fileinfo (): Extra information about the file
         """
-
-        return self.client.api.send_content(
-            self.room_id, url, name, "m.file",
-            extra_information=fileinfo
+        return self._call(
+            partial(self.client.api.send_content,
+                    self.room_id, url, name, "m.file", extra_information=fileinfo),
+            lambda x: x
         )
 
     def send_notice(self, text):
-        return self.client.api.send_notice(self.room_id, text)
+        # TODO: docstring
+        return self._call(
+            partial(self.client.api.send_notice, self.room_id, text),
+            lambda x: x
+        )
 
     # See http://matrix.org/docs/spec/r0.0.1/client_server.html#m-image for the
     # imageinfo args.
     def send_image(self, url, name, **imageinfo):
-        """ Send a pre-uploaded image to the room.
+        """Send a pre-uploaded image to the room.
         See http://matrix.org/docs/spec/r0.0.1/client_server.html#m-image
         for imageinfo
 
@@ -137,9 +191,11 @@ class Room(object):
             name (str): The filename of the image.
             imageinfo (): Extra information about the image.
         """
-        return self.client.api.send_content(
-            self.room_id, url, name, "m.image",
-            extra_information=imageinfo
+        return self._call(
+            partial(self.client.api.send_content,
+                    self.room_id, url, name, "m.image",
+                    extra_information=imageinfo),
+            lambda x: x
         )
 
     def send_location(self, geo_uri, name, thumb_url=None, **thumb_info):
@@ -153,13 +209,17 @@ class Room(object):
             thumb_url (str): URL to the thumbnail of the location.
             thumb_info (): Metadata about the thumbnail, type ImageInfo.
         """
-        return self.client.api.send_location(self.room_id, geo_uri, name,
-                                             thumb_url, thumb_info)
+        return self._call(
+            partial(self.client.api.send_location,
+                    self.room_id, geo_uri, name, thumb_url, thumb_info),
+            lambda x: x
+        )
 
     # See http://matrix.org/docs/spec/client_server/r0.2.0.html#m-video for the
     # videoinfo args.
     def send_video(self, url, name, **videoinfo):
-        """ Send a pre-uploaded video to the room.
+        """Send a pre-uploaded video to the room.
+
         See http://matrix.org/docs/spec/client_server/r0.2.0.html#m-video
         for videoinfo
 
@@ -168,13 +228,17 @@ class Room(object):
             name (str): The filename of the video.
             videoinfo (): Extra information about the video.
         """
-        return self.client.api.send_content(self.room_id, url, name, "m.video",
-                                            extra_information=videoinfo)
+        return self._call(
+            partial(self.client.api.send_content,
+                    self.room_id, url, name, "m.video", extra_information=videoinfo),
+            lambda x: x
+        )
 
     # See http://matrix.org/docs/spec/client_server/r0.2.0.html#m-audio for the
     # audioinfo args.
     def send_audio(self, url, name, **audioinfo):
-        """ Send a pre-uploaded audio to the room.
+        """Send a pre-uploaded audio to the room.
+
         See http://matrix.org/docs/spec/client_server/r0.2.0.html#m-audio
         for audioinfo
 
@@ -183,11 +247,14 @@ class Room(object):
             name (str): The filename of the audio.
             audioinfo (): Extra information about the audio.
         """
-        return self.client.api.send_content(self.room_id, url, name, "m.audio",
-                                            extra_information=audioinfo)
+        return self._call(
+            partial(self.client.api.send_content,
+                    self.room_id, url, name, "m.audio", extra_information=audioinfo),
+            lambda x: x
+        )
 
     def add_listener(self, callback, event_type=None):
-        """ Add a callback handler for events going to this room.
+        """Add a callback handler for events going to this room.
 
         Args:
             callback (func(room, event)): Callback called when an event arrives.
@@ -273,27 +340,37 @@ class Room(object):
                 listener['callback'](self, event)
 
     def get_events(self):
-        """ Get the most recent events for this room.
+        """Get the most recent events for this room.
 
         Returns:
             events
         """
         return self.events
 
+    def _handle_api_errors(self, api_callback):
+        """Returns `True` if api_callback doesn't raise `MatrixRequestError`"""
+        try:
+            api_callback
+            return True
+        except MatrixRequestError:
+            return False
+
     def invite_user(self, user_id):
-        """ Invite a user to this room
+        """Invite a user to this room
 
         Args:
             user_id (str): The matrix user id of a user.
 
         Returns:
             boolean: The invitation was sent.
+            or
+            AsyncResult(bool)
         """
-        try:
-            self.client.api.invite_user(self.room_id, user_id)
-            return True
-        except MatrixRequestError:
-            return False
+        return self._call(
+            partial(self._handle_api_errors,
+                    partial(self.client.api.invite_user, self.room_id, user_id)),
+            lambda x: x
+        )
 
     def kick_user(self, user_id, reason=""):
         """ Kick a user from this room
@@ -303,12 +380,15 @@ class Room(object):
 
         Returns:
             boolean: The user was kicked.
+            or
+            AsyncResult(bool)
         """
-        try:
-            self.client.api.kick_user(self.room_id, user_id)
-            return True
-        except MatrixRequestError:
-            return False
+        return self._call(
+            partial(self._handle_api_errors,
+                    partial(self.client.api.kick_user, self.room_id, user_id,
+                            reason=reason)),
+            lambda x: x
+        )
 
     def ban_user(self, user_id, reason):
         """ Ban a user from this room
@@ -319,12 +399,15 @@ class Room(object):
 
         Returns:
             boolean: The user was banned.
+            or
+            AsyncResult(bool)
         """
-        try:
-            self.client.api.ban_user(self.room_id, user_id, reason)
-            return True
-        except MatrixRequestError:
-            return False
+        return self._call(
+            partial(self._handle_api_errors,
+                    partial(self.client.api.ban_user, self.room_id, user_id,
+                            reason=reason)),
+            lambda x: x
+        )
 
     def unban_user(self, user_id):
         """Unban a user from this room
@@ -334,19 +417,26 @@ class Room(object):
 
         Returns:
             boolean: The user was unbanned.
+            or
+            AsyncResult(bool)
         """
-        try:
-            self.client.api.unban_user(self.room_id, user_id)
-            return True
-        except MatrixRequestError:
-            return False
+        return self._call(
+            partial(self._handle_api_errors,
+                    partial(self.client.api.unban_user, self.room_id, user_id)),
+            lambda x: x
+        )
 
     def leave(self):
         """ Leave the room.
 
         Returns:
             boolean: Leaving the room was successful.
+            or
+            AsyncResult(bool)
         """
+        return self._call(self._leave_handler, lambda x: x)
+
+    def _leave_helper(self):
         try:
             self.client.api.leave_room(self.room_id)
             del self.client.rooms[self.room_id]
@@ -359,16 +449,21 @@ class Room(object):
 
         Returns:
             boolean: True if the room name changed, False if not
+            or
+            AsyncResult(bool)
         """
-        try:
-            response = self.client.api.get_room_name(self.room_id)
+        def _helper(response):
             if "name" in response and response["name"] != self.name:
                 self.name = response["name"]
                 return True
             else:
                 return False
-        except MatrixRequestError:
-            return False
+
+        return self._call(
+            partial(self._handle_api_errors,
+                    partial(self.client.api.get_room_name, self.room_id)),
+            _helper
+        )
 
     def set_room_name(self, name):
         """ Set room name
@@ -376,13 +471,16 @@ class Room(object):
 
         Returns:
             boolean: True if the name changed, False if not
+            or
+            AsyncResult(bool)
         """
-        try:
-            self.client.api.set_room_name(self.room_id, name)
+        def _set_name(name):
             self.name = name
-            return True
-        except MatrixRequestError:
-            return False
+        return self._call(
+            partial(self._handle_api_errors,
+                    partial(self.client.api.set_room_name, self.room_id, name)),
+            lambda _: _set_name(name)
+        )
 
     def send_state_event(self, event_type, content, state_key):
         """ Send a state event to the room.
@@ -392,11 +490,13 @@ class Room(object):
             content (): An object with the content of the message.
             state_key (str, optional): A unique key to identify the state.
         """
-        return self.client.api.send_state_event(
-            self.room_id,
-            event_type,
-            content,
-            state_key
+        return self._call(
+            partial(self.client.api.send_state_event,
+                    self.room_id,
+                    event_type,
+                    content,
+                    state_key),
+            lambda x: x
         )
 
     def update_room_topic(self):
@@ -404,16 +504,21 @@ class Room(object):
 
         Returns:
             boolean: True if the topic changed, False if not
+            or
+            AsyncResult(bool)
         """
-        try:
-            response = self.client.api.get_room_topic(self.room_id)
-            if "topic" in response and response["topic"] != self.topic:
-                self.topic = response["topic"]
-                return True
-            else:
+        def _helper():
+            try:
+                response = self.client.api.get_room_topic(self.room_id)
+                if "topic" in response and response["topic"] != self.topic:
+                    self.topic = response["topic"]
+                    return True
+                else:
+                    return False
+            except MatrixRequestError:
                 return False
-        except MatrixRequestError:
-            return False
+
+        return self._call(_helper, lambda x: x)
 
     def set_room_topic(self, topic):
         """ Set room topic
@@ -421,31 +526,39 @@ class Room(object):
 
         Returns:
             boolean: True if the topic changed, False if not
+            or
+            AsyncResult(bool)
         """
-        try:
-            self.client.api.set_room_topic(self.room_id, topic)
+        def _set_room_topic(topic):
             self.topic = topic
-            return True
-        except MatrixRequestError:
-            return False
+        return self._call(
+            partial(self._handle_api_errors,
+                    partial(self.client.api.set_room_topic, self.room_id, topic)),
+            lambda _: set_room_topic(topic)
+        )
 
     def update_aliases(self):
         """ Get aliases information from room state
 
         Returns:
             boolean: True if the aliases changed, False if not
+            or
+            AsyncResult(bool)
         """
-        try:
-            response = self.client.api.get_room_state(self.room_id)
-            for chunk in response:
-                if "content" in chunk and "aliases" in chunk["content"]:
-                    if chunk["content"]["aliases"] != self.aliases:
-                        self.aliases = chunk["content"]["aliases"]
-                        return True
-                    else:
-                        return False
-        except MatrixRequestError:
-            return False
+        def _helper():
+            try:
+                response = self.client.api.get_room_state(self.room_id)
+                for chunk in response:
+                    if "content" in chunk and "aliases" in chunk["content"]:
+                        if chunk["content"]["aliases"] != self.aliases:
+                            self.aliases = chunk["content"]["aliases"]
+                            return True
+                        else:
+                            return False
+            except MatrixRequestError:
+                return False
+
+        return self._call(_helper, lambda x: x)
 
     def add_room_alias(self, room_alias):
         """Add an alias to the room
@@ -455,27 +568,32 @@ class Room(object):
 
         Returns:
             bool: True if the alias was added, False otherwise.
+            or
+            AsyncResult(bool)
         """
-        try:
-            self.client.api.set_room_alias(self.room_id, room_alias)
-            return True
-        except MatrixRequestError:
-            return False
+        return self._call(
+            partial(self._handle_api_errors,
+                    partial(self.client.api.set_room_alias, self.room_id, room_alias)),
+            lambda x: x
+        )
 
     def get_joined_members(self):
         """Query joined members of this room.
 
         Returns:
             {user_id: {"displayname": str or None}}: Dictionary of joined members.
+            or
+            AsyncResult(dict): Same structure as above.
         """
-        response = self.client.api.get_room_members(self.room_id)
-        rtn = {
-            event["state_key"]: {
-                "displayname": event["content"].get("displayname"),
-            } for event in response["chunk"] if event["content"]["membership"] == "join"
-        }
+        def _helper(response):
+            return {
+                event["state_key"]: {
+                    "displayname": event["content"].get("displayname"),
+                } for event in response["chunk"] if event["content"]["membership"] == "join"
+            }
 
-        return rtn
+        return self._call(partial(self.client.api.get_room_members, self.room_id),
+                          _helper)
 
     def backfill_previous_messages(self, reverse=False, limit=10):
         """Backfill handling of previous messages.
@@ -485,13 +603,17 @@ class Room(object):
                 order (old to new), otherwise the order will be reversed (new to old).
             limit (int): Number of messages to go back.
         """
-        res = self.client.api.get_room_messages(self.room_id, self.prev_batch,
-                                                direction="b", limit=limit)
-        events = res["chunk"]
-        if not reverse:
-            events = reversed(events)
-        for event in events:
-            self._put_event(event)
+        def _helper(res):
+            events = res["chunk"]
+            if not reverse:
+                events = reversed(events)
+            for event in events:
+                self._put_event(event)
+
+        self._call(partial(self.client.api.get_room_messages,
+                           self.room_id, self.prev_batch, direction="b", limit=limit),
+                   _helper
+        )
 
     @property
     def prev_batch(self):

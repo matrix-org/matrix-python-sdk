@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright 2015 OpenMarket Ltd
+# Copyright 2017 Adam Beckmeyer
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,12 +13,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from gevent import monkey; monkey.patch_all()
+
 from .api import MatrixHttpApi
 from .errors import MatrixRequestError, MatrixUnexpectedResponse
 from .room import Room
 from .user import User
-from threading import Thread
-from time import sleep
+from .queue import RequestQueue
+import gevent
+import gevent.pool
+from gevent.event import AsyncResult
+from functools import partial
 from uuid import uuid4
 import logging
 import sys
@@ -59,8 +65,8 @@ class MatrixClient(object):
 
     """
 
-    def __init__(self, base_url, token=None, user_id=None,
-                 valid_cert_check=True, sync_filter_limit=20):
+    def __init__(self, base_url, token=None, user_id=None, valid_cert_check=True,
+                 sync_filter_limit=20, async=False, num_threads=10):
         """ Create a new Matrix Client object.
 
         Args:
@@ -73,6 +79,10 @@ class MatrixClient(object):
                 the token) if supplying a token; otherwise, ignored.
             valid_cert_check (bool): Check the homeservers
                 certificate on connections?
+            async (bool): Run the client in async mode; if `True`, methods
+                return `AsyncResult`s instead of blocking on api calls.
+            num_threads (int): Number of greenlets with which to make
+                matrix requests. Only evaluated if `async`.
 
         Returns:
             MatrixClient
@@ -80,6 +90,7 @@ class MatrixClient(object):
         Raises:
             MatrixRequestError, ValueError
         """
+        # Set properties that may be overwritten if async
         if token is not None and user_id is None:
             raise ValueError("must supply user_id along with token")
 
@@ -95,6 +106,22 @@ class MatrixClient(object):
             % sync_filter_limit
         self.sync_thread = None
         self.should_listen = False
+
+        # Both call methods accept two callbacks. First one is called without
+        # any arguments. Second is called with output of first callback as an arg
+        if async:
+            # _async_call pushses callbacks onto `self.queue` and returns an
+            # AsyncResult promising the output of the second callback
+            self._call = self._async_call
+            self.queue = RequestQueue()
+            self.thread_pool = gevent.pool.Pool(size=num_threads)
+            while not self.thread_pool.full():
+                self.thread_pool.add(gevent.spawn(self.queue.call_forever))
+        else:
+            # _sync_call immediately calls both callbacks and blocks until complete
+            self._call = self._sync_call
+            self.queue = None
+            self.thread_pool = None
 
         """ Time to wait before attempting a /sync request after failing."""
         self.bad_sync_timeout_limit = 60 * 60
@@ -116,9 +143,14 @@ class MatrixClient(object):
 
     def register_as_guest(self):
         """ Register a guest account on this HS.
+
+        Note: Registration and login methods are always synchronous.
+
         Note: HS must have guest registration enabled.
+
         Returns:
             str: Access Token
+
         Raises:
             MatrixRequestError
         """
@@ -127,6 +159,8 @@ class MatrixClient(object):
 
     def register_with_password(self, username, password):
         """ Register for a new account on this HS.
+
+        Note: Registration and login methods are always synchronous.
 
         Args:
             username (str): Account username
@@ -158,6 +192,8 @@ class MatrixClient(object):
     def login_with_password_no_sync(self, username, password):
         """ Login to the homeserver.
 
+        Note: Registration and login methods are always synchronous.
+
         Args:
             username (str): Account username
             password (str): Account password
@@ -182,6 +218,8 @@ class MatrixClient(object):
     def login_with_password(self, username, password, limit=10):
         """ Login to the homeserver.
 
+        Note: Registration and login methods are always synchronous.
+
         Args:
             username (str): Account username
             password (str): Account password
@@ -203,6 +241,8 @@ class MatrixClient(object):
 
     def logout(self):
         """ Logout from the homeserver.
+
+        Note: Registration and login methods are synchronous.
         """
         self.stop_listener_thread()
         self.api.logout()
@@ -217,12 +257,17 @@ class MatrixClient(object):
 
         Returns:
             Room
+            or
+            AsyncResult(Room)
 
         Raises:
             MatrixRequestError
         """
-        response = self.api.create_room(alias, is_public, invitees)
-        return self._mkroom(response["room_id"])
+        out = self._call(
+            partial(self.api.create_room, alias, is_public, invitees),
+             self._mkroom
+        )
+        return out
 
     def join_room(self, room_id_or_alias):
         """ Join a room.
@@ -232,15 +277,17 @@ class MatrixClient(object):
 
         Returns:
             Room
+            or
+            AsyncResult(Room)
 
         Raises:
             MatrixRequestError
         """
-        response = self.api.join_room(room_id_or_alias)
-        room_id = (
-            response["room_id"] if "room_id" in response else room_id_or_alias
+        out = self._call(
+            partial(self.api.join_room, room_id_or_alias),
+             partial(self._mkroom, room_id_or_alias=room_id_or_alias)
         )
-        return self._mkroom(room_id)
+        return out
 
     def get_rooms(self):
         """ Return a dict of {room_id: Room objects} that the user has joined.
@@ -360,7 +407,7 @@ class MatrixClient(object):
                 if e.code >= 500:
                     logger.warning("Problem occured serverside. Waiting %i seconds",
                                    bad_sync_timeout)
-                    sleep(bad_sync_timeout)
+                    gevent.sleep(bad_sync_timeout)
                     bad_sync_timeout = min(bad_sync_timeout * 2,
                                            self.bad_sync_timeout_limit)
                 else:
@@ -375,6 +422,9 @@ class MatrixClient(object):
     def start_listener_thread(self, timeout_ms=30000, exception_handler=None):
         """ Start a listener thread to listen for events in the background.
 
+        Note that as of right now this thread is responsible for calling
+        listener callbacks as well as for syncing with the homeserver.
+
         Args:
             timeout (int): How long to poll the Home Server for before
                retrying.
@@ -383,12 +433,10 @@ class MatrixClient(object):
                thread.
         """
         try:
-            thread = Thread(target=self.listen_forever,
-                            args=(timeout_ms, exception_handler))
-            thread.daemon = True
+            thread = gevent.spawn(self.listen_forever,
+                                  timeout_ms, exception_handler)
             self.sync_thread = thread
             self.should_listen = True
-            thread.start()
         except:
             e = sys.exc_info()[0]
             logger.error("Error: unable to start thread. %s", str(e))
@@ -413,21 +461,40 @@ class MatrixClient(object):
             MatrixRequestError: If the upload failed for some reason.
         """
         try:
-            response = self.api.media_upload(content, content_type)
-            if "content_uri" in response:
-                return response["content_uri"]
-            else:
-                raise MatrixUnexpectedResponse(
-                    "The upload was successful, but content_uri wasn't found."
-                )
+            # If not async, exceptions can be handled and logged
+            return self._call(
+                partial(self._media_upload, content, content_type),
+                self._upload
+            )
         except MatrixRequestError as e:
             raise MatrixRequestError(
                 code=e.code,
                 content="Upload failed: %s" % e
             )
 
-    def _mkroom(self, room_id):
-        self.rooms[room_id] = Room(self, room_id)
+    def _media_upload(self, content, content_type):
+        """Wraps `self.api.media_upload` to allow error handling."""
+        try:
+            return self.api.media_upload(content, content_type)
+        except MatrixRequestError as e:
+            raise MatrixRequestError(
+                code=e.code,
+                content="Upload failed: %s" % e
+            )
+
+    def _upload(self, response):
+        """Helper function to be used as callback by `self.upload`"""
+        if "content_uri" in response:
+            return response["content_uri"]
+        else:
+            raise MatrixUnexpectedResponse(
+                "The upload was successful, but content_uri wasn't found."
+            )
+
+    def _mkroom(self, response=None, room_id_or_alias=None):
+        if response and "room_id" in response:
+            room_id_or_alias = response["room_id"]
+        self.rooms[room_id_or_alias] = Room(self, room_id)
         return self.rooms[room_id]
 
     def _process_state_event(self, state_event, current_room):
@@ -447,11 +514,12 @@ class MatrixClient(object):
                 listener['event_type'] is None or
                 listener['event_type'] == state_event['type']
             ):
-                listener['callback'](state_event)
+                gevent.spawn(listener['callback'], state_event)
 
     def _sync(self, timeout_ms=30000):
         # TODO: Deal with presence
         # TODO: Deal with left rooms
+        # TODO: Use gevent pool with queue to call listeners
         response = self.api.sync(self.sync_token, timeout_ms, filter=self.sync_filter)
         self.sync_token = response["next_batch"]
 
@@ -467,7 +535,7 @@ class MatrixClient(object):
 
         for room_id, sync_room in response['rooms']['join'].items():
             if room_id not in self.rooms:
-                self._mkroom(room_id)
+                self._mkroom(room_id_or_alias=room_id)
             room = self.rooms[room_id]
             room.prev_batch = sync_room["timeline"]["prev_batch"]
 
@@ -507,8 +575,7 @@ class MatrixClient(object):
         Args:
             user_id (str): The matrix user id of a user.
         """
-
-        return User(self.api, user_id)
+        return User(self.api, user_id, self._call)
 
     def remove_room_alias(self, room_alias):
         """Remove mapping of an alias
@@ -524,3 +591,16 @@ class MatrixClient(object):
             return True
         except MatrixRequestError:
             return False
+
+    def _async_call(self, first_callback, final_callback):
+        """Call `final_callback` on result of `first_callback` asynchronously"""
+        first_result = AsyncResult()
+        self.queue.put((first_callback, first_result))
+        final_result = AsyncResult()
+        # lambda function will wait for first_result to be fulfilled
+        self.queue.put(lambda: final_callback(first_result.get()), final_result)
+        return final_result
+
+    def _sync_call(self, first_callback, final_callback):
+        """Call `final_callback` on result of `first_callback` synchronously"""
+        return final_callback(first_callback())

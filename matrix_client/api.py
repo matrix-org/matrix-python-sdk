@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright 2015 OpenMarket Ltd
+# Copyright 2017 Adam Beckmeyer
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -553,22 +554,16 @@ class MatrixHttpApi(object):
         if headers["Content-Type"] == "application/json" and content is not None:
             content = json.dumps(content)
 
-        response = None
-        while True:
-            response = requests.request(
-                method, endpoint,
-                params=query_params,
-                data=content,
-                headers=headers,
-                verify=self.validate_cert
-            )
-
-            if response.status_code == 429:
-                sleep(response.json()['retry_after_ms'] / 1000)
-            else:
-                break
+        response = requests.request(
+            method, endpoint,
+            params=query_params,
+            data=content,
+            headers=headers,
+            verify=self.validate_cert
+        )
 
         if response.status_code < 200 or response.status_code >= 300:
+            # Error raised with status_code == 429 should be handled separately
             raise MatrixRequestError(
                 code=response.status_code, content=response.text
             )
