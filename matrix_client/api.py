@@ -37,7 +37,7 @@ class MatrixHttpApi(object):
     For room and sync handling, consider using MatrixClient.
     """
 
-    def __init__(self, base_url, token=None, identity=None):
+    def __init__(self, base_url, token=None, user_id=None):
         """Construct and configure the HTTP API.
 
         Args:
@@ -47,21 +47,22 @@ class MatrixHttpApi(object):
         """
         self.base_url = base_url
         self.token = token
-        self.identity = identity
+        self.user_id = user_id
         self.txn_id = 0
         self.validate_cert = True
 
-    def initial_sync(self, limit=1):
+    def initial_sync(self, limit=1, user_id=None):
         """ Deprecated. Use sync instead.
         Perform /initialSync.
 
         Args:
             limit(int): The limit= param to provide.
         """
-        return self._send("GET", "/initialSync", query_params={"limit": limit})
+        return self._send("GET", "/initialSync", query_params={"limit": limit},
+                          user_id=user_id)
 
     def sync(self, since=None, timeout_ms=30000, filter=None,
-             full_state=None, set_presence=None):
+             full_state=None, set_presence=None, user_id=None):
         """ Perform a sync request.
 
         Args:
@@ -92,13 +93,12 @@ class MatrixHttpApi(object):
             request["set_presence"] = set_presence
 
         return self._send("GET", "/sync", query_params=request,
-                          api_path=MATRIX_V2_API_PATH)
+                          api_path=MATRIX_V2_API_PATH, user_id=user_id)
 
     def validate_certificate(self, valid):
         self.validate_cert = valid
-        return
 
-    def register(self, content={}, kind='user'):
+    def register(self, content={}, kind='user', user_id=None):
         """Performs /register.
 
         Args:
@@ -128,7 +128,8 @@ class MatrixHttpApi(object):
             "POST",
             "/register",
             content=content,
-            query_params={'kind': kind}
+            query_params={'kind': kind},
+            user_id=user_id
         )
 
     def login(self, login_type, **kwargs):
@@ -146,12 +147,12 @@ class MatrixHttpApi(object):
 
         return self._send("POST", "/login", content)
 
-    def logout(self):
+    def logout(self, user_id=None):
         """Perform /logout.
         """
-        return self._send("POST", "/logout")
+        return self._send("POST", "/logout", user_id=user_id)
 
-    def create_room(self, alias=None, is_public=False, invitees=()):
+    def create_room(self, alias=None, is_public=False, invitees=(), user_id=None):
         """Perform /createRoom.
 
         Args:
@@ -166,9 +167,9 @@ class MatrixHttpApi(object):
             content["room_alias_name"] = alias
         if invitees:
             content["invite"] = invitees
-        return self._send("POST", "/createRoom", content)
+        return self._send("POST", "/createRoom", content, user_id=user_id)
 
-    def join_room(self, room_id_or_alias):
+    def join_room(self, room_id_or_alias, user_id=None):
         """Performs /join/$room_id
 
         Args:
@@ -179,9 +180,9 @@ class MatrixHttpApi(object):
 
         path = "/join/%s" % quote(room_id_or_alias)
 
-        return self._send("POST", path)
+        return self._send("POST", path, user_id=user_id)
 
-    def event_stream(self, from_token, timeout=30000):
+    def event_stream(self, from_token, timeout=30000, user_id=None):
         """ Deprecated. Use sync instead.
         Performs /events
 
@@ -194,11 +195,11 @@ class MatrixHttpApi(object):
             "GET", path, query_params={
                 "timeout": timeout,
                 "from": from_token
-            }
-        )
+            },
+            user_id=user_id)
 
     def send_state_event(self, room_id, event_type, content, state_key="",
-                         timestamp=None):
+                         timestamp=None, user_id=None):
         """Perform PUT /rooms/$room_id/state/$event_type
 
         Args:
@@ -216,10 +217,10 @@ class MatrixHttpApi(object):
         params = {}
         if timestamp:
             params["ts"] = timestamp
-        return self._send("PUT", path, content, query_params=params)
+        return self._send("PUT", path, content, query_params=params, user_id=user_id)
 
     def send_message_event(self, room_id, event_type, content, txn_id=None,
-                           timestamp=None):
+                           timestamp=None, user_id=None):
         """Perform PUT /rooms/$room_id/send/$event_type
 
         Args:
@@ -240,7 +241,7 @@ class MatrixHttpApi(object):
         params = {}
         if timestamp:
             params["ts"] = timestamp
-        return self._send("PUT", path, content, query_params=params)
+        return self._send("PUT", path, content, query_params=params, user_id=user_id)
 
     def redact_event(self, room_id, event_id, reason=None, txn_id=None, timestamp=None):
         """Perform PUT /rooms/$room_id/redact/$event_id/$txn_id/
@@ -271,7 +272,7 @@ class MatrixHttpApi(object):
     # extra information should be supplied, see
     # https://matrix.org/docs/spec/r0.0.1/client_server.html
     def send_content(self, room_id, item_url, item_name, msg_type,
-                     extra_information=None, timestamp=None):
+                     extra_information=None, timestamp=None, user_id=None):
         if extra_information is None:
             extra_information = {}
 
@@ -282,11 +283,11 @@ class MatrixHttpApi(object):
             "info": extra_information
         }
         return self.send_message_event(room_id, "m.room.message", content_pack,
-                                       timestamp=timestamp)
+                                       timestamp=timestamp, user_id=user_id)
 
     # http://matrix.org/docs/spec/client_server/r0.2.0.html#m-location
     def send_location(self, room_id, geo_uri, name, thumb_url=None, thumb_info=None,
-                      timestamp=None):
+                      timestamp=None, user_id=None):
         """Send m.location message event
 
         Args:
@@ -308,9 +309,10 @@ class MatrixHttpApi(object):
             content_pack["thumbnail_info"] = thumb_info
 
         return self.send_message_event(room_id, "m.room.message", content_pack,
-                                       timestamp=timestamp)
+                                       timestamp=timestamp, user_id=user_id)
 
-    def send_message(self, room_id, text_content, msgtype="m.text", timestamp=None):
+    def send_message(self, room_id, text_content, msgtype="m.text",
+                     timestamp=None, user_id=None):
         """Perform PUT /rooms/$room_id/send/m.room.message
 
         Args:
@@ -321,10 +323,11 @@ class MatrixHttpApi(object):
         return self.send_message_event(
             room_id, "m.room.message",
             self.get_text_body(text_content, msgtype),
-            timestamp=timestamp
+            timestamp=timestamp,
+            user_id=user_id
         )
 
-    def send_emote(self, room_id, text_content, timestamp=None):
+    def send_emote(self, room_id, text_content, timestamp=None, user_id=None):
         """Perform PUT /rooms/$room_id/send/m.room.message with m.emote msgtype
 
         Args:
@@ -335,10 +338,11 @@ class MatrixHttpApi(object):
         return self.send_message_event(
             room_id, "m.room.message",
             self.get_emote_body(text_content),
-            timestamp=timestamp
+            timestamp=timestamp,
+            user_id=user_id
         )
 
-    def send_notice(self, room_id, text_content, timestamp=None):
+    def send_notice(self, room_id, text_content, timestamp=None, user_id=None):
         """Perform PUT /rooms/$room_id/send/m.room.message with m.notice msgtype
 
         Args:
@@ -351,9 +355,10 @@ class MatrixHttpApi(object):
             "body": text_content
         }
         return self.send_message_event(room_id, "m.room.message", body,
-                                       timestamp=timestamp)
+                                       timestamp=timestamp, user_id=user_id)
 
-    def get_room_messages(self, room_id, token, direction, limit=10, to=None):
+    def get_room_messages(self, room_id, token, direction, limit=10, to=None,
+                          user_id=None):
         """Perform GET /rooms/{roomId}/messages.
 
         Args:
@@ -374,16 +379,18 @@ class MatrixHttpApi(object):
             query["to"] = to
 
         return self._send("GET", "/rooms/{}/messages".format(quote(room_id)),
-                          query_params=query, api_path="/_matrix/client/r0")
+                          query_params=query, api_path="/_matrix/client/r0",
+                          user_id=user_id)
 
-    def get_room_name(self, room_id):
+    def get_room_name(self, room_id, user_id=None):
         """Perform GET /rooms/$room_id/state/m.room.name
         Args:
             room_id(str): The room ID
         """
-        return self._send("GET", "/rooms/" + room_id + "/state/m.room.name")
+        return self._send("GET", "/rooms/" + room_id + "/state/m.room.name",
+                          user_id=user_id)
 
-    def set_room_name(self, room_id, name, timestamp=None):
+    def set_room_name(self, room_id, name, timestamp=None, user_id=None):
         """Perform PUT /rooms/$room_id/state/m.room.name
         Args:
             room_id(str): The room ID
@@ -393,16 +400,18 @@ class MatrixHttpApi(object):
         body = {
             "name": name
         }
-        return self.send_state_event(room_id, "m.room.name", body, timestamp=timestamp)
+        return self.send_state_event(room_id, "m.room.name", body, timestamp=timestamp,
+                                     user_id=user_id)
 
-    def get_room_topic(self, room_id):
+    def get_room_topic(self, room_id, user_id=None):
         """Perform GET /rooms/$room_id/state/m.room.topic
         Args:
             room_id(str): The room ID
         """
-        return self._send("GET", "/rooms/" + room_id + "/state/m.room.topic")
+        return self._send("GET", "/rooms/" + room_id + "/state/m.room.topic",
+                          user_id=user_id)
 
-    def set_room_topic(self, room_id, topic, timestamp=None):
+    def set_room_topic(self, room_id, topic, timestamp=None, user_id=None):
         """Perform PUT /rooms/$room_id/state/m.room.topic
         Args:
             room_id(str): The room ID
@@ -412,7 +421,8 @@ class MatrixHttpApi(object):
         body = {
             "topic": topic
         }
-        return self.send_state_event(room_id, "m.room.topic", body, timestamp=timestamp)
+        return self.send_state_event(room_id, "m.room.topic", body, timestamp=timestamp,
+                                     user_id=user_id)
 
     def get_power_levels(self, room_id):
         """Perform GET /rooms/$room_id/state/m.room.power_levels
@@ -461,12 +471,12 @@ class MatrixHttpApi(object):
 
         return self.send_state_event(room_id, "m.room.power_levels", content)
 
-    def leave_room(self, room_id):
+    def leave_room(self, room_id, user_id=None):
         """Perform POST /rooms/$room_id/leave
         Args:
             room_id(str): The room ID
         """
-        return self._send("POST", "/rooms/" + room_id + "/leave", {})
+        return self._send("POST", "/rooms/" + room_id + "/leave", {}, user_id=user_id)
 
     def forget_room(self, room_id):
         """Perform POST /rooms/$room_id/forget
@@ -588,12 +598,12 @@ class MatrixHttpApi(object):
             account_data
         )
 
-    def get_room_state(self, room_id):
+    def get_room_state(self, room_id, user_id=None):
         """Perform GET /rooms/$room_id/state
         Args:
             room_id(str): The room ID
         """
-        return self._send("GET", "/rooms/" + room_id + "/state")
+        return self._send("GET", "/rooms/" + room_id + "/state", user_id=user_id)
 
     def get_text_body(self, text, msgtype="m.text"):
         return {
@@ -617,7 +627,7 @@ class MatrixHttpApi(object):
                           filter_params)
 
     def _send(self, method, path, content=None, query_params={}, headers={},
-              api_path=MATRIX_V2_API_PATH):
+              api_path=MATRIX_V2_API_PATH, user_id=None):
         method = method.upper()
         if method not in ["GET", "PUT", "DELETE", "POST"]:
             raise MatrixError("Unsupported HTTP method: %s" % method)
@@ -626,8 +636,8 @@ class MatrixHttpApi(object):
             headers["Content-Type"] = "application/json"
 
         query_params["access_token"] = self.token
-        if self.identity:
-            query_params["user_id"] = self.identity
+        if self.user_id or user_id:
+            query_params["user_id"] = user_id if user_id else self.user_id
 
         endpoint = self.base_url + api_path + path
 
@@ -659,12 +669,13 @@ class MatrixHttpApi(object):
 
         return response.json()
 
-    def media_upload(self, content, content_type):
+    def media_upload(self, content, content_type, user_id=None):
         return self._send(
             "POST", "",
             content=content,
             headers={"Content-Type": content_type},
-            api_path="/_matrix/media/r0/upload"
+            api_path="/_matrix/media/r0/upload",
+            user_id=user_id
         )
 
     def get_display_name(self, user_id):
@@ -689,7 +700,7 @@ class MatrixHttpApi(object):
         else:
             raise ValueError("MXC URL did not begin with 'mxc://'")
 
-    def get_room_id(self, room_alias):
+    def get_room_id(self, room_alias, user_id=None):
         """Get room id from its alias
 
         Args:
@@ -698,10 +709,11 @@ class MatrixHttpApi(object):
         Returns:
             Wanted room's id.
         """
-        content = self._send("GET", "/directory/room/{}".format(quote(room_alias)))
+        content = self._send("GET", "/directory/room/{}".format(quote(room_alias)),
+                             user_id=user_id)
         return content.get("room_id", None)
 
-    def set_room_alias(self, room_id, room_alias):
+    def set_room_alias(self, room_id, room_alias, user_id=None):
         """Set alias to room id
 
         Args:
@@ -713,9 +725,9 @@ class MatrixHttpApi(object):
         }
 
         return self._send("PUT", "/directory/room/{}".format(quote(room_alias)),
-                          content=data)
+                          content=data, user_id=user_id)
 
-    def remove_room_alias(self, room_alias):
+    def remove_room_alias(self, room_alias, user_id=None):
         """Remove mapping of an alias
 
         Args:
@@ -724,12 +736,14 @@ class MatrixHttpApi(object):
         Raises:
             MatrixRequestError
         """
-        return self._send("DELETE", "/directory/room/{}".format(quote(room_alias)))
+        return self._send("DELETE", "/directory/room/{}".format(quote(room_alias)),
+                          user_id=user_id)
 
-    def get_room_members(self, room_id):
+    def get_room_members(self, room_id, user_id=None):
         """Get the list of members for this room.
 
         Args:
             room_id (str): The room to get the member events for.
         """
-        return self._send("GET", "/rooms/{}/members".format(quote(room_id)))
+        return self._send("GET", "/rooms/{}/members".format(quote(room_id)),
+                          user_id=user_id)
