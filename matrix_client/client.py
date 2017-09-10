@@ -29,57 +29,60 @@ class MatrixClient(object):
     """
     The client API for Matrix. For the raw HTTP calls, see MatrixHttpApi.
 
-    Usage (new user):
-        client = MatrixClient("https://matrix.org")
-        token = client.register_with_password(username="foobar",
-            password="monkey")
-        room = client.create_room("myroom")
-        room.send_image(file_like_object)
+    Args:
+        base_url (str): The url of the HS preceding /_matrix.
+            e.g. (ex: https://localhost:8008 )
+        token (Optional[str]): If you have an access token
+            supply it here.
+        user_id (Optional[str]): You must supply the user_id
+            (as obtained when initially logging in to obtain
+            the token) if supplying a token; otherwise, ignored.
+        valid_cert_check (bool): Check the homeservers
+            certificate on connections?
 
-    Usage (logged in):
-        client = MatrixClient("https://matrix.org", token="foobar",
-            user_id="@foobar:matrix.org")
-        rooms = client.get_rooms()  # NB: From initial sync
-        client.add_listener(func)  # NB: event stream callback
-        rooms[0].add_listener(func)  # NB: callbacks just for this room.
-        room = client.join_room("#matrix:matrix.org")
-        response = room.send_text("Hello!")
-        response = room.kick("@bob:matrix.org")
+    Returns:
+        `MatrixClient`
 
-    Incoming event callbacks (scopes):
+    Raises:
+        `MatrixRequestError`, `ValueError`
 
-        def user_callback(user, incoming_event):
-            pass
+    Examples:
 
-        def room_callback(room, incoming_event):
-            pass
+        Create a new user and send a message::
 
-        def global_callback(incoming_event):
-            pass
+            client = MatrixClient("https://matrix.org")
+            token = client.register_with_password(username="foobar",
+                password="monkey")
+            room = client.create_room("myroom")
+            room.send_image(file_like_object)
+
+        Send a message with an already logged in user::
+
+            client = MatrixClient("https://matrix.org", token="foobar",
+                user_id="@foobar:matrix.org")
+            rooms = client.get_rooms()  # NB: From initial sync
+            client.add_listener(func)  # NB: event stream callback
+            rooms[0].add_listener(func)  # NB: callbacks just for this room.
+            room = client.join_room("#matrix:matrix.org")
+            response = room.send_text("Hello!")
+            response = room.kick("@bob:matrix.org")
+
+        Incoming event callbacks (scopes)::
+
+            def user_callback(user, incoming_event):
+                pass
+
+            def room_callback(room, incoming_event):
+                pass
+
+            def global_callback(incoming_event):
+                pass
 
     """
 
     def __init__(self, base_url, token=None, user_id=None,
                  valid_cert_check=True, sync_filter_limit=20):
-        """ Create a new Matrix Client object.
-
-        Args:
-            base_url (str): The url of the HS preceding /_matrix.
-                e.g. (ex: https://localhost:8008 )
-            token (Optional[str]): If you have an access token
-                supply it here.
-            user_id (Optional[str]): You must supply the user_id
-                (as obtained when initially logging in to obtain
-                the token) if supplying a token; otherwise, ignored.
-            valid_cert_check (bool): Check the homeservers
-                certificate on connections?
-
-        Returns:
-            MatrixClient
-
-        Raises:
-            MatrixRequestError, ValueError
-        """
+        """ Create a new Matrix Client object. """
         if token is not None and user_id is None:
             raise ValueError("must supply user_id along with token")
 

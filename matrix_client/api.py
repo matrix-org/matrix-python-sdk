@@ -29,22 +29,22 @@ MATRIX_V2_API_PATH = "/_matrix/client/r0"
 class MatrixHttpApi(object):
     """Contains all raw Matrix HTTP Client-Server API calls.
 
-    Usage:
-        matrix = MatrixHttpApi("https://matrix.org", token="foobar")
-        response = matrix.sync()
-        response = matrix.send_message("!roomid:matrix.org", "Hello!")
-
     For room and sync handling, consider using MatrixClient.
+
+    Args:
+        base_url (str): The home server URL e.g. 'http://localhost:8008'
+        token (str): Optional. The client's access token.
+        identity (str): Optional. The mxid to act as (For application services only).
+
+    Examples:
+        Create a client and send a message::
+
+            matrix = MatrixHttpApi("https://matrix.org", token="foobar")
+            response = matrix.sync()
+            response = matrix.send_message("!roomid:matrix.org", "Hello!")
     """
 
     def __init__(self, base_url, token=None, identity=None):
-        """Construct and configure the HTTP API.
-
-        Args:
-            base_url(str): The home server URL e.g. 'http://localhost:8008'
-            token(str): Optional. The client's access token.
-            identity(str): Optional. The mxid to act as (For application services only).
-        """
         self.base_url = base_url
         self.token = token
         self.identity = identity
@@ -52,11 +52,15 @@ class MatrixHttpApi(object):
         self.validate_cert = True
 
     def initial_sync(self, limit=1):
-        """ Deprecated. Use sync instead.
+        """
+        .. warning::
+
+            Deprecated. Use sync instead.
+
         Perform /initialSync.
 
         Args:
-            limit(int): The limit= param to provide.
+            limit (int): The limit= param to provide.
         """
         return self._send("GET", "/initialSync", query_params={"limit": limit})
 
@@ -65,9 +69,8 @@ class MatrixHttpApi(object):
         """ Perform a sync request.
 
         Args:
-            since(str): Optional. A token which specifies where to continue
-                a sync from.
-            timeout_ms(int): Optional. The time in milliseconds to wait.
+            since (str): Optional. A token which specifies where to continue a sync from.
+            timeout_ms (int): Optional. The time in milliseconds to wait.
             filter (int|str): Either a Filter ID or a JSON string.
             full_state (bool): Return the full state for every room the user has joined
                 Defaults to false.
@@ -95,34 +98,34 @@ class MatrixHttpApi(object):
 
     def validate_certificate(self, valid):
         self.validate_cert = valid
-        return
 
     def register(self, content={}, kind='user'):
         """Performs /register.
 
         Args:
-            content(dict): The request payload.
-                Should be specified for all non-guest registrations.
+            content (dict): The request payload.
 
-                username(string): The local part of the desired Matrix ID.
-                    If omitted, the homeserver MUST generate a Matrix ID local part.
+                | Should be specified for all non-guest registrations.
 
-                bind_email(boolean): If true, the server binds the email used for
-                    authentication to the Matrix ID with the ID Server.
-                    *Email Registration not currently supported*
+                | username (string): The local part of the desired Matrix ID.
+                |     If omitted, the homeserver MUST generate a Matrix ID local part.
 
-                password(string): Required. The desired password for the account.
+                | bind_email (boolean): If true, the server binds the email used for
+                |     authentication to the Matrix ID with the ID Server.
+                |     *Email Registration not currently supported*
 
-                auth(dict): Authentication Data
-                    session(string):  The value of the session key given by the
-                        homeserver.
+                | password (string): Required. The desired password for the account.
 
-                    type(string):  Required. The login type that the client is attempting
-                        to complete. "m.login.dummy" is the only non-interactive type.
+                | auth (dict): Authentication Data
+                |     session (string):  The value of the session key given by the
+                |         homeserver.
 
-            kind(str): Specify kind="guest" to register as guest.
+                |     type (string):  Required. The login type that the client is attempting
+                |         to complete. "m.login.dummy" is the only non-interactive type.
+
+            kind (str): Specify kind="guest" to register as guest.
         """
-
+        query_params['kind'] = kind
         return self._send(
             "POST",
             "/register",
@@ -134,7 +137,7 @@ class MatrixHttpApi(object):
         """Perform /login.
 
         Args:
-            login_type(str): The value for the 'type' key.
+            login_type (str): The value for the 'type' key.
             **kwargs: Additional key/values to add to the JSON submitted.
         """
         content = {
@@ -154,9 +157,9 @@ class MatrixHttpApi(object):
         """Perform /createRoom.
 
         Args:
-            alias(str): Optional. The room alias name to set for this room.
-            is_public(bool): Optional. The public/private visibility.
-            invitees(list<str>): Optional. The list of user IDs to invite.
+            alias (str): Optional. The room alias name to set for this room.
+            is_public (bool): Optional. The public/private visibility.
+            invitees (list<str>): Optional. The list of user IDs to invite.
         """
         content = {
             "visibility": "public" if is_public else "private"
@@ -171,7 +174,7 @@ class MatrixHttpApi(object):
         """Performs /join/$room_id
 
         Args:
-            room_id_or_alias(str): The room ID or room alias to join.
+            room_id_or_alias (str): The room ID or room alias to join.
         """
         if not room_id_or_alias:
             raise MatrixError("No alias or room ID to join.")
@@ -185,8 +188,8 @@ class MatrixHttpApi(object):
         Performs /events
 
         Args:
-            from_token(str): The 'from' query parameter.
-            timeout(int): Optional. The 'timeout' query parameter.
+            from_token (str): The 'from' query parameter.
+            timeout (int): Optional. The 'timeout' query parameter.
         """
         path = "/events"
         return self._send(
@@ -205,7 +208,7 @@ class MatrixHttpApi(object):
             event_type(str): The state event type to send.
             content(dict): The JSON content to send.
             state_key(str): Optional. The state key for the event.
-            timestamp(int): Optional. Set origin_server_ts (For application services only)
+            timestamp (int): Optional. Set origin_server_ts (For application services only)
         """
         path = "/rooms/%s/state/%s" % (
             quote(room_id), quote(event_type),
@@ -222,11 +225,11 @@ class MatrixHttpApi(object):
         """Perform PUT /rooms/$room_id/send/$event_type
 
         Args:
-            room_id(str): The room ID to send the message event in.
-            event_type(str): The event type to send.
-            content(dict): The JSON content to send.
-            txn_id(int): Optional. The transaction ID to use.
-            timestamp(int): Optional. Set origin_server_ts (For application services only)
+            room_id (str): The room ID to send the message event in.
+            event_type (str): The event type to send.
+            content (dict): The JSON content to send.
+            txn_id (int): Optional. The transaction ID to use.
+            timestamp (int): Optional. Set origin_server_ts (For application services only)
         """
         if not txn_id:
             txn_id = str(self.txn_id) + str(int(time() * 1000))
@@ -264,12 +267,12 @@ class MatrixHttpApi(object):
         """Send m.location message event
 
         Args:
-            room_id(str): The room ID to send the event in.
-            geo_uri(str): The geo uri representing the location.
-            name(str): Description for the location.
-            thumb_url(str): URL to the thumbnail of the location.
-            thumb_info(dict): Metadata about the thumbnail, type ImageInfo.
-            timestamp(int): Optional. Set origin_server_ts (For application services only)
+            room_id (str): The room ID to send the event in.
+            geo_uri (str): The geo uri representing the location.
+            name (str): Description for the location.
+            thumb_url (str): URL to the thumbnail of the location.
+            thumb_info (dict): Metadata about the thumbnail, type ImageInfo.
+            timestamp (int): Optional. Set origin_server_ts (For application services only)
         """
         content_pack = {
             "geo_uri": geo_uri,
@@ -288,9 +291,9 @@ class MatrixHttpApi(object):
         """Perform PUT /rooms/$room_id/send/m.room.message
 
         Args:
-            room_id(str): The room ID to send the event in.
-            text_content(str): The m.text body to send.
-            timestamp(int): Optional. Set origin_server_ts (For application services only)
+            room_id (str): The room ID to send the event in.
+            text_content (str): The m.text body to send.
+            timestamp (int): Optional. Set origin_server_ts (For application services only)
         """
         return self.send_message_event(
             room_id, "m.room.message",
@@ -302,9 +305,9 @@ class MatrixHttpApi(object):
         """Perform PUT /rooms/$room_id/send/m.room.message with m.emote msgtype
 
         Args:
-            room_id(str): The room ID to send the event in.
-            text_content(str): The m.emote body to send.
-            timestamp(int): Optional. Set origin_server_ts (For application services only)
+            room_id (str): The room ID to send the event in.
+            text_content (str): The m.emote body to send.
+            timestamp (int): Optional. Set origin_server_ts (For application services only)
         """
         return self.send_message_event(
             room_id, "m.room.message",
@@ -316,9 +319,9 @@ class MatrixHttpApi(object):
         """Perform PUT /rooms/$room_id/send/m.room.message with m.notice msgtype
 
         Args:
-            room_id(str): The room ID to send the event in.
-            text_content(str): The m.notice body to send.
-            timestamp(int): Optional. Set origin_server_ts (For application services only)
+            room_id (str): The room ID to send the event in.
+            text_content (str): The m.notice body to send.
+            timestamp (int): Optional. Set origin_server_ts (For application services only)
         """
         body = {
             "msgtype": "m.notice",
@@ -360,9 +363,9 @@ class MatrixHttpApi(object):
     def set_room_name(self, room_id, name, timestamp=None):
         """Perform PUT /rooms/$room_id/state/m.room.name
         Args:
-            room_id(str): The room ID
-            name(str): The new room name
-            timestamp(int): Optional. Set origin_server_ts (For application services only)
+            room_id (str): The room ID
+            name (str): The new room name
+            timestamp (int): Optional. Set origin_server_ts (For application services only)
         """
         body = {
             "name": name
@@ -372,16 +375,16 @@ class MatrixHttpApi(object):
     def get_room_topic(self, room_id):
         """Perform GET /rooms/$room_id/state/m.room.topic
         Args:
-            room_id(str): The room ID
+            room_id (str): The room ID
         """
         return self._send("GET", "/rooms/" + room_id + "/state/m.room.topic")
 
     def set_room_topic(self, room_id, topic, timestamp=None):
         """Perform PUT /rooms/$room_id/state/m.room.topic
         Args:
-            room_id(str): The room ID
-            topic(str): The new room topic
-            timestamp(int): Optional. Set origin_server_ts (For application services only)
+            room_id (str): The room ID
+            topic (str): The new room topic
+            timestamp (int): Optional. Set origin_server_ts (For application services only)
         """
         body = {
             "topic": topic
@@ -390,16 +393,18 @@ class MatrixHttpApi(object):
 
     def leave_room(self, room_id):
         """Perform POST /rooms/$room_id/leave
+
         Args:
-            room_id(str): The room ID
+            room_id (str): The room ID
         """
         return self._send("POST", "/rooms/" + room_id + "/leave", {})
 
     def invite_user(self, room_id, user_id):
         """Perform POST /rooms/$room_id/invite
+
         Args:
-            room_id(str): The room ID
-            user_id(str): The user ID of the invitee
+            room_id (str): The room ID
+            user_id (str): The user ID of the invitee
         """
         body = {
             "user_id": user_id
@@ -413,9 +418,10 @@ class MatrixHttpApi(object):
 
     def get_membership(self, room_id, user_id):
         """Perform GET /rooms/$room_id/state/m.room.member/$user_id
+
         Args:
-            room_id(str): The room ID
-            user_id(str): The user ID
+            room_id (str): The room ID
+            user_id (str): The user ID
         """
         return self._send(
             "GET",
@@ -426,11 +432,11 @@ class MatrixHttpApi(object):
                        timestamp=None):
         """Perform PUT /rooms/$room_id/state/m.room.member/$user_id
         Args:
-            room_id(str): The room ID
-            user_id(str): The user ID
-            membership(str): New membership value
-            reason(str): The reason
-            timestamp(int): Optional. Set origin_server_ts (For application services only)
+            room_id (str): The room ID
+            user_id (str): The user ID
+            membership (str): New membership value
+            reason (str): The reason
+            timestamp (int): Optional. Set origin_server_ts (For application services only)
         """
         body = {
             "membership": membership,
@@ -446,10 +452,11 @@ class MatrixHttpApi(object):
 
     def ban_user(self, room_id, user_id, reason=""):
         """Perform POST /rooms/$room_id/ban
+
         Args:
-            room_id(str): The room ID
-            user_id(str): The user ID of the banee(sic)
-            reason(str): The reason for this ban
+            room_id (str): The room ID
+            user_id (str): The user ID of the banee(sic)
+            reason (str): The reason for this ban
         """
         body = {
             "user_id": user_id,
@@ -459,9 +466,10 @@ class MatrixHttpApi(object):
 
     def unban_user(self, room_id, user_id):
         """Perform POST /rooms/$room_id/unban
+
         Args:
-            room_id(str): The room ID
-            user_id(str): The user ID of the banee(sic)
+            room_id (str): The room ID
+            user_id (str): The user ID of the banee(sic)
         """
         body = {
             "user_id": user_id
@@ -509,8 +517,9 @@ class MatrixHttpApi(object):
 
     def get_room_state(self, room_id):
         """Perform GET /rooms/$room_id/state
+
         Args:
-            room_id(str): The room ID
+            room_id (str): The room ID
         """
         return self._send("GET", "/rooms/" + room_id + "/state")
 
@@ -609,7 +618,7 @@ class MatrixHttpApi(object):
         """Get room id from its alias
 
         Args:
-            room_alias(str): The room alias name.
+            room_alias (str): The room alias name.
 
         Returns:
             Wanted room's id.
@@ -621,8 +630,8 @@ class MatrixHttpApi(object):
         """Set alias to room id
 
         Args:
-            room_id(str): The room id.
-            room_alias(str): The room wanted alias name.
+            room_id (str): The room id.
+            room_alias (str): The room wanted alias name.
         """
         data = {
             "room_id": room_id
