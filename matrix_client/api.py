@@ -58,10 +58,12 @@ class MatrixHttpApi(object):
             limit(int): The limit= param to provide.
             **query_params: Extra parameters to be sent in the HTTP request.
                 Common values for ``query_params`` are:
-                    ts: timestamp for event
-                    user_id: user id for transaction.
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
-        return self._send("GET", "/initialSync", query_params={"limit": limit},
+        query_params['limit'] = limit
+        return self._send("GET", "/initialSync",
                           query_params=query_params)
 
     def sync(self, since=None, timeout_ms=30000, filter=None,
@@ -78,8 +80,9 @@ class MatrixHttpApi(object):
             set_presence (str): Should the client be marked as "online" or" offline"
             **query_params: Extra parameters to be sent in the HTTP request.
                 Common values for ``query_params`` are:
-                    ts: timestamp for event
-                    user_id: user id for transaction.
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
 
         request = query_params
@@ -129,8 +132,9 @@ class MatrixHttpApi(object):
             kind(str): Specify kind="guest" to register as guest.
             **query_params: Extra parameters to be sent in the HTTP request.
                 Common values for ``query_params`` are:
-                    ts: timestamp for event
-                    user_id: user id for transaction.
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         query_params['kind'] = kind
         return self._send(
@@ -157,11 +161,13 @@ class MatrixHttpApi(object):
 
     def logout(self, **query_params):
         """Perform /logout.
+
         Args:
             **query_params: Extra parameters to be sent in the HTTP request.
                 Common values for ``query_params`` are:
-                    ts: timestamp for event
-                    user_id: user id for transaction.
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         return self._send("POST", "/logout", query_params=query_params)
 
@@ -174,8 +180,9 @@ class MatrixHttpApi(object):
             invitees(list<str>): Optional. The list of user IDs to invite.
             **query_params: Extra parameters to be sent in the HTTP request.
                 Common values for ``query_params`` are:
-                    ts: timestamp for event
-                    user_id: user id for transaction.
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         content = {
             "visibility": "public" if is_public else "private"
@@ -193,8 +200,9 @@ class MatrixHttpApi(object):
             room_id_or_alias(str): The room ID or room alias to join.
             **query_params: Extra parameters to be sent in the HTTP request.
                 Common values for ``query_params`` are:
-                    ts: timestamp for event
-                    user_id: user id for transaction.
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         if not room_id_or_alias:
             raise MatrixError("No alias or room ID to join.")
@@ -212,8 +220,9 @@ class MatrixHttpApi(object):
             timeout(int): Optional. The 'timeout' query parameter.
             **query_params: Extra parameters to be sent in the HTTP request.
                 Common values for ``query_params`` are:
-                    ts: timestamp for event
-                    user_id: user id for transaction.
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         params = {
             "timeout": timeout,
@@ -237,8 +246,9 @@ class MatrixHttpApi(object):
             state_key(str): Optional. The state key for the event.
             **query_params: Extra parameters to be sent in the HTTP request.
                 Common values for ``query_params`` are:
-                    ts: timestamp for event
-                    user_id: user id for transaction.
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         path = "/rooms/%s/state/%s" % (
             quote(room_id), quote(event_type),
@@ -258,8 +268,9 @@ class MatrixHttpApi(object):
             txn_id(int): Optional. The transaction ID to use.
             **query_params: Extra parameters to be sent in the HTTP request.
                 Common values for ``query_params`` are:
-                    ts: timestamp for event
-                    user_id: user id for transaction.
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         if not txn_id:
             txn_id = str(self.txn_id) + str(int(time() * 1000))
@@ -327,8 +338,9 @@ class MatrixHttpApi(object):
             thumb_info(dict): Metadata about the thumbnail, type ImageInfo.
             **query_params: Extra parameters to be sent in the HTTP request.
                 Common values for ``query_params`` are:
-                    ts: timestamp for event
-                    user_id: user id for transaction.
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         content_pack = {
             "geo_uri": geo_uri,
@@ -352,8 +364,9 @@ class MatrixHttpApi(object):
             text_content(str): The m.text body to send.
             **query_params: Extra parameters to be sent in the HTTP request.
                 Common values for ``query_params`` are:
-                    ts: timestamp for event
-                    user_id: user id for transaction.
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         return self.send_message_event(
             room_id, "m.room.message",
@@ -369,8 +382,9 @@ class MatrixHttpApi(object):
             text_content(str): The m.emote body to send.
             **query_params: Extra parameters to be sent in the HTTP request.
                 Common values for ``query_params`` are:
-                    ts: timestamp for event
-                    user_id: user id for transaction.
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         return self.send_message_event(
             room_id, "m.room.message",
@@ -386,8 +400,9 @@ class MatrixHttpApi(object):
             text_content(str): The m.notice body to send.
             **query_params: Extra parameters to be sent in the HTTP request.
                 Common values for ``query_params`` are:
-                    ts: timestamp for event
-                    user_id: user id for transaction.
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         body = {
             "msgtype": "m.notice",
@@ -408,8 +423,9 @@ class MatrixHttpApi(object):
             to (str): The token to stop returning events at.
             **query_params: Extra parameters to be sent in the HTTP request.
                 Common values for ``query_params`` are:
-                    ts: timestamp for event
-                    user_id: user id for transaction.
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
 
         query_params.update({
@@ -432,8 +448,9 @@ class MatrixHttpApi(object):
             room_id(str): The room ID
             **query_params: Extra parameters to be sent in the HTTP request.
                 Common values for ``query_params`` are:
-                    ts: timestamp for event
-                    user_id: user id for transaction.
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         return self._send("GET", "/rooms/" + room_id + "/state/m.room.name",
                           query_params=query_params)
@@ -445,8 +462,9 @@ class MatrixHttpApi(object):
             name(str): The new room name
             **query_params: Extra parameters to be sent in the HTTP request.
                 Common values for ``query_params`` are:
-                    ts: timestamp for event
-                    user_id: user id for transaction.
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         body = {
             "name": name
@@ -460,8 +478,9 @@ class MatrixHttpApi(object):
             room_id(str): The room ID
             **query_params: Extra parameters to be sent in the HTTP request.
                 Common values for ``query_params`` are:
-                    ts: timestamp for event
-                    user_id: user id for transaction.
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         return self._send("GET", "/rooms/" + room_id + "/state/m.room.topic",
                           query_params=query_params)
@@ -473,8 +492,9 @@ class MatrixHttpApi(object):
             topic(str): The new room topic
             **query_params: Extra parameters to be sent in the HTTP request.
                 Common values for ``query_params`` are:
-                    ts: timestamp for event
-                    user_id: user id for transaction.
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         body = {
             "topic": topic
@@ -535,8 +555,9 @@ class MatrixHttpApi(object):
             room_id(str): The room ID
             **query_params: Extra parameters to be sent in the HTTP request.
                 Common values for ``query_params`` are:
-                    ts: timestamp for event
-                    user_id: user id for transaction.
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         return self._send("POST", "/rooms/" + room_id + "/leave", {},
                           query_params=query_params)
@@ -666,8 +687,9 @@ class MatrixHttpApi(object):
             room_id(str): The room ID
             **query_params: Extra parameters to be sent in the HTTP request.
                 Common values for ``query_params`` are:
-                    ts: timestamp for event
-                    user_id: user id for transaction.
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         return self._send("GET", "/rooms/" + room_id + "/state",
                           query_params=query_params)
