@@ -491,11 +491,11 @@ class MatrixClient(object):
                 "The upload was successful, but content_uri wasn't found."
             )
 
-    def _mkroom(self, response=None, room_id_or_alias=None):
+    def _mkroom(self, room_id_or_alias=None, response=None):
         if response and "room_id" in response:
             room_id_or_alias = response["room_id"]
-        self.rooms[room_id_or_alias] = Room(self, room_id)
-        return self.rooms[room_id]
+        self.rooms[room_id_or_alias] = Room(self, room_id_or_alias)
+        return self.rooms[room_id_or_alias]
 
     def _process_state_event(self, state_event, current_room):
         if "type" not in state_event:
@@ -593,14 +593,32 @@ class MatrixClient(object):
             return False
 
     def _async_call(self, first_callback, final_callback):
-        """Call `final_callback` on result of `first_callback` asynchronously"""
+        """Call `final_callback` on result of `first_callback` asynchronously
+
+        Args:
+            first_callback(callable): Callable with 0 args to be called first
+            final_callback(callable): Callable with 1 arg whose result will be
+                returned. Called with output from first_callback.
+
+        Returns:
+            AsyncResult: Promise for the result of final_callback.
+        """
         first_result = AsyncResult()
-        self.queue.put((first_callback, first_result))
+        self.queue.matrix_put((first_callback, first_result))
         final_result = AsyncResult()
         # lambda function will wait for first_result to be fulfilled
-        self.queue.put(lambda: final_callback(first_result.get()), final_result)
+        self.queue.matrix_put((lambda: final_callback(first_result.get()), final_result))
         return final_result
 
     def _sync_call(self, first_callback, final_callback):
-        """Call `final_callback` on result of `first_callback` synchronously"""
+        """Call `final_callback` on result of `first_callback` synchronously
+
+        Args:
+            first_callback(callable): Callable with 0 args to be called first
+            final_callback(callable): Callable with 1 arg whose result will be
+                returned. Called with output from first_callback.
+
+        Returns:
+            Object: Result of final_callback
+        """
         return final_callback(first_callback())

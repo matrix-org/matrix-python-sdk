@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import gevent.queue
+from gevent.event import AsyncResult
 import time
 import json
 from .errors import MatrixRequestError
@@ -68,3 +69,12 @@ class RequestQueue(gevent.queue.Queue):
         """Calls self.call forever."""
         while True:
             self.call()
+
+    def matrix_put(self, item, *args, **kwargs):
+        """Calls `self.put` after validating type of item."""
+        if (type(item) == tuple and len(item) == 2 and
+            callable(item[0]) and type(item[1]) == AsyncResult):
+
+            return self.put(item, *args, **kwargs)
+        else:
+            raise TypeError("Received %s when expecting (callable, AsyncResult)" % str(item))

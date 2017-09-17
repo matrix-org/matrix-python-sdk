@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from functools import partial
 import re
 from uuid import uuid4
 
@@ -534,7 +535,7 @@ class Room(object):
         return self._call(
             partial(self._handle_api_errors,
                     partial(self.client.api.set_room_topic, self.room_id, topic)),
-            lambda _: set_room_topic(topic)
+            lambda _: _set_room_topic(topic)
         )
 
     def update_aliases(self):
