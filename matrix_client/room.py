@@ -58,6 +58,9 @@ class Room(object):
 
     @property
     def display_name(self):
+        """
+        Calculates the display name for a room.
+        """
         if self.name:
             return self.name
         elif self.canonical_alias:
@@ -71,8 +74,9 @@ class Room(object):
         if len(first_two) == 1:
             return first_two[0]["displayname"]
         elif len(first_two) == 2:
-            return "{0} and {1}".format([x["displayname"] for x in
-                                         first_two])
+            return "{0} and {1}".format(
+                first_two[0]["displayname"],
+                first_two[1]["displayname"])
         elif len(first_two) > 2:
             return "{0} and {1} others".format(
                 first_two[0]["displayname"],
