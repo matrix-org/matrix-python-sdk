@@ -1,7 +1,6 @@
 import pytest
 import responses
 import json
-from mock import MagicMock
 from matrix_client.client import MatrixClient, Room, User
 from matrix_client.api import MATRIX_V2_API_PATH
 
