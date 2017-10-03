@@ -44,7 +44,8 @@ setup(
     ],
     keywords='chat sdk matrix matrix.org',
     install_requires=[
-        'requests'
+        'requests',
+        'gevent',
     ],
     extras_require={
         'test': ['tox', 'pytest', 'flake8', 'responses'],
