@@ -560,6 +560,8 @@ class MatrixHttpApi(object):
 
         if headers["Content-Type"] == "application/json" and content is not None:
             content = json.dumps(content)
+            
+        request_timeout = 10.0 + query_params.get("timeout", 30000) / 1000
 
         response = None
         while True:
@@ -568,7 +570,8 @@ class MatrixHttpApi(object):
                 params=query_params,
                 data=content,
                 headers=headers,
-                verify=self.validate_cert
+                verify=self.validate_cert,
+                timeout=request_timeout
             )
 
             if response.status_code == 429:
