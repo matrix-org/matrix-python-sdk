@@ -365,6 +365,10 @@ class MatrixClient(object):
                                            self.bad_sync_timeout_limit)
                 else:
                     raise e
+            except requests.exceptions.ReadTimeout as e:
+                logger.warning("A ReadTimeout exception occured during sync.")
+                bad_sync_timeout = min(bad_sync_timeout * 2,
+                                       self.bad_sync_timeout_limit)
             except Exception as e:
                 logger.exception("Exception thrown during sync")
                 if exception_handler is not None:
