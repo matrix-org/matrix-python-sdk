@@ -164,3 +164,29 @@ class TestClientRegister:
         assert cli.hs == 'example.com'
         assert cli.user_id == '@455:example.com'
         assert cli._sync_called
+
+
+def test_get_rooms_display_name():
+
+    def add_members(room, num):
+        for i in range(num):
+            room._mkmembers({'user_id': '@frho%s:matrix.org' % i,
+                             'displayname': 'ho%s' % i})
+
+    client = MatrixClient("http://example.com")
+    client.user_id = "@frho0:matrix.org"
+    room1 = client._mkroom("!abc:matrix.org")
+    add_members(room1, 1)
+    room2 = client._mkroom("!def:matrix.org")
+    add_members(room2, 2)
+    room3 = client._mkroom("!ghi:matrix.org")
+    add_members(room3, 3)
+    room4 = client._mkroom("!rfi:matrix.org")
+    add_members(room4, 30)
+
+    rooms = client.get_rooms()
+    assert len(rooms) == 4
+    assert room1.display_name == "Empty room"
+    assert room2.display_name == "ho1"
+    assert room3.display_name == "ho1 and ho2"
+    assert room4.display_name == "ho1 and ho2 others"

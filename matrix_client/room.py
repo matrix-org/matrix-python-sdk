@@ -1,5 +1,4 @@
 import re
-import collections
 from uuid import uuid4
 
 from .errors import MatrixRequestError
@@ -34,6 +33,7 @@ class Room(object):
         self.aliases = []
         self.topic = None
         self._prev_batch = None
+        self._members = []
 
     def set_user_profile(self,
                          displayname=None,
@@ -68,19 +68,23 @@ class Room(object):
 
         members = self.get_joined_members()
         # members without me
-        members = collections.OrderedDict({k: members[k] for k in members if
-                                           self.client.user_id != k})
-        first_two = list(members.values())[:2]
+        members = [k for k in members if self.client.user_id not in k['user_id']]
+        first_two = members[:2]
         if len(first_two) == 1:
             return first_two[0]["displayname"]
-        elif len(first_two) == 2:
+        elif len(members) == 2:
             return "{0} and {1}".format(
                 first_two[0]["displayname"],
                 first_two[1]["displayname"])
-        elif len(first_two) > 2:
+        elif len(members) > 2:
             return "{0} and {1} others".format(
                 first_two[0]["displayname"],
                 first_two[1]["displayname"])
+        elif len(first_two) == 0:
+            # TODO i18n
+            return "Empty room"
+        # TODO i18n
+        return "Empty room"
 
     def send_text(self, text):
         """ Send a plain text message to the room.
@@ -496,14 +500,18 @@ class Room(object):
         Returns:
             {user_id: {"displayname": str or None}}: Dictionary of joined members.
         """
+        if self._members:
+            return self._members
         response = self.client.api.get_room_members(self.room_id)
-        rtn = collections.OrderedDict({
-            event["state_key"]: {
-                "displayname": event["content"].get("displayname"),
-            } for event in response["chunk"] if event["content"]["membership"] == "join"
-        })
+        for event in response["chunk"]:
+            if event["content"]["membership"] == "join":
+                self._mkmembers({
+                    "user_id": event["state_key"],
+                    "displayname": event["content"].get("displayname")})
+        return self._members
 
-        return rtn
+    def _mkmembers(self, member):
+        self._members.append(member)
 
     def backfill_previous_messages(self, reverse=False, limit=10):
         """Backfill handling of previous messages.
