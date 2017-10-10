@@ -1,7 +1,7 @@
 class User(object):
     """ The User class can be used to call user specific functions.
     """
-    def __init__(self, api, user_id):
+    def __init__(self, api, user_id, displayname=None):
         if not user_id.startswith("@"):
             raise ValueError("UserIDs start with @")
 
@@ -9,6 +9,7 @@ class User(object):
             raise ValueError("UserIDs must have a domain component, seperated by a :")
 
         self.user_id = user_id
+        self.displayname = displayname
         self.api = api
 
     def get_display_name(self):
@@ -18,7 +19,9 @@ class User(object):
         Returns:
             str: Display Name
         """
-        return self.api.get_display_name(self.user_id)
+        if not self.displayname:
+            self.displayname = self.api.get_display_name(self.user_id)
+        return self.displayname
 
     def get_friendly_name(self):
         display_name = self.api.get_display_name(self.user_id)
@@ -30,6 +33,7 @@ class User(object):
         Args:
             display_name (str): Display Name
         """
+        self.displayname = display_name
         return self.api.set_display_name(self.user_id, display_name)
 
     def get_avatar_url(self):

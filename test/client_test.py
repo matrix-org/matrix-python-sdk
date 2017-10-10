@@ -168,21 +168,20 @@ class TestClientRegister:
 
 def test_get_rooms_display_name():
 
-    def add_members(room, num):
+    def add_members(api, room, num):
         for i in range(num):
-            room._mkmembers({'user_id': '@frho%s:matrix.org' % i,
-                             'displayname': 'ho%s' % i})
+            room._mkmembers(User(api, '@frho%s:matrix.org' % i, 'ho%s' % i))
 
     client = MatrixClient("http://example.com")
     client.user_id = "@frho0:matrix.org"
     room1 = client._mkroom("!abc:matrix.org")
-    add_members(room1, 1)
+    add_members(client.api, room1, 1)
     room2 = client._mkroom("!def:matrix.org")
-    add_members(room2, 2)
+    add_members(client.api, room2, 2)
     room3 = client._mkroom("!ghi:matrix.org")
-    add_members(room3, 3)
+    add_members(client.api, room3, 3)
     room4 = client._mkroom("!rfi:matrix.org")
-    add_members(room4, 30)
+    add_members(client.api, room4, 30)
 
     rooms = client.get_rooms()
     assert len(rooms) == 4

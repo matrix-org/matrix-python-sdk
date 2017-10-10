@@ -1,6 +1,7 @@
 import re
 from uuid import uuid4
 
+from .user import User
 from .errors import MatrixRequestError
 
 
@@ -68,18 +69,19 @@ class Room(object):
 
         members = self.get_joined_members()
         # members without me
-        members = [k for k in members if self.client.user_id not in k['user_id']]
+        members = [u.get_display_name() for u in members if
+                   self.client.user_id != u.user_id]
         first_two = members[:2]
         if len(first_two) == 1:
-            return first_two[0]["displayname"]
+            return first_two[0]
         elif len(members) == 2:
             return "{0} and {1}".format(
-                first_two[0]["displayname"],
-                first_two[1]["displayname"])
+                first_two[0],
+                first_two[1])
         elif len(members) > 2:
             return "{0} and {1} others".format(
-                first_two[0]["displayname"],
-                first_two[1]["displayname"])
+                first_two[0],
+                first_two[1])
         elif len(first_two) == 0:
             # TODO i18n
             return "Empty room"
@@ -505,9 +507,11 @@ class Room(object):
         response = self.client.api.get_room_members(self.room_id)
         for event in response["chunk"]:
             if event["content"]["membership"] == "join":
-                self._mkmembers({
-                    "user_id": event["state_key"],
-                    "displayname": event["content"].get("displayname")})
+                self._mkmembers(
+                    User(self.client.api,
+                         event["state_key"],
+                         event["content"].get("displayname"))
+                )
         return self._members
 
     def _mkmembers(self, member):
