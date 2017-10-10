@@ -443,6 +443,13 @@ class MatrixClient(object):
             current_room.topic = state_event["content"].get("topic", None)
         elif etype == "m.room.aliases":
             current_room.aliases = state_event["content"].get("aliases", None)
+        elif etype == "m.room.member":
+            if state_event["content"]["membership"] == "join":
+                current_room._mkmembers(
+                    User(self.api,
+                         state_event["state_key"],
+                         state_event["content"].get("displayname", None))
+                )
 
         for listener in current_room.state_listeners:
             if (

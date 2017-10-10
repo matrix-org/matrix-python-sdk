@@ -515,7 +515,8 @@ class Room(object):
         return self._members
 
     def _mkmembers(self, member):
-        self._members.append(member)
+        if member.user_id not in [x.user_id for x in self._members]:
+            self._members.append(member)
 
     def backfill_previous_messages(self, reverse=False, limit=10):
         """Backfill handling of previous messages.

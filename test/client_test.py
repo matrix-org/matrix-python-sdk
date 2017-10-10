@@ -97,6 +97,14 @@ def test_state_event():
     client._process_state_event(ev, room)
     assert room.aliases is aliases
 
+    # test member event
+    ev["type"] = "m.room.member"
+    ev["content"] = {'membership': 'join', 'displayname': 'stereo'}
+    ev["state_key"] = "@stereo:xxx.org"
+    client._process_state_event(ev, room)
+    assert len(room._members) == 1
+    assert room._members[0].user_id == "@stereo:xxx.org"
+
 
 def test_get_user():
     client = MatrixClient("http://example.com")
