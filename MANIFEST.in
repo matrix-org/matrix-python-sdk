@@ -3,7 +3,6 @@ include *.rst
 include tox.ini
 recursive-include samples *.py
 recursive-include test *.py
-recursive-include test/recordings *
 
 recursive-include docs *.py
 recursive-include docs *.rst
