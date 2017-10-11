@@ -69,8 +69,8 @@ class Room(object):
 
         members = self.get_joined_members()
         # members without me
-        members = [u.get_display_name() for u in members if
-                   self.client.user_id != u.user_id]
+        members[:] = [u.get_display_name() for u in members if
+                      self.client.user_id != u.user_id]
         first_two = members[:2]
         if len(first_two) == 1:
             return first_two[0]
@@ -81,7 +81,7 @@ class Room(object):
         elif len(members) > 2:
             return "{0} and {1} others".format(
                 first_two[0],
-                first_two[1])
+                len(members) - 1)
         elif len(first_two) == 0:
             # TODO i18n
             return "Empty room"
@@ -517,6 +517,9 @@ class Room(object):
     def _mkmembers(self, member):
         if member.user_id not in [x.user_id for x in self._members]:
             self._members.append(member)
+
+    def _rmmembers(self, user_id):
+        self._members[:] = [x for x in self._members if x.user_id != user_id]
 
     def backfill_previous_messages(self, reverse=False, limit=10):
         """Backfill handling of previous messages.

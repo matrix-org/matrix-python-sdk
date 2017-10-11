@@ -450,6 +450,8 @@ class MatrixClient(object):
                          state_event["state_key"],
                          state_event["content"].get("displayname", None))
                 )
+            elif state_event["content"]["membership"] in ("leave", "kick", "invite"):
+                current_room._rmmembers(state_event["state_key"])
 
         for listener in current_room.state_listeners:
             if (

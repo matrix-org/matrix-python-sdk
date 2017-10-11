@@ -97,13 +97,17 @@ def test_state_event():
     client._process_state_event(ev, room)
     assert room.aliases is aliases
 
-    # test member event
+    # test member join event
     ev["type"] = "m.room.member"
     ev["content"] = {'membership': 'join', 'displayname': 'stereo'}
     ev["state_key"] = "@stereo:xxx.org"
     client._process_state_event(ev, room)
     assert len(room._members) == 1
     assert room._members[0].user_id == "@stereo:xxx.org"
+    # test member leave event
+    ev["content"]['membership'] = 'leave'
+    client._process_state_event(ev, room)
+    assert len(room._members) == 0
 
 
 def test_get_user():
@@ -196,4 +200,4 @@ def test_get_rooms_display_name():
     assert room1.display_name == "Empty room"
     assert room2.display_name == "ho1"
     assert room3.display_name == "ho1 and ho2"
-    assert room4.display_name == "ho1 and ho2 others"
+    assert room4.display_name == "ho1 and 28 others"
