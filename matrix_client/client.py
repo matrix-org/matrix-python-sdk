@@ -19,7 +19,7 @@ from .user import User
 from threading import Thread
 from time import sleep
 from uuid import uuid4
-from requests.exceptions import ReadTimeout
+import requests
 import logging
 import sys
 
@@ -366,8 +366,12 @@ class MatrixClient(object):
                                            self.bad_sync_timeout_limit)
                 else:
                     raise e
-            except ReadTimeout as e:
-                logger.warning("A ReadTimeout exception occured during sync.")
+            except requests.exceptions.ReadTimeout as e:
+                logger.warning("A ReadTimeout occured during sync.")
+                bad_sync_timeout = min(bad_sync_timeout * 2,
+                                       self.bad_sync_timeout_limit)
+            except requests.exceptions.ConnectionError as e:
+                logger.warning("A ConnectionError occured during sync.")
                 bad_sync_timeout = min(bad_sync_timeout * 2,
                                        self.bad_sync_timeout_limit)
             except Exception as e:
