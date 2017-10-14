@@ -86,6 +86,7 @@ class MatrixClient(object):
         self.api = MatrixHttpApi(base_url, token)
         self.api.validate_certificate(valid_cert_check)
         self.listeners = []
+        self.presence_listeners = []
         self.invite_listeners = []
         self.left_listeners = []
         self.ephemeral_listeners = []
@@ -281,6 +282,34 @@ class MatrixClient(object):
         self.listeners[:] = (listener for listener in self.listeners
                              if listener['uid'] != uid)
 
+    def add_presence_listener(self, callback):
+        """ Add a presence listener that will send a callback when the client receives
+        a presence update.
+
+        Args:
+            callback (func(roomchunk)): Callback called when a presence update arrives.
+
+        Returns:
+            uuid.UUID: Unique id of the listener, can be used to identify the listener.
+        """
+        listener_uid = uuid4()
+        self.presence_listeners.append(
+            {
+                'uid': listener_uid,
+                'callback': callback
+            }
+        )
+        return listener_uid
+
+    def remove_presence_listener(self, uid):
+        """ Remove presence listener with given uid
+
+        Args:
+            uuid.UUID: Unique id of the listener to remove
+        """
+        self.presence_listeners[:] = (listener for listener in self.presence_listeners
+                                       if listener['uid'] != uid)
+
     def add_ephemeral_listener(self, callback, event_type=None):
         """ Add an ephemeral listener that will send a callback when the client recieves
         an ephemeral event.
@@ -461,10 +490,13 @@ class MatrixClient(object):
                 listener['callback'](state_event)
 
     def _sync(self, timeout_ms=30000):
-        # TODO: Deal with presence
         # TODO: Deal with left rooms
         response = self.api.sync(self.sync_token, timeout_ms, filter=self.sync_filter)
         self.sync_token = response["next_batch"]
+
+        for presence_update in response['presence']['events']:
+            for listener in self.presence_listeners:
+                listener['callback'](presence_update)
 
         for room_id, invite_room in response['rooms']['invite'].items():
             for listener in self.invite_listeners:
