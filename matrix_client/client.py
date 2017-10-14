@@ -308,7 +308,7 @@ class MatrixClient(object):
             uuid.UUID: Unique id of the listener to remove
         """
         self.presence_listeners[:] = (listener for listener in self.presence_listeners
-                                       if listener['uid'] != uid)
+                                      if listener['uid'] != uid)
 
     def add_ephemeral_listener(self, callback, event_type=None):
         """ Add an ephemeral listener that will send a callback when the client recieves
