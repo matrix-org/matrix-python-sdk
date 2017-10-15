@@ -460,35 +460,35 @@ class MatrixClient(object):
             MatrixUnexpectedResponse: If the homeserver gave a strange response
             MatrixRequestError: If the upload failed for some reason.
         """
+        def _media_upload(self, content, content_type):
+            """Wraps `self.api.media_upload` to allow error handling."""
+            try:
+                return self.api.media_upload(content, content_type)
+            except MatrixRequestError as e:
+                raise MatrixRequestError(
+                    code=e.code,
+                    content="Upload failed: %s" % e
+                )
+
+        def _upload(self, response):
+            """Helper function to be used as callback by `self.upload`"""
+            if "content_uri" in response:
+                return response["content_uri"]
+            else:
+                raise MatrixUnexpectedResponse(
+                    "The upload was successful, but content_uri wasn't found."
+                )
+
         try:
             # If not async, exceptions can be handled and logged
             return self._call(
-                partial(self._media_upload, content, content_type),
-                self._upload
+                partial(_media_upload, content, content_type),
+                _upload
             )
         except MatrixRequestError as e:
             raise MatrixRequestError(
                 code=e.code,
                 content="Upload failed: %s" % e
-            )
-
-    def _media_upload(self, content, content_type):
-        """Wraps `self.api.media_upload` to allow error handling."""
-        try:
-            return self.api.media_upload(content, content_type)
-        except MatrixRequestError as e:
-            raise MatrixRequestError(
-                code=e.code,
-                content="Upload failed: %s" % e
-            )
-
-    def _upload(self, response):
-        """Helper function to be used as callback by `self.upload`"""
-        if "content_uri" in response:
-            return response["content_uri"]
-        else:
-            raise MatrixUnexpectedResponse(
-                "The upload was successful, but content_uri wasn't found."
             )
 
     def _mkroom(self, room_id_or_alias=None, response=None):
