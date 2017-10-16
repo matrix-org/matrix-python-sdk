@@ -360,9 +360,7 @@ class MatrixClient(object):
             except MatrixRequestError as e:
                 logger.warning("A MatrixRequestError occured during sync.")
                 if e.code >= 500:
-                    logger.warning("Problem occured serverside. Waiting %i seconds",
-                                   bad_sync_timeout)
-                    sleep_bad_sync_timeout = True
+                    sleep_bad_sync = True
                 else:
                     raise e
             except requests.exceptions.ReadTimeout as e:
@@ -378,6 +376,8 @@ class MatrixClient(object):
                 else:
                     raise
             if sleep_bad_sync:
+                logger.warning("Waiting %i seconds until next sync.",
+                               bad_sync_timeout)
                 sleep(bad_sync_timeout)
                 bad_sync_timeout = min(bad_sync_timeout * 2,
                                        self.bad_sync_timeout_limit)
