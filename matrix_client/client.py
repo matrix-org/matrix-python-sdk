@@ -350,7 +350,8 @@ class MatrixClient(object):
                function which can be used to handle exceptions in the caller
                thread.
         """
-        bad_sync_timeout = 5000
+        bad_sync_timeout = 5
+        sleep_bad_sync = False
         self.should_listen = True
         while (self.should_listen):
             try:
@@ -361,25 +362,26 @@ class MatrixClient(object):
                 if e.code >= 500:
                     logger.warning("Problem occured serverside. Waiting %i seconds",
                                    bad_sync_timeout)
-                    sleep(bad_sync_timeout)
-                    bad_sync_timeout = min(bad_sync_timeout * 2,
-                                           self.bad_sync_timeout_limit)
+                    sleep_bad_sync_timeout = True
                 else:
                     raise e
             except requests.exceptions.ReadTimeout as e:
                 logger.warning("A ReadTimeout occured during sync.")
-                bad_sync_timeout = min(bad_sync_timeout * 2,
-                                       self.bad_sync_timeout_limit)
+                sleep_bad_sync = True
             except requests.exceptions.ConnectionError as e:
                 logger.warning("A ConnectionError occured during sync.")
-                bad_sync_timeout = min(bad_sync_timeout * 2,
-                                       self.bad_sync_timeout_limit)
+                sleep_bad_sync = True
             except Exception as e:
                 logger.exception("Exception thrown during sync")
                 if exception_handler is not None:
                     exception_handler(e)
                 else:
                     raise
+            if sleep_bad_sync:
+                sleep(bad_sync_timeout)
+                bad_sync_timeout = min(bad_sync_timeout * 2,
+                                       self.bad_sync_timeout_limit)
+                sleep_bad_sync = False
 
     def start_listener_thread(self, timeout_ms=30000, exception_handler=None):
         """ Start a listener thread to listen for events in the background.
