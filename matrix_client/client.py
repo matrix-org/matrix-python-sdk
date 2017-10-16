@@ -446,10 +446,21 @@ class MatrixClient(object):
 
         if etype == "m.room.name":
             current_room.name = state_event["content"].get("name", None)
+        elif etype == "m.room.canonical_alias":
+            current_room.canonical_alias = state_event["content"].get("alias")
         elif etype == "m.room.topic":
             current_room.topic = state_event["content"].get("topic", None)
         elif etype == "m.room.aliases":
             current_room.aliases = state_event["content"].get("aliases", None)
+        elif etype == "m.room.member":
+            if state_event["content"]["membership"] == "join":
+                current_room._mkmembers(
+                    User(self.api,
+                         state_event["state_key"],
+                         state_event["content"].get("displayname", None))
+                )
+            elif state_event["content"]["membership"] in ("leave", "kick", "invite"):
+                current_room._rmmembers(state_event["state_key"])
 
         for listener in current_room.state_listeners:
             if (

@@ -97,6 +97,18 @@ def test_state_event():
     client._process_state_event(ev, room)
     assert room.aliases is aliases
 
+    # test member join event
+    ev["type"] = "m.room.member"
+    ev["content"] = {'membership': 'join', 'displayname': 'stereo'}
+    ev["state_key"] = "@stereo:xxx.org"
+    client._process_state_event(ev, room)
+    assert len(room._members) == 1
+    assert room._members[0].user_id == "@stereo:xxx.org"
+    # test member leave event
+    ev["content"]['membership'] = 'leave'
+    client._process_state_event(ev, room)
+    assert len(room._members) == 0
+
 
 def test_get_user():
     client = MatrixClient("http://example.com")
@@ -164,3 +176,28 @@ class TestClientRegister:
         assert cli.hs == 'example.com'
         assert cli.user_id == '@455:example.com'
         assert cli._sync_called
+
+
+def test_get_rooms_display_name():
+
+    def add_members(api, room, num):
+        for i in range(num):
+            room._mkmembers(User(api, '@frho%s:matrix.org' % i, 'ho%s' % i))
+
+    client = MatrixClient("http://example.com")
+    client.user_id = "@frho0:matrix.org"
+    room1 = client._mkroom("!abc:matrix.org")
+    add_members(client.api, room1, 1)
+    room2 = client._mkroom("!def:matrix.org")
+    add_members(client.api, room2, 2)
+    room3 = client._mkroom("!ghi:matrix.org")
+    add_members(client.api, room3, 3)
+    room4 = client._mkroom("!rfi:matrix.org")
+    add_members(client.api, room4, 30)
+
+    rooms = client.get_rooms()
+    assert len(rooms) == 4
+    assert room1.display_name == "Empty room"
+    assert room2.display_name == "ho1"
+    assert room3.display_name == "ho1 and ho2"
+    assert room4.display_name == "ho1 and 28 others"
