@@ -19,7 +19,6 @@ from .user import User
 from threading import Thread
 from time import sleep
 from uuid import uuid4
-import requests
 import logging
 import sys
 
@@ -350,8 +349,7 @@ class MatrixClient(object):
                function which can be used to handle exceptions in the caller
                thread.
         """
-        bad_sync_timeout = 5
-        sleep_bad_sync = False
+        bad_sync_timeout = 5000
         self.should_listen = True
         while (self.should_listen):
             try:
@@ -360,28 +358,19 @@ class MatrixClient(object):
             except MatrixRequestError as e:
                 logger.warning("A MatrixRequestError occured during sync.")
                 if e.code >= 500:
-                    sleep_bad_sync = True
+                    logger.warning("Problem occured serverside. Waiting %i seconds",
+                                   bad_sync_timeout)
+                    sleep(bad_sync_timeout)
+                    bad_sync_timeout = min(bad_sync_timeout * 2,
+                                           self.bad_sync_timeout_limit)
                 else:
                     raise e
-            except requests.exceptions.ReadTimeout as e:
-                logger.warning("A ReadTimeout occured during sync.")
-                sleep_bad_sync = True
-            except requests.exceptions.ConnectionError as e:
-                logger.warning("A ConnectionError occured during sync.")
-                sleep_bad_sync = True
             except Exception as e:
                 logger.exception("Exception thrown during sync")
                 if exception_handler is not None:
                     exception_handler(e)
                 else:
                     raise
-            if sleep_bad_sync:
-                logger.warning("Waiting %i seconds until next sync.",
-                               bad_sync_timeout)
-                sleep(bad_sync_timeout)
-                bad_sync_timeout = min(bad_sync_timeout * 2,
-                                       self.bad_sync_timeout_limit)
-                sleep_bad_sync = False
 
     def start_listener_thread(self, timeout_ms=30000, exception_handler=None):
         """ Start a listener thread to listen for events in the background.
