@@ -583,18 +583,23 @@ class MatrixHttpApi(object):
         if headers["Content-Type"] == "application/json" and content is not None:
             content = json.dumps(content)
             
-        request_timeout = 10.0 + query_params.get("timeout", 30000) / 1000
+        request_timeout = 30 + query_params.get("timeout", 30000) / 1000
 
         response = None
         while True:
-            response = requests.request(
-                method, endpoint,
-                params=query_params,
-                data=content,
-                headers=headers,
-                verify=self.validate_cert,
-                timeout=request_timeout
-            )
+            try:
+                response = requests.request(
+                    method, endpoint,
+                    params=query_params,
+                    data=content,
+                    headers=headers,
+                    verify=self.validate_cert,
+                    timeout=request_timeout
+                )
+            except requests.exceptions.ReadTimeout:
+                raise MatrixTimeoutError(
+                    "A timeout occured while waiting for response"
+                    )
 
             if response.status_code == 429:
                 sleep(response.json()['retry_after_ms'] / 1000)

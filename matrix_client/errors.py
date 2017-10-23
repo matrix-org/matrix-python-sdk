@@ -4,16 +4,22 @@ class MatrixError(Exception):
 
 
 class MatrixUnexpectedResponse(MatrixError):
-    """The home server gave an unexpected response. """
+    """The home server gave an unexpected response."""
     def __init__(self, content=""):
         super(MatrixError, self).__init__(content)
         self.content = content
 
 
 class MatrixRequestError(MatrixError):
-    """ The home server returned an error response. """
+    """The home server returned an error response."""
 
     def __init__(self, code=0, content=""):
         super(MatrixRequestError, self).__init__("%d: %s" % (code, content))
         self.code = code
         self.content = content
+
+class MatrixTimeoutError(MatrixError):
+    """A timeout occured while waiting for an answer."""
+
+    def __init__(self, msg=""):
+        super(MatrixTimeoutError, self).__init__(msg)
