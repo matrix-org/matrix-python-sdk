@@ -18,6 +18,7 @@ class MatrixRequestError(MatrixError):
         self.code = code
         self.content = content
 
+
 class MatrixTimeoutError(MatrixError):
     """A timeout occured while waiting for an answer."""
 
