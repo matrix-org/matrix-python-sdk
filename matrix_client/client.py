@@ -17,7 +17,7 @@ from .errors import MatrixRequestError, MatrixUnexpectedResponse
 from .room import Room
 from .user import User
 from threading import Thread
-from time import time, sleep
+from time import sleep
 from uuid import uuid4
 import logging
 import sys
@@ -339,8 +339,7 @@ class MatrixClient(object):
         """
         self._sync(timeout_ms)
 
-    def listen_forever(self, timeout_ms=30000,
-                       exception_handler=None, exception_handler_kwargs=None):
+    def listen_forever(self, timeout_ms=30000, exception_handler=None):
         """ Keep listening for events forever.
 
         Args:
@@ -349,43 +348,29 @@ class MatrixClient(object):
             exception_handler (func(exception)): Optional exception handler
                function which can be used to handle exceptions in the caller
                thread.
-            exception_handler_kwargs (func(**kwargs)): Optional exception handler
-               function, handles all exceptions if defined.
-               Possible kwargs:
-                  exc: Exception
-                  last_connection_time: time of the last successful connection
-               could return whether the the thread should sleep for a while
         """
-
-        bad_sync_timeout = 5        
-        last_connection_time = time()
-        sleep_bad_sync = False
+        bad_sync_timeout = 5000
         self.should_listen = True
         while (self.should_listen):
             try:
                 self._sync(timeout_ms)
                 bad_sync_timeout = 5
-                last_connection_time = time()
-            except Exception as e:
-                logger.warning("A exception occured during sync: {}".format(repr(e)))
-                if exception_handler_kwargs is not None:
-                    sleep_bad_sync = exception_handler_kwargs(exc=e,
-                                        last_connection_time=last_connection_time)
+            except MatrixRequestError as e:
+                logger.warning("A MatrixRequestError occured during sync.")
+                if e.code >= 500:
+                    logger.warning("Problem occured serverside. Waiting %i seconds",
+                                   bad_sync_timeout)
+                    sleep(bad_sync_timeout)
+                    bad_sync_timeout = min(bad_sync_timeout * 2,
+                                           self.bad_sync_timeout_limit)
                 else:
-                    if isinstance(e, MatrixRequestError) and e.code >= 500:
-                        logger.warning("Problem occured serverside")
-                        sleep_bad_sync = True
-                    elif exception_handler is not None:
-                        exception_handler(e)
-                    else:
-                        raise e
-            if sleep_bad_sync:
-                logger.warning("Waiting %i seconds until next sync.",
-                               bad_sync_timeout)
-                sleep(bad_sync_timeout)
-                bad_sync_timeout = min(bad_sync_timeout * 2,
-                                       self.bad_sync_timeout_limit)
-                sleep_bad_sync = False
+                    raise e
+            except Exception as e:
+                logger.exception("Exception thrown during sync")
+                if exception_handler is not None:
+                    exception_handler(e)
+                else:
+                    raise
 
     def start_listener_thread(self, timeout_ms=30000, exception_handler=None):
         """ Start a listener thread to listen for events in the background.
