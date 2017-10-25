@@ -86,7 +86,7 @@ class MatrixClient(object):
         self.api = MatrixHttpApi(base_url, token)
         self.api.validate_certificate(valid_cert_check)
         self.listeners = []
-        self.presence_listeners = []
+        self.presence_listeners = {}
         self.invite_listeners = []
         self.left_listeners = []
         self.ephemeral_listeners = []
@@ -293,12 +293,7 @@ class MatrixClient(object):
             uuid.UUID: Unique id of the listener, can be used to identify the listener.
         """
         listener_uid = uuid4()
-        self.presence_listeners.append(
-            {
-                'uid': listener_uid,
-                'callback': callback
-            }
-        )
+        self.presence_listeners[listener_uid] = callback
         return listener_uid
 
     def remove_presence_listener(self, uid):
@@ -307,8 +302,7 @@ class MatrixClient(object):
         Args:
             uuid.UUID: Unique id of the listener to remove
         """
-        self.presence_listeners[:] = (listener for listener in self.presence_listeners
-                                      if listener['uid'] != uid)
+        self.presence_listeners.pop(uid)
 
     def add_ephemeral_listener(self, callback, event_type=None):
         """ Add an ephemeral listener that will send a callback when the client recieves
@@ -495,8 +489,8 @@ class MatrixClient(object):
         self.sync_token = response["next_batch"]
 
         for presence_update in response['presence']['events']:
-            for listener in self.presence_listeners:
-                listener['callback'](presence_update)
+            for callback in self.presence_listeners.values():
+                callback(presence_update)
 
         for room_id, invite_room in response['rooms']['invite'].items():
             for listener in self.invite_listeners:

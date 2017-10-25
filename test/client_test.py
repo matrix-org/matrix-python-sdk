@@ -1,8 +1,10 @@
 import pytest
 import responses
 import json
+from copy import deepcopy
 from matrix_client.client import MatrixClient, Room, User
 from matrix_client.api import MATRIX_V2_API_PATH
+from . import response_examples
 
 HOSTNAME = "http://example.com"
 
@@ -201,3 +203,60 @@ def test_get_rooms_display_name():
     assert room2.display_name == "ho1"
     assert room3.display_name == "ho1 and ho2"
     assert room4.display_name == "ho1 and 28 others"
+
+@responses.activate
+def test_presence_listener():
+    client = MatrixClient("http://example.com")
+    accumulator = []
+    def dummy_callback(event):
+        accumulator.append(event)
+    presence_events = [
+        {
+        "content": {
+            "avatar_url": "mxc://localhost:wefuiwegh8742w",
+            "currently_active": False,
+            "last_active_ago": 2478593,
+            "presence": "online",
+            "user_id": "@example:localhost"
+        },
+        "event_id": "$WLGTSEFSEF:localhost",
+        "type": "m.presence"
+        },
+        {
+        "content": {
+            "avatar_url": "mxc://localhost:weaugwe742w",
+            "currently_active": True,
+            "last_active_ago": 1478593,
+            "presence": "online",
+            "user_id": "@example2:localhost"
+        },
+        "event_id": "$CIGTXEFREF:localhost",
+        "type": "m.presence"
+        },
+        {
+        "content": {
+            "avatar_url": "mxc://localhost:wefudweg13742w",
+            "currently_active": False,
+            "last_active_ago": 24795,
+            "presence": "offline",
+            "user_id": "@example3:localhost"
+        },
+        "event_id": "$ZEGASEDSEF:localhost",
+        "type": "m.presence"
+        },
+    ]
+    sync_response = deepcopy(response_examples.example_sync)
+    sync_response["presence"]["events"] = presence_events
+    response_body = json.dumps(sync_response)
+    sync_url = HOSTNAME + MATRIX_V2_API_PATH + "/sync"
+
+    responses.add(responses.GET, sync_url, body=response_body)
+    callback_uid = client.add_presence_listener(dummy_callback)
+    client._sync()
+    assert accumulator == presence_events
+
+    responses.add(responses.GET, sync_url, body=response_body)
+    client.remove_presence_listener(callback_uid)
+    accumulator = []
+    client._sync()
+    assert accumulator == []
