@@ -23,6 +23,8 @@ class MatrixRequestError(MatrixError):
 class MatrixHttpLibError(MatrixError):
     """The library used for http requests raised an exception."""
 
-    def __init__(self, msg, original_exception):
-        super(MatrixHttpLibError, self).__init__(msg + ": {}".format(original_exception))
+    def __init__(self, original_exception, method, endpoint):
+        super(MatrixHttpLibError, self).__init__(
+            "Something went wrong in {} requesting {}: {}".format(original_exception)
+        )
         self.original_exception = original_exception

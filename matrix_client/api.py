@@ -594,9 +594,7 @@ class MatrixHttpApi(object):
                     verify=self.validate_cert
                 )
             except requests.exceptions.RequestException as e:
-                raise MatrixHttpLibError(
-                    "Something went wrong in {} requesting {}".format(method, endpoint), e
-                )
+                raise MatrixHttpLibError(e, method, endpoint)
 
             if response.status_code == 429:
                 sleep(response.json()['retry_after_ms'] / 1000)
