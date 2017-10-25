@@ -4,6 +4,9 @@ Matrix Client SDK for Python
 .. image:: https://img.shields.io/pypi/v/matrix-client.svg?maxAge=2592000
   :target: https://pypi.python.org/pypi/matrix-client
   :alt: Latest Version
+.. image:: https://travis-ci.org/matrix-org/matrix-python-sdk.svg?branch=master
+    :target: https://travis-ci.org/matrix-org/matrix-python-sdk
+    :alt: Travis-CI Results
 
 This is a Matrix client-server SDK for Python 2.7 and 3.4+
 
