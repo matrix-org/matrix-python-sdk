@@ -412,7 +412,7 @@ class MatrixClient(object):
             self.sync_thread = thread
             self.should_listen = True
             thread.start()
-        except:
+        except RuntimeError:
             e = sys.exc_info()[0]
             logger.error("Error: unable to start thread. %s", str(e))
 
