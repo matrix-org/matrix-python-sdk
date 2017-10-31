@@ -14,6 +14,27 @@ Matrix Client SDK for Python
 
 This is a Matrix client-server SDK for Python 2.7 and 3.4+
 
+Installation
+=====
+Stable release
+-----
+Install with pip from pypi. This will install all necessary dependencies as well.
+
+.. code:: shell
+
+   pip install matrix_client
+
+Development version
+-----
+Install using ``setup.py`` in root project directory. This will also install all
+needed dependencies.
+
+.. code:: shell
+
+   git clone https://github.com/matrix-org/matrix-python-sdk.git
+   cd matrix-python-sdk
+   python setup.py install
+
 Usage
 =====
 The SDK provides 2 layers of interaction. The low-level layer just wraps the
