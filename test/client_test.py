@@ -398,7 +398,7 @@ def test_cache():
     responses.add(responses.GET, sync_url, json.dumps(sync_response))
     m1._sync()
 
-    assert m_1.rooms[room_id].name == None
+    assert m_1.rooms[room_id].name is None
     assert m0.rooms[room_id].name == room_name
     assert m1.rooms[room_id].name == room_name
 
