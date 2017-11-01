@@ -363,3 +363,45 @@ def test_changing_other_required_power_levels():
     del expected_request["state_default"]
 
     assert json.loads(responses.calls[1].request.body) == expected_request
+
+
+@responses.activate
+def test_cache():
+    m_1 = MatrixClient("http://example.com", cache_level=-1)
+    m0 = MatrixClient("http://example.com", cache_level=0)
+    m1 = MatrixClient("http://example.com", cache_level=1)
+    sync_url = HOSTNAME + MATRIX_V2_API_PATH + "/sync"
+    room_id = "!726s6s6q:example.com"
+    room_name = "The FooBar"
+    sync_response = deepcopy(response_examples.example_sync)
+
+    with pytest.raises(ValueError):
+        MatrixClient("http://example.com", cache_level=5)
+        MatrixClient("http://example.com", cache_level=0.5)
+        MatrixClient("http://example.com", cache_level=-5)
+        MatrixClient("http://example.com", cache_level="foo")
+        MatrixClient("http://example.com", cache_level=0.0)
+
+    sync_response["rooms"]["join"][room_id]["state"]["events"].append(
+        {
+            "sender": "@alice:example.com",
+            "type": "m.room.name",
+            "state_key": "",
+            "content": {"name": room_name},
+        }
+    )
+
+    responses.add(responses.GET, sync_url, json.dumps(sync_response))
+    m_1._sync()
+    responses.add(responses.GET, sync_url, json.dumps(sync_response))
+    m0._sync()
+    responses.add(responses.GET, sync_url, json.dumps(sync_response))
+    m1._sync()
+
+    assert m_1.rooms[room_id].name == None
+    assert m0.rooms[room_id].name == room_name
+    assert m1.rooms[room_id].name == room_name
+
+    assert m_1.rooms[room_id]._members == m0.rooms[room_id]._members == []
+    assert len(m1.rooms[room_id]._members) == 1
+    assert m1.rooms[room_id]._members[0].user_id == "@alice:example.com"
