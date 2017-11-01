@@ -8,6 +8,7 @@ from . import response_examples
 
 HOSTNAME = "http://example.com"
 
+
 def test_create_client():
     MatrixClient("http://example.com")
 
@@ -156,12 +157,14 @@ def test_remove_listener():
 
     assert not found_listener, "listener was not removed properly"
 
+
 class TestClientRegister:
     cli = MatrixClient(HOSTNAME)
 
     @responses.activate
     def test_register_as_guest(self):
         cli = self.cli
+
         def _sync(self):
             self._sync_called = True
         cli.__dict__[_sync.__name__] = _sync.__get__(cli, cli.__class__)
@@ -204,45 +207,47 @@ def test_get_rooms_display_name():
     assert room3.display_name == "ho1 and ho2"
     assert room4.display_name == "ho1 and 28 others"
 
+
 @responses.activate
 def test_presence_listener():
     client = MatrixClient("http://example.com")
     accumulator = []
+
     def dummy_callback(event):
         accumulator.append(event)
     presence_events = [
         {
-        "content": {
-            "avatar_url": "mxc://localhost:wefuiwegh8742w",
-            "currently_active": False,
-            "last_active_ago": 2478593,
-            "presence": "online",
-            "user_id": "@example:localhost"
-        },
-        "event_id": "$WLGTSEFSEF:localhost",
-        "type": "m.presence"
-        },
-        {
-        "content": {
-            "avatar_url": "mxc://localhost:weaugwe742w",
-            "currently_active": True,
-            "last_active_ago": 1478593,
-            "presence": "online",
-            "user_id": "@example2:localhost"
-        },
-        "event_id": "$CIGTXEFREF:localhost",
-        "type": "m.presence"
+            "content": {
+                "avatar_url": "mxc://localhost:wefuiwegh8742w",
+                "currently_active": False,
+                "last_active_ago": 2478593,
+                "presence": "online",
+                "user_id": "@example:localhost"
+            },
+            "event_id": "$WLGTSEFSEF:localhost",
+            "type": "m.presence"
         },
         {
-        "content": {
-            "avatar_url": "mxc://localhost:wefudweg13742w",
-            "currently_active": False,
-            "last_active_ago": 24795,
-            "presence": "offline",
-            "user_id": "@example3:localhost"
+            "content": {
+                "avatar_url": "mxc://localhost:weaugwe742w",
+                "currently_active": True,
+                "last_active_ago": 1478593,
+                "presence": "online",
+                "user_id": "@example2:localhost"
+            },
+            "event_id": "$CIGTXEFREF:localhost",
+            "type": "m.presence"
         },
-        "event_id": "$ZEGASEDSEF:localhost",
-        "type": "m.presence"
+        {
+            "content": {
+                "avatar_url": "mxc://localhost:wefudweg13742w",
+                "currently_active": False,
+                "last_active_ago": 24795,
+                "presence": "offline",
+                "user_id": "@example3:localhost"
+            },
+            "event_id": "$ZEGASEDSEF:localhost",
+            "type": "m.presence"
         },
     ]
     sync_response = deepcopy(response_examples.example_sync)
