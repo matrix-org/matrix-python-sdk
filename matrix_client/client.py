@@ -77,12 +77,27 @@ class MatrixClient(object):
 
             def global_callback(incoming_event):
                 pass
-
     """
 
     def __init__(self, base_url, token=None, user_id=None,
-                 valid_cert_check=True, sync_filter_limit=20):
-        """ Create a new Matrix Client object. """
+                 valid_cert_check=True, sync_filter_limit=20,
+                 cache_level=1):
+        """ Create a new Matrix Client object.
+
+        Args:
+            base_url (str): The url of the HS preceding /_matrix.
+                e.g. (ex: https://localhost:8008 )
+            token (str): Optional. If you have an access token
+                supply it here.
+            user_id (str): Optional. You must supply the user_id
+                (as obtained when initially logging in to obtain
+                the token) if supplying a token; otherwise, ignored.
+            valid_cert_check (bool): Check the homeservers
+                certificate on connections?
+            cache_level (int): One of -1, 0, or 1. 1 fully caches room
+                state, 0 partially caches room state, and -1 doesn't cache
+                room state at all.
+        """
         if token is not None and user_id is None:
             raise ValueError("must supply user_id along with token")
 
@@ -93,6 +108,11 @@ class MatrixClient(object):
         self.invite_listeners = []
         self.left_listeners = []
         self.ephemeral_listeners = []
+        if cache_level in (-1, 0, 1):
+            self._cache_level = cache_level
+        else:
+            self._cache_level = 1
+            raise ValueError("`cache_level` must be one of -1, 0, or 1")
 
         self.sync_token = None
         self.sync_filter = '{ "room": { "timeline" : { "limit" : %i } } }' \
@@ -461,23 +481,26 @@ class MatrixClient(object):
             return  # Ignore event
         etype = state_event["type"]
 
-        if etype == "m.room.name":
-            current_room.name = state_event["content"].get("name", None)
-        elif etype == "m.room.canonical_alias":
-            current_room.canonical_alias = state_event["content"].get("alias")
-        elif etype == "m.room.topic":
-            current_room.topic = state_event["content"].get("topic", None)
-        elif etype == "m.room.aliases":
-            current_room.aliases = state_event["content"].get("aliases", None)
-        elif etype == "m.room.member":
-            if state_event["content"]["membership"] == "join":
-                current_room._mkmembers(
-                    User(self.api,
-                         state_event["state_key"],
-                         state_event["content"].get("displayname", None))
-                )
-            elif state_event["content"]["membership"] in ("leave", "kick", "invite"):
-                current_room._rmmembers(state_event["state_key"])
+        if self._cache_level >= 0:
+            # Don't keep track of room state if caching turned off
+            if etype == "m.room.name":
+                current_room.name = state_event["content"].get("name", None)
+            elif etype == "m.room.canonical_alias":
+                current_room.canonical_alias = state_event["content"].get("alias")
+            elif etype == "m.room.topic":
+                current_room.topic = state_event["content"].get("topic", None)
+            elif etype == "m.room.aliases":
+                current_room.aliases = state_event["content"].get("aliases", None)
+            elif etype == "m.room.member" and self._cache_level == 1:
+                # tracking room members can be large e.g. #matrix:matrix.org
+                if state_event["content"]["membership"] == "join":
+                    current_room._mkmembers(
+                        User(self.api,
+                             state_event["state_key"],
+                             state_event["content"].get("displayname", None))
+                    )
+                elif state_event["content"]["membership"] in ("leave", "kick", "invite"):
+                    current_room._rmmembers(state_event["state_key"])
 
         for listener in current_room.state_listeners:
             if (
@@ -507,6 +530,7 @@ class MatrixClient(object):
 
         for room_id, sync_room in response['rooms']['join'].items():
             if room_id not in self.rooms:
+                # TODO: don't keep track of joined rooms for self._cache_level==-1
                 self._mkroom(room_id)
             room = self.rooms[room_id]
             room.prev_batch = sync_room["timeline"]["prev_batch"]
