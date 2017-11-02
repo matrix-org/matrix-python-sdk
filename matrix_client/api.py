@@ -16,7 +16,7 @@
 import json
 import requests
 from time import time, sleep
-from .errors import MatrixError, MatrixRequestError, MatrixHttpLibError
+from .errors import MatrixError, MatrixRequestError, MatrixHttpLibError, MatrixTimeoutError
 
 try:
     from urllib import quote
@@ -50,6 +50,7 @@ class MatrixHttpApi(object):
         self.identity = identity
         self.txn_id = 0
         self.validate_cert = True
+        self.default_timeout = 30
 
     def initial_sync(self, limit=1):
         """ Deprecated. Use sync instead.
@@ -582,6 +583,11 @@ class MatrixHttpApi(object):
 
         if headers["Content-Type"] == "application/json" and content is not None:
             content = json.dumps(content)
+            
+        if "timeout" in query_params:
+            request_timeout = 5 + query_params["timeout"] / 1000
+        else:
+            request_timeout = self.default_timeout
 
         response = None
         while True:
@@ -591,10 +597,18 @@ class MatrixHttpApi(object):
                     params=query_params,
                     data=content,
                     headers=headers,
-                    verify=self.validate_cert
+                    verify=self.validate_cert,
+                    timeout=request_timeout
                 )
             except requests.exceptions.RequestException as e:
                 raise MatrixHttpLibError(e, method, endpoint)
+                
+            except requests.exceptions.Timeout as e:
+                raise MatrixTimeoutError(
+                    original_exception=e,
+                    content="A timeout occured while _send",
+                    endpoint=endpoint
+                )
 
             if response.status_code == 429:
                 sleep(response.json()['retry_after_ms'] / 1000)
