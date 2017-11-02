@@ -1,6 +1,7 @@
 import responses
 from matrix_client import client
 
+
 class TestTagsApi:
     cli = client.MatrixClient("http://example.com")
     user_id = "@user:matrix.org"
@@ -62,6 +63,7 @@ class TestAccountDataApi:
         assert req.url == account_data_url
         assert req.method == 'PUT'
 
+
 class TestUnbanApi:
     cli = client.MatrixClient("http://example.com")
     user_id = "@user:matrix.org"
@@ -70,8 +72,8 @@ class TestUnbanApi:
     @responses.activate
     def test_unban(self):
         unban_url = "http://example.com" \
-                "/_matrix/client/r0/rooms/#foo:matrix.org/unban"
-        body = '{"user_id": "'+ self.user_id + '"}'
+                    "/_matrix/client/r0/rooms/#foo:matrix.org/unban"
+        body = '{"user_id": "' + self.user_id + '"}'
         responses.add(responses.POST, unban_url, body=body)
         self.cli.api.unban_user(self.room_id, self.user_id)
         req = responses.calls[0].request
