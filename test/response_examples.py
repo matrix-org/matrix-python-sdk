@@ -1,0 +1,132 @@
+example_sync = {
+    "next_batch": "s72595_4483_1934",
+    "presence": {
+        "events": [
+            {
+                "sender": "@alice:example.com",
+                "type": "m.presence",
+                "content": {
+                    "presence": "online"
+                }
+            }
+        ]
+    },
+    "account_data": {
+        "events": [
+            {
+                "type": "org.example.custom.config",
+                "content": {
+                    "custom_config_key": "custom_config_value"
+                }
+            }
+        ]
+    },
+    "rooms": {
+        "join": {
+            "!726s6s6q:example.com": {
+                "state": {
+                    "events": [
+                        {
+                            "sender": "@alice:example.com",
+                            "type": "m.room.member",
+                            "state_key": "@alice:example.com",
+                            "content": {
+                                "membership": "join"
+                            },
+                            "origin_server_ts": 1417731086795,
+                            "event_id": "$66697273743031:example.com"
+                        }
+                    ]
+                },
+                "timeline": {
+                    "events": [
+                        {
+                            "sender": "@bob:example.com",
+                            "type": "m.room.member",
+                            "state_key": "@bob:example.com",
+                            "content": {
+                                "membership": "join"
+                            },
+                            "prev_content": {
+                                "membership": "invite"
+                            },
+                            "origin_server_ts": 1417731086795,
+                            "event_id": "$7365636s6r6432:example.com"
+                        },
+                        {
+                            "sender": "@alice:example.com",
+                            "type": "m.room.message",
+                            "age": 124524,
+                            "txn_id": "1234",
+                            "content": {
+                                "body": "I am a fish",
+                                "msgtype": "m.text"
+                            },
+                            "origin_server_ts": 1417731086797,
+                            "event_id": "$74686972643033:example.com"
+                        }
+                    ],
+                    "limited": True,
+                    "prev_batch": "t34-23535_0_0"
+                },
+                "ephemeral": {
+                    "events": [
+                        {
+                            "type": "m.typing",
+                            "content": {
+                                "user_ids": [
+                                    "@alice:example.com"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "account_data": {
+                    "events": [
+                        {
+                            "type": "m.tag",
+                            "content": {
+                                "tags": {
+                                    "work": {
+                                        "order": 1
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "type": "org.example.custom.room.config",
+                            "content": {
+                                "custom_config_key": "custom_config_value"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "invite": {
+            "!696r7674:example.com": {
+                "invite_state": {
+                    "events": [
+                        {
+                            "sender": "@alice:example.com",
+                            "type": "m.room.name",
+                            "state_key": "",
+                            "content": {
+                                "name": "My Room Name"
+                            }
+                        },
+                        {
+                            "sender": "@alice:example.com",
+                            "type": "m.room.member",
+                            "state_key": "@bob:example.com",
+                            "content": {
+                                "membership": "invite"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "leave": {}
+    }
+}

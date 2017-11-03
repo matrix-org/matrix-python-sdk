@@ -5,6 +5,8 @@ class MatrixError(Exception):
 
 class MatrixUnexpectedResponse(MatrixError):
     """The home server gave an unexpected response."""
+
+
     def __init__(self, content=""):
         super(MatrixError, self).__init__(content)
         self.content = content
@@ -19,8 +21,21 @@ class MatrixRequestError(MatrixError):
         self.content = content
 
 
-class MatrixTimeoutError(MatrixError):
-    """A timeout occured while waiting for an answer."""
+class MatrixHttpLibError(MatrixError):
+    """The library used for http requests raised an exception."""
 
-    def __init__(self, msg=""):
-        super(MatrixTimeoutError, self).__init__(msg)
+    def __init__(self, original_exception, method, endpoint):
+        super(MatrixHttpLibError, self).__init__(
+            "Something went wrong in {} requesting {}: {}".format(method, endpoint, original_exception)
+        )
+        self.original_exception = original_exception
+
+
+class MatrixTimeoutError(MatrixHttpLibError):
+    """Client-side timeout in a request."""
+    
+    def __init__(self, original_exception, method, endpoint):
+        super(MatrixHttpLibError, self).__init__(
+            "Timeout in {} requesting {}: {}".format(method, endpoint, original_exception)
+        )
+        self.original_exception = original_exception
