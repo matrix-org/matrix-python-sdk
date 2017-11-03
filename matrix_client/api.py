@@ -16,7 +16,8 @@
 import json
 import requests
 from time import time, sleep
-from .errors import MatrixError, MatrixRequestError, MatrixHttpLibError, MatrixTimeoutError
+from .errors import MatrixError, MatrixRequestError, MatrixHttpLibError, \ 
+    MatrixTimeoutError
 
 try:
     from urllib import quote
@@ -603,7 +604,7 @@ class MatrixHttpApi(object):
 
             except requests.exceptions.Timeout as e:
                 raise MatrixTimeoutError(e, method, endpoint)
-                
+
             except requests.exceptions.RequestException as e:
                 raise MatrixHttpLibError(e, method, endpoint)
 

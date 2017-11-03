@@ -26,14 +26,16 @@ class MatrixHttpLibError(MatrixError):
 
     def __init__(self, original_exception, method, endpoint):
         super(MatrixHttpLibError, self).__init__(
-            "Something went wrong in {} requesting {}: {}".format(method, endpoint, original_exception)
+            "Something went wrong in {} requesting {}: {}".format(
+                method, endpoint, original_exception
+            )
         )
         self.original_exception = original_exception
 
 
 class MatrixTimeoutError(MatrixHttpLibError):
     """Client-side timeout in a request."""
-    
+
     def __init__(self, original_exception, method, endpoint):
         super(MatrixHttpLibError, self).__init__(
             "Timeout in {} requesting {}: {}".format(method, endpoint, original_exception)
