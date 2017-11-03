@@ -25,6 +25,8 @@ class MatrixHttpLibError(MatrixError):
 
     def __init__(self, original_exception, method, endpoint):
         super(MatrixHttpLibError, self).__init__(
-            "Something went wrong in {} requesting {}: {}".format(original_exception)
+            "Something went wrong in {} requesting {}: {}".format(method,
+                                                                  endpoint,
+                                                                  original_exception)
         )
         self.original_exception = original_exception
