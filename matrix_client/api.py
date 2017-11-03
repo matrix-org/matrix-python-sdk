@@ -583,7 +583,7 @@ class MatrixHttpApi(object):
 
         if headers["Content-Type"] == "application/json" and content is not None:
             content = json.dumps(content)
-            
+
         if "timeout" in query_params:
             request_timeout = 5 + query_params["timeout"] / 1000
         else:
