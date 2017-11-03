@@ -16,7 +16,7 @@
 import json
 import requests
 from time import time, sleep
-from .errors import MatrixError, MatrixRequestError, MatrixHttpLibError, \ 
+from .errors import MatrixError, MatrixRequestError, MatrixHttpLibError, \
     MatrixTimeoutError
 
 try:
