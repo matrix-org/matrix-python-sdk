@@ -551,6 +551,83 @@ class Room(object):
         for event in events:
             self._put_event(event)
 
+    def modify_user_power_levels(self, users=None, users_default=None):
+        """Modify the power level for a subset of users
+
+        Args:
+            users(dict): Power levels to assign to specific users, in the form
+                {"@name0:host0": 10, "@name1:host1": 100, "@name3:host3", None}
+                A level of None causes the user to revert to the default level
+                as specified by users_default.
+            users_default(int): Default power level for users in the room
+
+        Returns:
+            True if successful, False if not
+        """
+        try:
+            content = self.client.api.get_power_levels(self.room_id)
+            if users_default:
+                content["users_default"] = users_default
+
+            if users:
+                if "users" in content:
+                    content["users"].update(users)
+                else:
+                    content["users"] = users
+
+                # Remove any keys with value None
+                for user, power_level in list(content["users"].items()):
+                    if power_level is None:
+                        del content["users"][user]
+            self.client.api.set_power_levels(self.room_id, content)
+            return True
+        except MatrixRequestError:
+            return False
+
+    def modify_required_power_levels(self, events=None, **kwargs):
+        """Modifies room power level requirements.
+
+        Args:
+            events(dict): Power levels required for sending specific event types,
+                in the form {"m.room.whatever0": 60, "m.room.whatever2": None}.
+                Overrides events_default and state_default for the specified
+                events. A level of None causes the target event to revert to the
+                default level as specified by events_default or state_default.
+            **kwargs: Key/value pairs specifying the power levels required for
+                    various actions:
+                        events_default(int): Default level for sending message events
+                        state_default(int): Default level for sending state events
+                        invite(int): Inviting a user
+                        redact(int): Redacting an event
+                        ban(int): Banning a user
+                        kick(int): Kicking a user
+
+        Returns:
+            True if successful, False if not
+        """
+        try:
+            content = self.client.api.get_power_levels(self.room_id)
+            content.update(kwargs)
+            for key, value in list(content.items()):
+                if value is None:
+                    del content[key]
+
+            if events:
+                if "events" in content:
+                    content["events"].update(events)
+                else:
+                    content["events"] = events
+
+                # Remove any keys with value None
+                for event, power_level in list(content["events"].items()):
+                    if power_level is None:
+                        del content["events"][event]
+
+            self.client.api.set_power_levels(self.room_id, content)
+            return True
+        except MatrixRequestError:
+            return False
+
     @property
     def prev_batch(self):
         return self._prev_batch

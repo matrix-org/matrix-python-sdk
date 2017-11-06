@@ -412,6 +412,53 @@ class MatrixHttpApi(object):
         }
         return self.send_state_event(room_id, "m.room.topic", body, timestamp=timestamp)
 
+    def get_power_levels(self, room_id):
+        """Perform GET /rooms/$room_id/state/m.room.power_levels
+
+        Args:
+            room_id(str): The room ID
+        """
+        return self._send("GET", "/rooms/" + quote(room_id) +
+                          "/state/m.room.power_levels")
+
+    def set_power_levels(self, room_id, content):
+        """Perform PUT /rooms/$room_id/state/m.room.power_levels
+
+        Note that any power levels which are not explicitly specified
+        in the content arg are reset to default values.
+
+        Args:
+            room_id(str): The room ID
+            content(dict): The JSON content to send. See example content below.
+
+        Usage:
+            api = MatrixHttpApi("http://example.com", token="foobar")
+            api.set_power_levels("!exampleroom:example.com",
+                {
+                    "ban": 50, # defaults to 50 if unspecified
+                    "events": {
+                        "m.room.name": 100, # must have PL 100 to change room name
+                        "m.room.power_levels": 100 # must have PL 100 to change PLs
+                    },
+                    "events_default": 0, # defaults to 0
+                    "invite": 50, # defaults to 50
+                    "kick": 50, # defaults to 50
+                    "redact": 50, # defaults to 50
+                    "state_default": 50, # defaults to 50 if m.room.power_levels exists
+                    "users": {
+                        "@someguy:example.com": 100 # defaults to 0
+                    },
+                    "users_default": 0 # defaults to 0
+                }
+            )
+        """
+        # Synapse returns M_UNKNOWN if body['events'] is omitted,
+        #  as of 2016-10-31
+        if "events" not in content:
+            content["events"] = {}
+
+        return self.send_state_event(room_id, "m.room.power_levels", content)
+
     def leave_room(self, room_id):
         """Perform POST /rooms/$room_id/leave
         Args:
