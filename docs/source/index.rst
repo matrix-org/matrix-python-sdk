@@ -11,8 +11,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   modules
-
+   matrix_client
 
 
 Indices and tables
