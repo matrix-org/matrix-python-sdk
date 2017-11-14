@@ -231,7 +231,7 @@ class Room(object):
         content = {}
         if reason:
             content['reason'] = reason
-        return self.client.api.send_redact_event(self.room_id, event_id,
+        return self.client.api.redact_event(self.room_id, event_id,
                                                  content)
 
     def add_listener(self, callback, event_type=None):

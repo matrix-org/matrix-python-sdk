@@ -241,13 +241,13 @@ class MatrixHttpApi(object):
             params["ts"] = timestamp
         return self._send("PUT", path, content, query_params=params)
 
-    def redact_event(self, room_id, event_id, reason, txn_id=None, timestamp=None):
+    def redact_event(self, room_id, event_id, content, txn_id=None, timestamp=None):
         """Perferm PUT /rooms/$room_id/redact/$event_id/$txn_id/
 
         Args:
             room_id(str): The room ID to redact the message event in.
             event_id(str): The event id to redact.
-            reason(str): The reason the message was redacted.
+            content(dict): The JSON content to send.
             txn_id(int): Optional. The transaction ID to use.
             timestamp(int): Optional. Set origin_server_ts (For application services only)
         """
@@ -261,7 +261,7 @@ class MatrixHttpApi(object):
         params = {}
         if timestamp:
             params["ts"] = timestamp
-        return self._send("PUT", path, {"reason": reason}, query_params=params)
+        return self._send("PUT", path, content, query_params=params)
 
     # content_type can be a image,audio or video
     # extra information should be supplied, see
