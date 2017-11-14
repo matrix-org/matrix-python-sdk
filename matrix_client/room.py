@@ -232,7 +232,7 @@ class Room(object):
         if reason:
             content['reason'] = reason
         return self.client.api.redact_event(self.room_id, event_id,
-                                                 content)
+                                            content)
 
     def add_listener(self, callback, event_type=None):
         """ Add a callback handler for events going to this room.
