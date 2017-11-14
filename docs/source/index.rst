@@ -9,8 +9,13 @@ Welcome to Matrix Python SDK's documentation!
 Contents:
 
 .. toctree::
+   :glob:
    :maxdepth: 2
 
+   matrix_client
+
+.. include matrix_client.rst
+.. include modules.rst
 
 
 Indices and tables
