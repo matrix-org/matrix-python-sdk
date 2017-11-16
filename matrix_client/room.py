@@ -228,8 +228,7 @@ class Room(object):
             event_id (str): The id of the event to be redacted.
             reason (str): Optional. The reason provided for the redaction.
         """
-        return self.client.api.redact_event(self.room_id, event_id,
-                                            reason=reason)
+        return self.client.api.redact_event(self.room_id, event_id, reason)
 
     def add_listener(self, callback, event_type=None):
         """ Add a callback handler for events going to this room.
