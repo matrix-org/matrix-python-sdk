@@ -86,6 +86,7 @@ class MatrixHttpApi(object):
         """
 
         request = query_params
+        # non-integer timeouts appear to cause issues
         request["timeout"] = int(timeout_ms)
 
         if since:
@@ -759,7 +760,7 @@ class MatrixHttpApi(object):
         return self._send(
             "POST", "",
             content=content,
-            query_params=query_params
+            query_params=query_params,
             headers={"Content-Type": content_type},
             api_path="/_matrix/media/r0/upload",
         )
