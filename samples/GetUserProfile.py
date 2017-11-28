@@ -27,7 +27,7 @@ except MatrixRequestError as e:
         print("Bad username or password.")
         sys.exit(4)
     else:
-        print("Check your sever details are correct.")
+        print("Check your server details are correct.")
         sys.exit(2)
 except MissingSchema as e:
     print("Bad URL format.")

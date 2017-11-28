@@ -1,6 +1,7 @@
 import re
 from uuid import uuid4
 
+from .user import User
 from .errors import MatrixRequestError
 
 
@@ -29,9 +30,11 @@ class Room(object):
         self.events = []
         self.event_history_limit = 20
         self.name = None
+        self.canonical_alias = None
         self.aliases = []
         self.topic = None
         self._prev_batch = None
+        self._members = []
 
     def set_user_profile(self,
                          displayname=None,
@@ -53,6 +56,37 @@ class Room(object):
                 "avatar_url": avatar_url
             }
         )
+
+    @property
+    def display_name(self):
+        """
+        Calculates the display name for a room.
+        """
+        if self.name:
+            return self.name
+        elif self.canonical_alias:
+            return self.canonical_alias
+
+        members = self.get_joined_members()
+        # members without me
+        members[:] = [u.get_display_name() for u in members if
+                      self.client.user_id != u.user_id]
+        first_two = members[:2]
+        if len(first_two) == 1:
+            return first_two[0]
+        elif len(members) == 2:
+            return "{0} and {1}".format(
+                first_two[0],
+                first_two[1])
+        elif len(members) > 2:
+            return "{0} and {1} others".format(
+                first_two[0],
+                len(members) - 1)
+        elif len(first_two) == 0:
+            # TODO i18n
+            return "Empty room"
+        # TODO i18n
+        return "Empty room"
 
     def send_text(self, text):
         """ Send a plain text message to the room.
@@ -185,6 +219,16 @@ class Room(object):
         """
         return self.client.api.send_content(self.room_id, url, name, "m.audio",
                                             extra_information=audioinfo)
+
+    def redact_message(self, event_id, reason=None):
+        """ Redacts the message with specified event_id in the room.
+        See https://matrix.org/docs/spec/r0.0.1/client_server.html#id112
+
+        Args:
+            event_id (str): The id of the event to be redacted.
+            reason (str): Optional. The reason provided for the redaction.
+        """
+        return self.client.api.redact_event(self.room_id, event_id, reason)
 
     def add_listener(self, callback, event_type=None):
         """ Add a callback handler for events going to this room.
@@ -468,14 +512,24 @@ class Room(object):
         Returns:
             {user_id: {"displayname": str or None}}: Dictionary of joined members.
         """
+        if self._members:
+            return self._members
         response = self.client.api.get_room_members(self.room_id)
-        rtn = {
-            event["state_key"]: {
-                "displayname": event["content"].get("displayname"),
-            } for event in response["chunk"] if event["content"]["membership"] == "join"
-        }
+        for event in response["chunk"]:
+            if event["content"]["membership"] == "join":
+                self._mkmembers(
+                    User(self.client.api,
+                         event["state_key"],
+                         event["content"].get("displayname"))
+                )
+        return self._members
 
-        return rtn
+    def _mkmembers(self, member):
+        if member.user_id not in [x.user_id for x in self._members]:
+            self._members.append(member)
+
+    def _rmmembers(self, user_id):
+        self._members[:] = [x for x in self._members if x.user_id != user_id]
 
     def backfill_previous_messages(self, reverse=False, limit=10):
         """Backfill handling of previous messages.
@@ -492,6 +546,83 @@ class Room(object):
             events = reversed(events)
         for event in events:
             self._put_event(event)
+
+    def modify_user_power_levels(self, users=None, users_default=None):
+        """Modify the power level for a subset of users
+
+        Args:
+            users(dict): Power levels to assign to specific users, in the form
+                {"@name0:host0": 10, "@name1:host1": 100, "@name3:host3", None}
+                A level of None causes the user to revert to the default level
+                as specified by users_default.
+            users_default(int): Default power level for users in the room
+
+        Returns:
+            True if successful, False if not
+        """
+        try:
+            content = self.client.api.get_power_levels(self.room_id)
+            if users_default:
+                content["users_default"] = users_default
+
+            if users:
+                if "users" in content:
+                    content["users"].update(users)
+                else:
+                    content["users"] = users
+
+                # Remove any keys with value None
+                for user, power_level in list(content["users"].items()):
+                    if power_level is None:
+                        del content["users"][user]
+            self.client.api.set_power_levels(self.room_id, content)
+            return True
+        except MatrixRequestError:
+            return False
+
+    def modify_required_power_levels(self, events=None, **kwargs):
+        """Modifies room power level requirements.
+
+        Args:
+            events(dict): Power levels required for sending specific event types,
+                in the form {"m.room.whatever0": 60, "m.room.whatever2": None}.
+                Overrides events_default and state_default for the specified
+                events. A level of None causes the target event to revert to the
+                default level as specified by events_default or state_default.
+            **kwargs: Key/value pairs specifying the power levels required for
+                    various actions:
+                        events_default(int): Default level for sending message events
+                        state_default(int): Default level for sending state events
+                        invite(int): Inviting a user
+                        redact(int): Redacting an event
+                        ban(int): Banning a user
+                        kick(int): Kicking a user
+
+        Returns:
+            True if successful, False if not
+        """
+        try:
+            content = self.client.api.get_power_levels(self.room_id)
+            content.update(kwargs)
+            for key, value in list(content.items()):
+                if value is None:
+                    del content[key]
+
+            if events:
+                if "events" in content:
+                    content["events"].update(events)
+                else:
+                    content["events"] = events
+
+                # Remove any keys with value None
+                for event, power_level in list(content["events"].items()):
+                    if power_level is None:
+                        del content["events"][event]
+
+            self.client.api.set_power_levels(self.room_id, content)
+            return True
+        except MatrixRequestError:
+            return False
 
     @property
     def prev_batch(self):

@@ -16,7 +16,7 @@
 import json
 import requests
 from time import time, sleep
-from .errors import MatrixError, MatrixRequestError
+from .errors import MatrixError, MatrixRequestError, MatrixHttpLibError
 
 try:
     from urllib import quote
@@ -244,6 +244,31 @@ class MatrixHttpApi(object):
             params["ts"] = timestamp
         return self._send("PUT", path, content, query_params=params)
 
+    def redact_event(self, room_id, event_id, reason=None, txn_id=None, timestamp=None):
+        """Perform PUT /rooms/$room_id/redact/$event_id/$txn_id/
+
+        Args:
+            room_id(str): The room ID to redact the message event in.
+            event_id(str): The event id to redact.
+            reason (str): Optional. The reason the message was redacted.
+            txn_id(int): Optional. The transaction ID to use.
+            timestamp(int): Optional. Set origin_server_ts (For application services only)
+        """
+        if not txn_id:
+            txn_id = str(self.txn_id) + str(int(time() * 1000))
+
+        self.txn_id = self.txn_id + 1
+        path = '/rooms/%s/redact/%s/%s' % (
+            room_id, event_id, txn_id
+        )
+        content = {}
+        if reason:
+            content['reason'] = reason
+        params = {}
+        if timestamp:
+            params["ts"] = timestamp
+        return self._send("PUT", path, content, query_params=params)
+
     # content_type can be a image,audio or video
     # extra information should be supplied, see
     # https://matrix.org/docs/spec/r0.0.1/client_server.html
@@ -391,6 +416,53 @@ class MatrixHttpApi(object):
         }
         return self.send_state_event(room_id, "m.room.topic", body, timestamp=timestamp)
 
+    def get_power_levels(self, room_id):
+        """Perform GET /rooms/$room_id/state/m.room.power_levels
+
+        Args:
+            room_id(str): The room ID
+        """
+        return self._send("GET", "/rooms/" + quote(room_id) +
+                          "/state/m.room.power_levels")
+
+    def set_power_levels(self, room_id, content):
+        """Perform PUT /rooms/$room_id/state/m.room.power_levels
+
+        Note that any power levels which are not explicitly specified
+        in the content arg are reset to default values.
+
+        Args:
+            room_id(str): The room ID
+            content(dict): The JSON content to send. See example content below.
+
+        Usage:
+            api = MatrixHttpApi("http://example.com", token="foobar")
+            api.set_power_levels("!exampleroom:example.com",
+                {
+                    "ban": 50, # defaults to 50 if unspecified
+                    "events": {
+                        "m.room.name": 100, # must have PL 100 to change room name
+                        "m.room.power_levels": 100 # must have PL 100 to change PLs
+                    },
+                    "events_default": 0, # defaults to 0
+                    "invite": 50, # defaults to 50
+                    "kick": 50, # defaults to 50
+                    "redact": 50, # defaults to 50
+                    "state_default": 50, # defaults to 50 if m.room.power_levels exists
+                    "users": {
+                        "@someguy:example.com": 100 # defaults to 0
+                    },
+                    "users_default": 0 # defaults to 0
+                }
+            )
+        """
+        # Synapse returns M_UNKNOWN if body['events'] is omitted,
+        #  as of 2016-10-31
+        if "events" not in content:
+            content["events"] = {}
+
+        return self.send_state_event(room_id, "m.room.power_levels", content)
+
     def leave_room(self, room_id):
         """Perform POST /rooms/$room_id/leave
 
@@ -398,6 +470,14 @@ class MatrixHttpApi(object):
             room_id (str): The room ID
         """
         return self._send("POST", "/rooms/" + room_id + "/leave", {})
+
+    def forget_room(self, room_id):
+        """Perform POST /rooms/$room_id/forget
+
+        Args:
+            room_id(str): The room ID
+        """
+        return self._send("POST", "/rooms/" + room_id + "/forget", content={})
 
     def invite_user(self, room_id, user_id):
         """Perform POST /rooms/$room_id/invite
@@ -564,13 +644,16 @@ class MatrixHttpApi(object):
 
         response = None
         while True:
-            response = requests.request(
-                method, endpoint,
-                params=query_params,
-                data=content,
-                headers=headers,
-                verify=self.validate_cert
-            )
+            try:
+                response = requests.request(
+                    method, endpoint,
+                    params=query_params,
+                    data=content,
+                    headers=headers,
+                    verify=self.validate_cert
+                )
+            except requests.exceptions.RequestException as e:
+                raise MatrixHttpLibError(e, method, endpoint)
 
             if response.status_code == 429:
                 sleep(response.json()['retry_after_ms'] / 1000)

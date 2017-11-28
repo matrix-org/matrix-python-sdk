@@ -89,6 +89,7 @@ class MatrixClient(object):
         self.api = MatrixHttpApi(base_url, token)
         self.api.validate_certificate(valid_cert_check)
         self.listeners = []
+        self.presence_listeners = {}
         self.invite_listeners = []
         self.left_listeners = []
         self.ephemeral_listeners = []
@@ -284,6 +285,28 @@ class MatrixClient(object):
         self.listeners[:] = (listener for listener in self.listeners
                              if listener['uid'] != uid)
 
+    def add_presence_listener(self, callback):
+        """ Add a presence listener that will send a callback when the client receives
+        a presence update.
+
+        Args:
+            callback (func(roomchunk)): Callback called when a presence update arrives.
+
+        Returns:
+            uuid.UUID: Unique id of the listener, can be used to identify the listener.
+        """
+        listener_uid = uuid4()
+        self.presence_listeners[listener_uid] = callback
+        return listener_uid
+
+    def remove_presence_listener(self, uid):
+        """ Remove presence listener with given uid
+
+        Args:
+            uuid.UUID: Unique id of the listener to remove
+        """
+        self.presence_listeners.pop(uid)
+
     def add_ephemeral_listener(self, callback, event_type=None):
         """ Add an ephemeral listener that will send a callback when the client recieves
         an ephemeral event.
@@ -392,7 +415,7 @@ class MatrixClient(object):
             self.sync_thread = thread
             self.should_listen = True
             thread.start()
-        except:
+        except RuntimeError:
             e = sys.exc_info()[0]
             logger.error("Error: unable to start thread. %s", str(e))
 
@@ -440,10 +463,21 @@ class MatrixClient(object):
 
         if etype == "m.room.name":
             current_room.name = state_event["content"].get("name", None)
+        elif etype == "m.room.canonical_alias":
+            current_room.canonical_alias = state_event["content"].get("alias")
         elif etype == "m.room.topic":
             current_room.topic = state_event["content"].get("topic", None)
         elif etype == "m.room.aliases":
             current_room.aliases = state_event["content"].get("aliases", None)
+        elif etype == "m.room.member":
+            if state_event["content"]["membership"] == "join":
+                current_room._mkmembers(
+                    User(self.api,
+                         state_event["state_key"],
+                         state_event["content"].get("displayname", None))
+                )
+            elif state_event["content"]["membership"] in ("leave", "kick", "invite"):
+                current_room._rmmembers(state_event["state_key"])
 
         for listener in current_room.state_listeners:
             if (
@@ -453,10 +487,13 @@ class MatrixClient(object):
                 listener['callback'](state_event)
 
     def _sync(self, timeout_ms=30000):
-        # TODO: Deal with presence
         # TODO: Deal with left rooms
         response = self.api.sync(self.sync_token, timeout_ms, filter=self.sync_filter)
         self.sync_token = response["next_batch"]
+
+        for presence_update in response['presence']['events']:
+            for callback in self.presence_listeners.values():
+                callback(presence_update)
 
         for room_id, invite_room in response['rooms']['invite'].items():
             for listener in self.invite_listeners:

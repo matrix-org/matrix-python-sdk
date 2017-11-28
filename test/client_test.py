@@ -1,11 +1,17 @@
 import pytest
 import responses
 import json
-from unittest.mock import MagicMock
+from copy import deepcopy
 from matrix_client.client import MatrixClient, Room, User
 from matrix_client.api import MATRIX_V2_API_PATH
+from . import response_examples
+try:
+    from urllib import quote
+except ImportError:
+    from urllib.parse import quote
 
 HOSTNAME = "http://example.com"
+
 
 def test_create_client():
     MatrixClient("http://example.com")
@@ -98,6 +104,18 @@ def test_state_event():
     client._process_state_event(ev, room)
     assert room.aliases is aliases
 
+    # test member join event
+    ev["type"] = "m.room.member"
+    ev["content"] = {'membership': 'join', 'displayname': 'stereo'}
+    ev["state_key"] = "@stereo:xxx.org"
+    client._process_state_event(ev, room)
+    assert len(room._members) == 1
+    assert room._members[0].user_id == "@stereo:xxx.org"
+    # test member leave event
+    ev["content"]['membership'] = 'leave'
+    client._process_state_event(ev, room)
+    assert len(room._members) == 0
+
 
 def test_get_user():
     client = MatrixClient("http://example.com")
@@ -143,12 +161,14 @@ def test_remove_listener():
 
     assert not found_listener, "listener was not removed properly"
 
+
 class TestClientRegister:
     cli = MatrixClient(HOSTNAME)
 
     @responses.activate
     def test_register_as_guest(self):
         cli = self.cli
+
         def _sync(self):
             self._sync_called = True
         cli.__dict__[_sync.__name__] = _sync.__get__(cli, cli.__class__)
@@ -165,3 +185,181 @@ class TestClientRegister:
         assert cli.hs == 'example.com'
         assert cli.user_id == '@455:example.com'
         assert cli._sync_called
+
+
+def test_get_rooms_display_name():
+
+    def add_members(api, room, num):
+        for i in range(num):
+            room._mkmembers(User(api, '@frho%s:matrix.org' % i, 'ho%s' % i))
+
+    client = MatrixClient("http://example.com")
+    client.user_id = "@frho0:matrix.org"
+    room1 = client._mkroom("!abc:matrix.org")
+    add_members(client.api, room1, 1)
+    room2 = client._mkroom("!def:matrix.org")
+    add_members(client.api, room2, 2)
+    room3 = client._mkroom("!ghi:matrix.org")
+    add_members(client.api, room3, 3)
+    room4 = client._mkroom("!rfi:matrix.org")
+    add_members(client.api, room4, 30)
+
+    rooms = client.get_rooms()
+    assert len(rooms) == 4
+    assert room1.display_name == "Empty room"
+    assert room2.display_name == "ho1"
+    assert room3.display_name == "ho1 and ho2"
+    assert room4.display_name == "ho1 and 28 others"
+
+
+@responses.activate
+def test_presence_listener():
+    client = MatrixClient("http://example.com")
+    accumulator = []
+
+    def dummy_callback(event):
+        accumulator.append(event)
+    presence_events = [
+        {
+            "content": {
+                "avatar_url": "mxc://localhost:wefuiwegh8742w",
+                "currently_active": False,
+                "last_active_ago": 2478593,
+                "presence": "online",
+                "user_id": "@example:localhost"
+            },
+            "event_id": "$WLGTSEFSEF:localhost",
+            "type": "m.presence"
+        },
+        {
+            "content": {
+                "avatar_url": "mxc://localhost:weaugwe742w",
+                "currently_active": True,
+                "last_active_ago": 1478593,
+                "presence": "online",
+                "user_id": "@example2:localhost"
+            },
+            "event_id": "$CIGTXEFREF:localhost",
+            "type": "m.presence"
+        },
+        {
+            "content": {
+                "avatar_url": "mxc://localhost:wefudweg13742w",
+                "currently_active": False,
+                "last_active_ago": 24795,
+                "presence": "offline",
+                "user_id": "@example3:localhost"
+            },
+            "event_id": "$ZEGASEDSEF:localhost",
+            "type": "m.presence"
+        },
+    ]
+    sync_response = deepcopy(response_examples.example_sync)
+    sync_response["presence"]["events"] = presence_events
+    response_body = json.dumps(sync_response)
+    sync_url = HOSTNAME + MATRIX_V2_API_PATH + "/sync"
+
+    responses.add(responses.GET, sync_url, body=response_body)
+    callback_uid = client.add_presence_listener(dummy_callback)
+    client._sync()
+    assert accumulator == presence_events
+
+    responses.add(responses.GET, sync_url, body=response_body)
+    client.remove_presence_listener(callback_uid)
+    accumulator = []
+    client._sync()
+    assert accumulator == []
+
+
+@responses.activate
+def test_changing_user_power_levels():
+    client = MatrixClient(HOSTNAME)
+    room_id = "!UcYsUzyxTGDxLBEvLz:matrix.org"
+    room = client._mkroom(room_id)
+    PL_state_path = HOSTNAME + MATRIX_V2_API_PATH + \
+        "/rooms/" + quote(room_id) + "/state/m.room.power_levels"
+
+    # Code should first get current power_levels and then modify them
+    responses.add(responses.GET, PL_state_path,
+                  json=response_examples.example_pl_event["content"])
+    responses.add(responses.PUT, PL_state_path,
+                  json=response_examples.example_event_response)
+    # Removes user from user and adds user to to users list
+    assert room.modify_user_power_levels(users={"@example:localhost": None,
+                                                "@foobar:example.com": 49})
+
+    expected_request = deepcopy(response_examples.example_pl_event["content"])
+    del expected_request["users"]["@example:localhost"]
+    expected_request["users"]["@foobar:example.com"] = 49
+
+    assert json.loads(responses.calls[1].request.body) == expected_request
+
+
+@responses.activate
+def test_changing_default_power_level():
+    client = MatrixClient(HOSTNAME)
+    room_id = "!UcYsUzyxTGDxLBEvLz:matrix.org"
+    room = client._mkroom(room_id)
+    PL_state_path = HOSTNAME + MATRIX_V2_API_PATH + \
+        "/rooms/" + quote(room_id) + "/state/m.room.power_levels"
+
+    # Code should first get current power_levels and then modify them
+    responses.add(responses.GET, PL_state_path,
+                  json=response_examples.example_pl_event["content"])
+    responses.add(responses.PUT, PL_state_path,
+                  json=response_examples.example_event_response)
+    assert room.modify_user_power_levels(users_default=23)
+
+    expected_request = deepcopy(response_examples.example_pl_event["content"])
+    expected_request["users_default"] = 23
+
+    assert json.loads(responses.calls[1].request.body) == expected_request
+
+
+@responses.activate
+def test_changing_event_required_power_levels():
+    client = MatrixClient(HOSTNAME)
+    room_id = "!UcYsUzyxTGDxLBEvLz:matrix.org"
+    room = client._mkroom(room_id)
+    PL_state_path = HOSTNAME + MATRIX_V2_API_PATH + \
+        "/rooms/" + quote(room_id) + "/state/m.room.power_levels"
+
+    # Code should first get current power_levels and then modify them
+    responses.add(responses.GET, PL_state_path,
+                  json=response_examples.example_pl_event["content"])
+    responses.add(responses.PUT, PL_state_path,
+                  json=response_examples.example_event_response)
+    # Remove event from events and adds new controlled event
+    assert room.modify_required_power_levels(events={"m.room.name": None,
+                                                     "example.event": 51})
+
+    expected_request = deepcopy(response_examples.example_pl_event["content"])
+    del expected_request["events"]["m.room.name"]
+    expected_request["events"]["example.event"] = 51
+
+    assert json.loads(responses.calls[1].request.body) == expected_request
+
+
+@responses.activate
+def test_changing_other_required_power_levels():
+    client = MatrixClient(HOSTNAME)
+    room_id = "!UcYsUzyxTGDxLBEvLz:matrix.org"
+    room = client._mkroom(room_id)
+    PL_state_path = HOSTNAME + MATRIX_V2_API_PATH + \
+        "/rooms/" + quote(room_id) + "/state/m.room.power_levels"
+
+    # Code should first get current power_levels and then modify them
+    responses.add(responses.GET, PL_state_path,
+                  json=response_examples.example_pl_event["content"])
+    responses.add(responses.PUT, PL_state_path,
+                  json=response_examples.example_event_response)
+    # Remove event from events and adds new controlled event
+    assert room.modify_required_power_levels(kick=53, redact=2,
+                                             state_default=None)
+
+    expected_request = deepcopy(response_examples.example_pl_event["content"])
+    expected_request["kick"] = 53
+    expected_request["redact"] = 2
+    del expected_request["state_default"]
+
+    assert json.loads(responses.calls[1].request.body) == expected_request
