@@ -75,6 +75,7 @@ class MatrixHttpApi(object):
         """
 
         request = {
+            # non-integer timeouts appear to cause issues
             "timeout": int(timeout_ms)
         }
 
