@@ -16,6 +16,7 @@ from .api import MatrixHttpApi
 from .errors import MatrixRequestError, MatrixUnexpectedResponse
 from .room import Room
 from .user import User
+from enum import Enum
 from threading import Thread
 from time import sleep
 from uuid import uuid4
@@ -23,6 +24,13 @@ import logging
 import sys
 
 logger = logging.getLogger(__name__)
+
+
+# Cache constants used when instantiating Matrix Client to specify level of caching
+class CACHE(Enum):
+    NONE = -1
+    SOME = 0
+    ALL = 1
 
 
 class MatrixClient(object):
@@ -81,7 +89,7 @@ class MatrixClient(object):
 
     def __init__(self, base_url, token=None, user_id=None,
                  valid_cert_check=True, sync_filter_limit=20,
-                 cache_level=1):
+                 cache_level=CACHE.ALL):
         """ Create a new Matrix Client object.
 
         Args:
@@ -94,9 +102,14 @@ class MatrixClient(object):
                 the token) if supplying a token; otherwise, ignored.
             valid_cert_check (bool): Check the homeservers
                 certificate on connections?
-            cache_level (int): One of -1, 0, or 1. 1 fully caches room
-                state, 0 partially caches room state, and -1 doesn't cache
-                room state at all.
+            cache_level (CACHE): One of CACHE.NONE, CACHE.SOME, or
+                CACHE.ALL (defined in module namespace).
+
+        Returns:
+            MatrixClient
+
+        Raises:
+            MatrixRequestError, ValueError
         """
         if token is not None and user_id is None:
             raise ValueError("must supply user_id along with token")
@@ -108,11 +121,13 @@ class MatrixClient(object):
         self.invite_listeners = []
         self.left_listeners = []
         self.ephemeral_listeners = []
-        if cache_level in (-1, 0, 1):
+        if isinstance(cache_level, CACHE):
             self._cache_level = cache_level
         else:
-            self._cache_level = 1
-            raise ValueError("`cache_level` must be one of -1, 0, or 1")
+            self._cache_level = CACHE.ALL
+            raise ValueError(
+                "cache_level must be one of CACHE.NONE, CACHE.SOME, CACHE.ALL"
+            )
 
         self.sync_token = None
         self.sync_filter = '{ "room": { "timeline" : { "limit" : %i } } }' \
@@ -481,8 +496,8 @@ class MatrixClient(object):
             return  # Ignore event
         etype = state_event["type"]
 
-        if self._cache_level >= 0:
-            # Don't keep track of room state if caching turned off
+        # Don't keep track of room state if caching turned off
+        if self._cache_level.value >= 0:
             if etype == "m.room.name":
                 current_room.name = state_event["content"].get("name", None)
             elif etype == "m.room.canonical_alias":
@@ -491,7 +506,7 @@ class MatrixClient(object):
                 current_room.topic = state_event["content"].get("topic", None)
             elif etype == "m.room.aliases":
                 current_room.aliases = state_event["content"].get("aliases", None)
-            elif etype == "m.room.member" and self._cache_level == 1:
+            elif etype == "m.room.member" and self._cache_level == CACHE.ALL:
                 # tracking room members can be large e.g. #matrix:matrix.org
                 if state_event["content"]["membership"] == "join":
                     current_room._mkmembers(
@@ -530,7 +545,7 @@ class MatrixClient(object):
 
         for room_id, sync_room in response['rooms']['join'].items():
             if room_id not in self.rooms:
-                # TODO: don't keep track of joined rooms for self._cache_level==-1
+                # TODO: don't keep track of joined rooms for self._cache_level==CACHE.NONE
                 self._mkroom(room_id)
             room = self.rooms[room_id]
             room.prev_batch = sync_room["timeline"]["prev_batch"]

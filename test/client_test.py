@@ -2,7 +2,7 @@ import pytest
 import responses
 import json
 from copy import deepcopy
-from matrix_client.client import MatrixClient, Room, User
+from matrix_client.client import MatrixClient, Room, User, CACHE
 from matrix_client.api import MATRIX_V2_API_PATH
 from . import response_examples
 try:
@@ -367,15 +367,16 @@ def test_changing_other_required_power_levels():
 
 @responses.activate
 def test_cache():
-    m_1 = MatrixClient("http://example.com", cache_level=-1)
-    m0 = MatrixClient("http://example.com", cache_level=0)
-    m1 = MatrixClient("http://example.com", cache_level=1)
+    m_none = MatrixClient("http://example.com", cache_level=CACHE.NONE)
+    m_some = MatrixClient("http://example.com", cache_level=CACHE.SOME)
+    m_all = MatrixClient("http://example.com", cache_level=CACHE.ALL)
     sync_url = HOSTNAME + MATRIX_V2_API_PATH + "/sync"
     room_id = "!726s6s6q:example.com"
     room_name = "The FooBar"
     sync_response = deepcopy(response_examples.example_sync)
 
     with pytest.raises(ValueError):
+        MatrixClient("http://example.com", cache_level=1)
         MatrixClient("http://example.com", cache_level=5)
         MatrixClient("http://example.com", cache_level=0.5)
         MatrixClient("http://example.com", cache_level=-5)
@@ -392,16 +393,16 @@ def test_cache():
     )
 
     responses.add(responses.GET, sync_url, json.dumps(sync_response))
-    m_1._sync()
+    m_none._sync()
     responses.add(responses.GET, sync_url, json.dumps(sync_response))
-    m0._sync()
+    m_some._sync()
     responses.add(responses.GET, sync_url, json.dumps(sync_response))
-    m1._sync()
+    m_all._sync()
 
-    assert m_1.rooms[room_id].name is None
-    assert m0.rooms[room_id].name == room_name
-    assert m1.rooms[room_id].name == room_name
+    assert m_none.rooms[room_id].name is None
+    assert m_some.rooms[room_id].name == room_name
+    assert m_all.rooms[room_id].name == room_name
 
-    assert m_1.rooms[room_id]._members == m0.rooms[room_id]._members == []
-    assert len(m1.rooms[room_id]._members) == 1
-    assert m1.rooms[room_id]._members[0].user_id == "@alice:example.com"
+    assert m_none.rooms[room_id]._members == m_some.rooms[room_id]._members == []
+    assert len(m_all.rooms[room_id]._members) == 1
+    assert m_all.rooms[room_id]._members[0].user_id == "@alice:example.com"
