@@ -1,6 +1,5 @@
 import json
 from asyncio import sleep
-from urllib.parse import quote
 
 from matrix_client.api import MatrixHttpApi
 from matrix_client.errors import MatrixError, MatrixRequestError
