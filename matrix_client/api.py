@@ -37,7 +37,7 @@ class MatrixHttpApi(object):
     For room and sync handling, consider using MatrixClient.
     """
 
-    def __init__(self, base_url, token=None):
+    def __init__(self, base_url, token=None, identity=None):
         """Construct and configure the HTTP API.
 
         Args:
@@ -47,6 +47,7 @@ class MatrixHttpApi(object):
         """
         self.base_url = base_url
         self.token = token
+        self.identity = identity
         self.txn_id = 0
         self.validate_cert = True
 
@@ -727,6 +728,9 @@ class MatrixHttpApi(object):
 
         query_params["access_token"] = self.token
         endpoint = self.base_url + api_path + path
+
+        if self.identity and "user_id" not in query_params:
+            query_params["user_id"] = self.identity
 
         if headers["Content-Type"] == "application/json" and content is not None:
             content = json.dumps(content)
