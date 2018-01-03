@@ -238,7 +238,7 @@ class MatrixHttpApi(object):
                 | user_id: user id for transaction.
         """
         query_params['timeout'] = int(timeout)
-        query_parms['from'] = from_token
+        query_params['from'] = from_token
 
         path = "/events"
         return self._send(
