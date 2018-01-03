@@ -86,23 +86,22 @@ class MatrixHttpApi(object):
                 | user_id: user id for transaction.
         """
 
-        request = query_params
         # non-integer timeouts appear to cause issues
-        request["timeout"] = int(timeout_ms)
+        query_params["timeout"] = int(timeout_ms)
 
         if since:
-            request["since"] = since
+            query_params["since"] = since
 
         if filter:
-            request["filter"] = filter
+            query_params["filter"] = filter
 
         if full_state:
-            request["full_state"] = full_state
+            query_params["full_state"] = full_state
 
         if set_presence:
-            request["set_presence"] = set_presence
+            query_params["set_presence"] = set_presence
 
-        return self._send("GET", "/sync", query_params=request,
+        return self._send("GET", "/sync", query_params=query_params,
                           api_path=MATRIX_V2_API_PATH)
 
     def validate_certificate(self, valid):
