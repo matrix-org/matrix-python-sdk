@@ -51,7 +51,7 @@ class MatrixHttpApi(object):
         self.txn_id = 0
         self.validate_cert = True
 
-    def initial_sync(self, limit=1, query_params=None):
+    def initial_sync(self, limit=1, query_params={}):
         """ Deprecated. Use sync instead.
         Perform /initialSync.
 
@@ -69,7 +69,7 @@ class MatrixHttpApi(object):
                           query_params=query_params)
 
     def sync(self, since=None, timeout_ms=30000, filter=None,
-             full_state=None, set_presence=None, query_params=None):
+             full_state=None, set_presence=None, query_params={}):
         """ Perform a sync request.
 
         Args:
@@ -110,7 +110,7 @@ class MatrixHttpApi(object):
     def validate_certificate(self, valid):
         self.validate_cert = valid
 
-    def register(self, content={}, kind='user', query_params=None):
+    def register(self, content={}, kind='user', query_params={}):
         """Performs /register.
 
         Args:
@@ -164,7 +164,7 @@ class MatrixHttpApi(object):
 
         return self._send("POST", "/login", content)
 
-    def logout(self, query_params=None):
+    def logout(self, query_params={}):
         """Perform /logout.
 
         Args:
@@ -178,7 +178,7 @@ class MatrixHttpApi(object):
         """
         return self._send("POST", "/logout", query_params=query_params)
 
-    def create_room(self, alias=None, is_public=False, invitees=(), query_params=None):
+    def create_room(self, alias=None, is_public=False, invitees=(), query_params={}):
         """Perform /createRoom.
 
         Args:
@@ -202,7 +202,7 @@ class MatrixHttpApi(object):
             content["invite"] = invitees
         return self._send("POST", "/createRoom", content, query_params=query_params)
 
-    def join_room(self, room_id_or_alias, query_params=None):
+    def join_room(self, room_id_or_alias, query_params={}):
         """Performs /join/$room_id
 
         Args:
@@ -222,7 +222,7 @@ class MatrixHttpApi(object):
 
         return self._send("POST", path, query_params=query_params)
 
-    def event_stream(self, from_token, timeout=30000, query_params=None):
+    def event_stream(self, from_token, timeout=30000, query_params={}):
         """ Deprecated. Use sync instead.
         Performs /events
 
@@ -246,7 +246,7 @@ class MatrixHttpApi(object):
             query_params=query_params)
 
     def send_state_event(self, room_id, event_type, content, state_key="",
-                         query_params=None):
+                         query_params={}):
         """Perform PUT /rooms/$room_id/state/$event_type
 
         Args:
@@ -270,7 +270,7 @@ class MatrixHttpApi(object):
         return self._send("PUT", path, content, query_params=query_params)
 
     def send_message_event(self, room_id, event_type, content, txn_id=None,
-                           query_params=None):
+                           query_params={}):
         """Perform PUT /rooms/$room_id/send/$event_type
 
         Args:
@@ -325,7 +325,7 @@ class MatrixHttpApi(object):
     # extra information should be supplied, see
     # https://matrix.org/docs/spec/r0.0.1/client_server.html
     def send_content(self, room_id, item_url, item_name, msg_type,
-                     extra_information=None, query_params=None):
+                     extra_information=None, query_params={}):
         if extra_information is None:
             extra_information = {}
 
@@ -341,7 +341,7 @@ class MatrixHttpApi(object):
 
     # http://matrix.org/docs/spec/client_server/r0.2.0.html#m-location
     def send_location(self, room_id, geo_uri, name, thumb_url=None, thumb_info=None,
-                      query_params=None):
+                      query_params={}):
         """Send m.location message event
 
         Args:
@@ -372,7 +372,7 @@ class MatrixHttpApi(object):
                                        query_params=query_params)
 
     def send_message(self, room_id, text_content, msgtype="m.text",
-                     query_params=None):
+                     query_params={}):
         """Perform PUT /rooms/$room_id/send/m.room.message
 
         Args:
@@ -392,7 +392,7 @@ class MatrixHttpApi(object):
             query_params=query_params
         )
 
-    def send_emote(self, room_id, text_content, query_params=None):
+    def send_emote(self, room_id, text_content, query_params={}):
         """Perform PUT /rooms/$room_id/send/m.room.message with m.emote msgtype
 
         Args:
@@ -412,7 +412,7 @@ class MatrixHttpApi(object):
             query_params=query_params
         )
 
-    def send_notice(self, room_id, text_content, query_params=None):
+    def send_notice(self, room_id, text_content, query_params={}):
         """Perform PUT /rooms/$room_id/send/m.room.message with m.notice msgtype
 
         Args:
@@ -434,7 +434,7 @@ class MatrixHttpApi(object):
                                        query_params=query_params)
 
     def get_room_messages(self, room_id, token, direction, limit=10, to=None,
-                          query_params=None):
+                          query_params={}):
         """Perform GET /rooms/{roomId}/messages.
 
         Args:
@@ -466,7 +466,7 @@ class MatrixHttpApi(object):
                           api_path="/_matrix/client/r0",
                           query_params=query_params)
 
-    def get_room_name(self, room_id, query_params=None):
+    def get_room_name(self, room_id, query_params={}):
         """Perform GET /rooms/$room_id/state/m.room.name
         Args:
             room_id(str): The room ID
@@ -481,7 +481,7 @@ class MatrixHttpApi(object):
         return self._send("GET", "/rooms/" + room_id + "/state/m.room.name",
                           query_params=query_params)
 
-    def set_room_name(self, room_id, name, query_params=None):
+    def set_room_name(self, room_id, name, query_params={}):
         """Perform PUT /rooms/$room_id/state/m.room.name
         Args:
             room_id(str): The room ID
@@ -500,7 +500,7 @@ class MatrixHttpApi(object):
         return self.send_state_event(room_id, "m.room.name", body,
                                      query_params=query_params)
 
-    def get_room_topic(self, room_id, query_params=None):
+    def get_room_topic(self, room_id, query_params={}):
         """Perform GET /rooms/$room_id/state/m.room.topic
         Args:
             room_id(str): The room ID
@@ -515,7 +515,7 @@ class MatrixHttpApi(object):
         return self._send("GET", "/rooms/" + room_id + "/state/m.room.topic",
                           query_params=query_params)
 
-    def set_room_topic(self, room_id, topic, query_params=None):
+    def set_room_topic(self, room_id, topic, query_params={}):
         """Perform PUT /rooms/$room_id/state/m.room.topic
         Args:
             room_id(str): The room ID
@@ -581,7 +581,7 @@ class MatrixHttpApi(object):
 
         return self.send_state_event(room_id, "m.room.power_levels", content)
 
-    def leave_room(self, room_id, query_params=None):
+    def leave_room(self, room_id, query_params={}):
         """Perform POST /rooms/$room_id/leave
         Args:
             room_id(str): The room ID
@@ -632,7 +632,7 @@ class MatrixHttpApi(object):
         )
 
     def set_membership(self, room_id, user_id, membership, reason="", profile={},
-                       query_params=None):
+                       query_params={}):
         """Perform PUT /rooms/$room_id/state/m.room.member/$user_id
         Args:
             room_id(str): The room ID
@@ -715,7 +715,7 @@ class MatrixHttpApi(object):
             account_data
         )
 
-    def get_room_state(self, room_id, query_params=None):
+    def get_room_state(self, room_id, query_params={}):
         """Perform GET /rooms/$room_id/state
         Args:
             room_id(str): The room ID
@@ -794,7 +794,7 @@ class MatrixHttpApi(object):
 
         return response.json()
 
-    def media_upload(self, content, content_type, query_params=None):
+    def media_upload(self, content, content_type, query_params={}):
         return self._send(
             "POST", "",
             content=content,
@@ -825,7 +825,7 @@ class MatrixHttpApi(object):
         else:
             raise ValueError("MXC URL did not begin with 'mxc://'")
 
-    def get_room_id(self, room_alias, query_params=None):
+    def get_room_id(self, room_alias, query_params={}):
         """Get room id from its alias
 
         Args:
@@ -838,7 +838,7 @@ class MatrixHttpApi(object):
                              query_params=query_params)
         return content.get("room_id", None)
 
-    def set_room_alias(self, room_id, room_alias, query_params=None):
+    def set_room_alias(self, room_id, room_alias, query_params={}):
         """Set alias to room id
 
         Args:
@@ -852,7 +852,7 @@ class MatrixHttpApi(object):
         return self._send("PUT", "/directory/room/{}".format(quote(room_alias)),
                           content=data, query_params=query_params)
 
-    def remove_room_alias(self, room_alias, query_params=None):
+    def remove_room_alias(self, room_alias, query_params={}):
         """Remove mapping of an alias
 
         Args:
@@ -864,7 +864,7 @@ class MatrixHttpApi(object):
         return self._send("DELETE", "/directory/room/{}".format(quote(room_alias)),
                           query_params=query_params)
 
-    def get_room_members(self, room_id, query_params=None):
+    def get_room_members(self, room_id, query_params={}):
         """Get the list of members for this room.
 
         Args:
