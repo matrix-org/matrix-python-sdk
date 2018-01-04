@@ -51,17 +51,25 @@ class MatrixHttpApi(object):
         self.txn_id = 0
         self.validate_cert = True
 
-    def initial_sync(self, limit=1):
+    def initial_sync(self, limit=1, query_params={}):
         """ Deprecated. Use sync instead.
         Perform /initialSync.
 
         Args:
             limit(int): The limit= param to provide.
+            query_params: Extra parameters to be sent in the HTTP request,
+
+                These parameters are normally only used for application services.
+                Common values for ``query_params`` are:
+
+                | user_id: user id for transaction.
         """
-        return self._send("GET", "/initialSync", query_params={"limit": limit})
+        query_params['limit'] = limit
+        return self._send("GET", "/initialSync",
+                          query_params=query_params)
 
     def sync(self, since=None, timeout_ms=30000, filter=None,
-             full_state=None, set_presence=None):
+             full_state=None, set_presence=None, query_params={}):
         """ Perform a sync request.
 
         Args:
@@ -72,33 +80,37 @@ class MatrixHttpApi(object):
             full_state (bool): Return the full state for every room the user has joined
                 Defaults to false.
             set_presence (str): Should the client be marked as "online" or" offline"
+            query_params: Extra parameters to be sent in the HTTP request,
+
+                These parameters are normally only used for application services.
+                Common values for ``query_params`` are:
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
 
-        request = {
-            # non-integer timeouts appear to cause issues
-            "timeout": int(timeout_ms)
-        }
+        # non-integer timeouts appear to cause issues
+        query_params["timeout"] = int(timeout_ms)
 
         if since:
-            request["since"] = since
+            query_params["since"] = since
 
         if filter:
-            request["filter"] = filter
+            query_params["filter"] = filter
 
         if full_state:
-            request["full_state"] = full_state
+            query_params["full_state"] = full_state
 
         if set_presence:
-            request["set_presence"] = set_presence
+            query_params["set_presence"] = set_presence
 
-        return self._send("GET", "/sync", query_params=request,
+        return self._send("GET", "/sync", query_params=query_params,
                           api_path=MATRIX_V2_API_PATH)
 
     def validate_certificate(self, valid):
         self.validate_cert = valid
-        return
 
-    def register(self, content={}, kind='user'):
+    def register(self, content={}, kind='user', query_params={}):
         """Performs /register.
 
         Args:
@@ -122,13 +134,19 @@ class MatrixHttpApi(object):
                         to complete. "m.login.dummy" is the only non-interactive type.
 
             kind(str): Specify kind="guest" to register as guest.
-        """
+            query_params: Extra parameters to be sent in the HTTP request,
 
+                These parameters are normally only used for application services.
+                Common values for ``query_params`` are:
+
+                | user_id: user id for transaction.
+        """
+        query_params['kind'] = kind
         return self._send(
             "POST",
             "/register",
             content=content,
-            query_params={'kind': kind}
+            query_params=query_params
         )
 
     def login(self, login_type, **kwargs):
@@ -146,18 +164,34 @@ class MatrixHttpApi(object):
 
         return self._send("POST", "/login", content)
 
-    def logout(self):
+    def logout(self, query_params={}):
         """Perform /logout.
-        """
-        return self._send("POST", "/logout")
 
-    def create_room(self, alias=None, is_public=False, invitees=()):
+        Args:
+            query_params: Extra parameters to be sent in the HTTP request,
+
+                These parameters are normally only used for application services.
+                Common values for ``query_params`` are:
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
+        """
+        return self._send("POST", "/logout", query_params=query_params)
+
+    def create_room(self, alias=None, is_public=False, invitees=(), query_params={}):
         """Perform /createRoom.
 
         Args:
             alias(str): Optional. The room alias name to set for this room.
             is_public(bool): Optional. The public/private visibility.
             invitees(list<str>): Optional. The list of user IDs to invite.
+            query_params: Extra parameters to be sent in the HTTP request,
+
+                These parameters are normally only used for application services.
+                Common values for ``query_params`` are:
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         content = {
             "visibility": "public" if is_public else "private"
@@ -166,39 +200,53 @@ class MatrixHttpApi(object):
             content["room_alias_name"] = alias
         if invitees:
             content["invite"] = invitees
-        return self._send("POST", "/createRoom", content)
+        return self._send("POST", "/createRoom", content, query_params=query_params)
 
-    def join_room(self, room_id_or_alias):
+    def join_room(self, room_id_or_alias, query_params={}):
         """Performs /join/$room_id
 
         Args:
             room_id_or_alias(str): The room ID or room alias to join.
+            query_params: Extra parameters to be sent in the HTTP request,
+
+                These parameters are normally only used for application services.
+                Common values for ``query_params`` are:
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         if not room_id_or_alias:
             raise MatrixError("No alias or room ID to join.")
 
         path = "/join/%s" % quote(room_id_or_alias)
 
-        return self._send("POST", path)
+        return self._send("POST", path, query_params=query_params)
 
-    def event_stream(self, from_token, timeout=30000):
+    def event_stream(self, from_token, timeout=30000, query_params={}):
         """ Deprecated. Use sync instead.
         Performs /events
 
         Args:
             from_token(str): The 'from' query parameter.
             timeout(int): Optional. The 'timeout' query parameter.
+            query_params: Extra parameters to be sent in the HTTP request,
+
+                These parameters are normally only used for application services.
+                Common values for ``query_params`` are:
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
+        query_params['timeout'] = int(timeout)
+        query_params['from'] = from_token
+
         path = "/events"
         return self._send(
-            "GET", path, query_params={
-                "timeout": timeout,
-                "from": from_token
-            }
-        )
+            "GET", path,
+            query_params=query_params)
 
     def send_state_event(self, room_id, event_type, content, state_key="",
-                         timestamp=None):
+                         query_params={}):
         """Perform PUT /rooms/$room_id/state/$event_type
 
         Args:
@@ -206,20 +254,23 @@ class MatrixHttpApi(object):
             event_type(str): The state event type to send.
             content(dict): The JSON content to send.
             state_key(str): Optional. The state key for the event.
-            timestamp(int): Optional. Set origin_server_ts (For application services only)
+            query_params: Extra parameters to be sent in the HTTP request,
+
+                These parameters are normally only used for application services.
+                Common values for ``query_params`` are:
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         path = "/rooms/%s/state/%s" % (
             quote(room_id), quote(event_type),
         )
         if state_key:
             path += "/%s" % (quote(state_key))
-        params = {}
-        if timestamp:
-            params["ts"] = timestamp
-        return self._send("PUT", path, content, query_params=params)
+        return self._send("PUT", path, content, query_params=query_params)
 
     def send_message_event(self, room_id, event_type, content, txn_id=None,
-                           timestamp=None):
+                           query_params={}):
         """Perform PUT /rooms/$room_id/send/$event_type
 
         Args:
@@ -227,7 +278,13 @@ class MatrixHttpApi(object):
             event_type(str): The event type to send.
             content(dict): The JSON content to send.
             txn_id(int): Optional. The transaction ID to use.
-            timestamp(int): Optional. Set origin_server_ts (For application services only)
+            query_params: Extra parameters to be sent in the HTTP request,
+
+                These parameters are normally only used for application services.
+                Common values for ``query_params`` are:
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         if not txn_id:
             txn_id = str(self.txn_id) + str(int(time() * 1000))
@@ -237,10 +294,7 @@ class MatrixHttpApi(object):
         path = "/rooms/%s/send/%s/%s" % (
             quote(room_id), quote(event_type), quote(str(txn_id)),
         )
-        params = {}
-        if timestamp:
-            params["ts"] = timestamp
-        return self._send("PUT", path, content, query_params=params)
+        return self._send("PUT", path, content, query_params=query_params)
 
     def redact_event(self, room_id, event_id, reason=None, txn_id=None, timestamp=None):
         """Perform PUT /rooms/$room_id/redact/$event_id/$txn_id/
@@ -271,7 +325,7 @@ class MatrixHttpApi(object):
     # extra information should be supplied, see
     # https://matrix.org/docs/spec/r0.0.1/client_server.html
     def send_content(self, room_id, item_url, item_name, msg_type,
-                     extra_information=None, timestamp=None):
+                     extra_information=None, query_params={}):
         if extra_information is None:
             extra_information = {}
 
@@ -281,12 +335,13 @@ class MatrixHttpApi(object):
             "body": item_name,
             "info": extra_information
         }
-        return self.send_message_event(room_id, "m.room.message", content_pack,
-                                       timestamp=timestamp)
+        return self.send_message_event(room_id, "m.room.message",
+                                       content=content_pack,
+                                       query_params=query_params)
 
     # http://matrix.org/docs/spec/client_server/r0.2.0.html#m-location
     def send_location(self, room_id, geo_uri, name, thumb_url=None, thumb_info=None,
-                      timestamp=None):
+                      query_params={}):
         """Send m.location message event
 
         Args:
@@ -295,7 +350,13 @@ class MatrixHttpApi(object):
             name(str): Description for the location.
             thumb_url(str): URL to the thumbnail of the location.
             thumb_info(dict): Metadata about the thumbnail, type ImageInfo.
-            timestamp(int): Optional. Set origin_server_ts (For application services only)
+            query_params: Extra parameters to be sent in the HTTP request,
+
+                These parameters are normally only used for application services.
+                Common values for ``query_params`` are:
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         content_pack = {
             "geo_uri": geo_uri,
@@ -308,52 +369,72 @@ class MatrixHttpApi(object):
             content_pack["thumbnail_info"] = thumb_info
 
         return self.send_message_event(room_id, "m.room.message", content_pack,
-                                       timestamp=timestamp)
+                                       query_params=query_params)
 
-    def send_message(self, room_id, text_content, msgtype="m.text", timestamp=None):
+    def send_message(self, room_id, text_content, msgtype="m.text",
+                     query_params={}):
         """Perform PUT /rooms/$room_id/send/m.room.message
 
         Args:
             room_id(str): The room ID to send the event in.
             text_content(str): The m.text body to send.
-            timestamp(int): Optional. Set origin_server_ts (For application services only)
+            query_params: Extra parameters to be sent in the HTTP request,
+
+                These parameters are normally only used for application services.
+                Common values for ``query_params`` are:
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         return self.send_message_event(
             room_id, "m.room.message",
             self.get_text_body(text_content, msgtype),
-            timestamp=timestamp
+            query_params=query_params
         )
 
-    def send_emote(self, room_id, text_content, timestamp=None):
+    def send_emote(self, room_id, text_content, query_params={}):
         """Perform PUT /rooms/$room_id/send/m.room.message with m.emote msgtype
 
         Args:
             room_id(str): The room ID to send the event in.
             text_content(str): The m.emote body to send.
-            timestamp(int): Optional. Set origin_server_ts (For application services only)
+            query_params: Extra parameters to be sent in the HTTP request,
+
+                These parameters are normally only used for application services.
+                Common values for ``query_params`` are:
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         return self.send_message_event(
             room_id, "m.room.message",
             self.get_emote_body(text_content),
-            timestamp=timestamp
+            query_params=query_params
         )
 
-    def send_notice(self, room_id, text_content, timestamp=None):
+    def send_notice(self, room_id, text_content, query_params={}):
         """Perform PUT /rooms/$room_id/send/m.room.message with m.notice msgtype
 
         Args:
             room_id(str): The room ID to send the event in.
             text_content(str): The m.notice body to send.
-            timestamp(int): Optional. Set origin_server_ts (For application services only)
+            query_params: Extra parameters to be sent in the HTTP request,
+
+                These parameters are normally only used for application services.
+                Common values for ``query_params`` are:
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         body = {
             "msgtype": "m.notice",
             "body": text_content
         }
         return self.send_message_event(room_id, "m.room.message", body,
-                                       timestamp=timestamp)
+                                       query_params=query_params)
 
-    def get_room_messages(self, room_id, token, direction, limit=10, to=None):
+    def get_room_messages(self, room_id, token, direction, limit=10, to=None,
+                          query_params={}):
         """Perform GET /rooms/{roomId}/messages.
 
         Args:
@@ -362,57 +443,96 @@ class MatrixHttpApi(object):
             direction (str):  The direction to return events from. One of: ["b", "f"].
             limit (int): The maximum number of events to return.
             to (str): The token to stop returning events at.
+            query_params: Extra parameters to be sent in the HTTP request,
+
+                These parameters are normally only used for application services.
+                Common values for ``query_params`` are:
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
-        query = {
+
+        query_params.update({
             "roomId": room_id,
             "from": token,
             "dir": direction,
             "limit": limit,
-        }
+        })
 
         if to:
-            query["to"] = to
+            query_params["to"] = to
 
         return self._send("GET", "/rooms/{}/messages".format(quote(room_id)),
-                          query_params=query, api_path="/_matrix/client/r0")
+                          api_path="/_matrix/client/r0",
+                          query_params=query_params)
 
-    def get_room_name(self, room_id):
+    def get_room_name(self, room_id, query_params={}):
         """Perform GET /rooms/$room_id/state/m.room.name
         Args:
             room_id(str): The room ID
-        """
-        return self._send("GET", "/rooms/" + room_id + "/state/m.room.name")
+            query_params: Extra parameters to be sent in the HTTP request,
 
-    def set_room_name(self, room_id, name, timestamp=None):
+                These parameters are normally only used for application services.
+                Common values for ``query_params`` are:
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
+        """
+        return self._send("GET", "/rooms/" + room_id + "/state/m.room.name",
+                          query_params=query_params)
+
+    def set_room_name(self, room_id, name, query_params={}):
         """Perform PUT /rooms/$room_id/state/m.room.name
         Args:
             room_id(str): The room ID
             name(str): The new room name
-            timestamp(int): Optional. Set origin_server_ts (For application services only)
+            query_params: Extra parameters to be sent in the HTTP request,
+
+                These parameters are normally only used for application services.
+                Common values for ``query_params`` are:
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         body = {
             "name": name
         }
-        return self.send_state_event(room_id, "m.room.name", body, timestamp=timestamp)
+        return self.send_state_event(room_id, "m.room.name", body,
+                                     query_params=query_params)
 
-    def get_room_topic(self, room_id):
+    def get_room_topic(self, room_id, query_params={}):
         """Perform GET /rooms/$room_id/state/m.room.topic
         Args:
             room_id(str): The room ID
-        """
-        return self._send("GET", "/rooms/" + room_id + "/state/m.room.topic")
+            query_params: Extra parameters to be sent in the HTTP request,
 
-    def set_room_topic(self, room_id, topic, timestamp=None):
+                These parameters are normally only used for application services.
+                Common values for ``query_params`` are:
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
+        """
+        return self._send("GET", "/rooms/" + room_id + "/state/m.room.topic",
+                          query_params=query_params)
+
+    def set_room_topic(self, room_id, topic, query_params={}):
         """Perform PUT /rooms/$room_id/state/m.room.topic
         Args:
             room_id(str): The room ID
             topic(str): The new room topic
-            timestamp(int): Optional. Set origin_server_ts (For application services only)
+            query_params: Extra parameters to be sent in the HTTP request,
+
+                These parameters are normally only used for application services.
+                Common values for ``query_params`` are:
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
         body = {
             "topic": topic
         }
-        return self.send_state_event(room_id, "m.room.topic", body, timestamp=timestamp)
+        return self.send_state_event(room_id, "m.room.topic", body,
+                                     query_params=query_params)
 
     def get_power_levels(self, room_id):
         """Perform GET /rooms/$room_id/state/m.room.power_levels
@@ -461,22 +581,30 @@ class MatrixHttpApi(object):
 
         return self.send_state_event(room_id, "m.room.power_levels", content)
 
-    def leave_room(self, room_id):
+    def leave_room(self, room_id, query_params={}):
         """Perform POST /rooms/$room_id/leave
         Args:
             room_id(str): The room ID
-        """
-        return self._send("POST", "/rooms/" + room_id + "/leave", {})
+            query_params: Extra parameters to be sent in the HTTP request,
 
-    def forget_room(self, room_id):
+                These parameters are normally only used for application services.
+                Common values for ``query_params`` are:
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
+        """
+        return self._send("POST", "/rooms/" + room_id + "/leave", {},
+                          query_params=query_params)
+
+    def forget_room(self, room_id, query_params={}):
         """Perform POST /rooms/$room_id/forget
 
         Args:
             room_id(str): The room ID
         """
-        return self._send("POST", "/rooms/" + room_id + "/forget", content={})
+        return self._send("POST", "/rooms/" + room_id + "/forget", content={}, query_params=query_params)
 
-    def invite_user(self, room_id, user_id):
+    def invite_user(self, room_id, user_id, query_params={}):
         """Perform POST /rooms/$room_id/invite
         Args:
             room_id(str): The room ID
@@ -485,14 +613,14 @@ class MatrixHttpApi(object):
         body = {
             "user_id": user_id
         }
-        return self._send("POST", "/rooms/" + room_id + "/invite", body)
+        return self._send("POST", "/rooms/" + room_id + "/invite", body, query_params=query_params)
 
-    def kick_user(self, room_id, user_id, reason=""):
+    def kick_user(self, room_id, user_id, reason="", query_params={}):
         """Calls set_membership with membership="leave" for the user_id provided
         """
-        self.set_membership(room_id, user_id, "leave", reason)
+        self.set_membership(room_id, user_id, "leave", reason, query_params=query_params)
 
-    def get_membership(self, room_id, user_id):
+    def get_membership(self, room_id, user_id, query_params={}):
         """Perform GET /rooms/$room_id/state/m.room.member/$user_id
         Args:
             room_id(str): The room ID
@@ -500,18 +628,18 @@ class MatrixHttpApi(object):
         """
         return self._send(
             "GET",
-            "/rooms/%s/state/m.room.member/%s" % (room_id, user_id)
+            "/rooms/%s/state/m.room.member/%s" % (room_id, user_id),
+            query_params=query_params
         )
 
     def set_membership(self, room_id, user_id, membership, reason="", profile={},
-                       timestamp=None):
+                       query_params={}):
         """Perform PUT /rooms/$room_id/state/m.room.member/$user_id
         Args:
             room_id(str): The room ID
             user_id(str): The user ID
             membership(str): New membership value
             reason(str): The reason
-            timestamp(int): Optional. Set origin_server_ts (For application services only)
         """
         body = {
             "membership": membership,
@@ -523,7 +651,7 @@ class MatrixHttpApi(object):
             body["avatar_url"] = profile["avatar_url"]
 
         return self.send_state_event(room_id, "m.room.member", body, state_key=user_id,
-                                     timestamp=timestamp)
+                                     query_params=query_params)
 
     def ban_user(self, room_id, user_id, reason=""):
         """Perform POST /rooms/$room_id/ban
@@ -588,12 +716,20 @@ class MatrixHttpApi(object):
             account_data
         )
 
-    def get_room_state(self, room_id):
+    def get_room_state(self, room_id, query_params={}):
         """Perform GET /rooms/$room_id/state
         Args:
             room_id(str): The room ID
+            query_params: Extra parameters to be sent in the HTTP request,
+
+                These parameters are normally only used for application services.
+                Common values for ``query_params`` are:
+
+                | ts: timestamp for event
+                | user_id: user id for transaction.
         """
-        return self._send("GET", "/rooms/" + room_id + "/state")
+        return self._send("GET", "/rooms/" + room_id + "/state",
+                          query_params=query_params)
 
     def get_text_body(self, text, msgtype="m.text"):
         return {
@@ -626,10 +762,10 @@ class MatrixHttpApi(object):
             headers["Content-Type"] = "application/json"
 
         query_params["access_token"] = self.token
-        if self.identity:
-            query_params["user_id"] = self.identity
-
         endpoint = self.base_url + api_path + path
+
+        if self.identity and "user_id" not in query_params:
+            query_params["user_id"] = self.identity
 
         if headers["Content-Type"] == "application/json" and content is not None:
             content = json.dumps(content)
@@ -659,12 +795,13 @@ class MatrixHttpApi(object):
 
         return response.json()
 
-    def media_upload(self, content, content_type):
+    def media_upload(self, content, content_type, query_params={}):
         return self._send(
             "POST", "",
             content=content,
+            query_params=query_params,
             headers={"Content-Type": content_type},
-            api_path="/_matrix/media/r0/upload"
+            api_path="/_matrix/media/r0/upload",
         )
 
     def get_display_name(self, user_id):
@@ -689,7 +826,7 @@ class MatrixHttpApi(object):
         else:
             raise ValueError("MXC URL did not begin with 'mxc://'")
 
-    def get_room_id(self, room_alias):
+    def get_room_id(self, room_alias, query_params={}):
         """Get room id from its alias
 
         Args:
@@ -698,10 +835,11 @@ class MatrixHttpApi(object):
         Returns:
             Wanted room's id.
         """
-        content = self._send("GET", "/directory/room/{}".format(quote(room_alias)))
+        content = self._send("GET", "/directory/room/{}".format(quote(room_alias)),
+                             query_params=query_params)
         return content.get("room_id", None)
 
-    def set_room_alias(self, room_id, room_alias):
+    def set_room_alias(self, room_id, room_alias, query_params={}):
         """Set alias to room id
 
         Args:
@@ -713,9 +851,9 @@ class MatrixHttpApi(object):
         }
 
         return self._send("PUT", "/directory/room/{}".format(quote(room_alias)),
-                          content=data)
+                          content=data, query_params=query_params)
 
-    def remove_room_alias(self, room_alias):
+    def remove_room_alias(self, room_alias, query_params={}):
         """Remove mapping of an alias
 
         Args:
@@ -724,12 +862,14 @@ class MatrixHttpApi(object):
         Raises:
             MatrixRequestError
         """
-        return self._send("DELETE", "/directory/room/{}".format(quote(room_alias)))
+        return self._send("DELETE", "/directory/room/{}".format(quote(room_alias)),
+                          query_params=query_params)
 
-    def get_room_members(self, room_id):
+    def get_room_members(self, room_id, query_params={}):
         """Get the list of members for this room.
 
         Args:
             room_id (str): The room to get the member events for.
         """
-        return self._send("GET", "/rooms/{}/members".format(quote(room_id)))
+        return self._send("GET", "/rooms/{}/members".format(quote(room_id)),
+                          query_params=query_params)
