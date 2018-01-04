@@ -596,15 +596,15 @@ class MatrixHttpApi(object):
         return self._send("POST", "/rooms/" + room_id + "/leave", {},
                           query_params=query_params)
 
-    def forget_room(self, room_id):
+    def forget_room(self, room_id, query_params={}):
         """Perform POST /rooms/$room_id/forget
 
         Args:
             room_id(str): The room ID
         """
-        return self._send("POST", "/rooms/" + room_id + "/forget", content={})
+        return self._send("POST", "/rooms/" + room_id + "/forget", content={}, query_params=query_params)
 
-    def invite_user(self, room_id, user_id):
+    def invite_user(self, room_id, user_id, query_params={}):
         """Perform POST /rooms/$room_id/invite
         Args:
             room_id(str): The room ID
@@ -613,14 +613,14 @@ class MatrixHttpApi(object):
         body = {
             "user_id": user_id
         }
-        return self._send("POST", "/rooms/" + room_id + "/invite", body)
+        return self._send("POST", "/rooms/" + room_id + "/invite", body, query_params=query_params)
 
-    def kick_user(self, room_id, user_id, reason=""):
+    def kick_user(self, room_id, user_id, reason="", query_params={}):
         """Calls set_membership with membership="leave" for the user_id provided
         """
-        self.set_membership(room_id, user_id, "leave", reason)
+        self.set_membership(room_id, user_id, "leave", reason, query_params=query_params)
 
-    def get_membership(self, room_id, user_id):
+    def get_membership(self, room_id, user_id, query_params={}):
         """Perform GET /rooms/$room_id/state/m.room.member/$user_id
         Args:
             room_id(str): The room ID
@@ -628,7 +628,8 @@ class MatrixHttpApi(object):
         """
         return self._send(
             "GET",
-            "/rooms/%s/state/m.room.member/%s" % (room_id, user_id)
+            "/rooms/%s/state/m.room.member/%s" % (room_id, user_id),
+            query_params=query_params
         )
 
     def set_membership(self, room_id, user_id, membership, reason="", profile={},
