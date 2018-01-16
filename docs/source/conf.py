@@ -30,7 +30,7 @@ sys.path.insert(0, srcdir)
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-# needs_sphinx = '1.0'
+needs_sphinx = '1.3'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -38,7 +38,7 @@ sys.path.insert(0, srcdir)
 extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.autodoc',
-    'sphinxcontrib.napoleon'
+    'sphinx.ext.napoleon'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -75,9 +75,10 @@ todo_include_todos = False
 html_theme = "sphinx_rtd_theme"
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 html_title = 'Matrix Python SDK v' + version
-html_static_path = ['_static']
+# html_static_path = ['_static']
 
 htmlhelp_basename = 'MatrixPythonSDKdoc'
+highlight_language = 'python'
 
 latex_documents = [
     (master_doc, 'MatrixPythonSDK.tex', 'Matrix Python SDK Documentation',
