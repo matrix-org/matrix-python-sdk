@@ -209,8 +209,7 @@ class MatrixHttpApi(object):
             event_type(str): The state event type to send.
             content(dict): The JSON content to send.
             state_key(str): Optional. The state key for the event.
-            timestamp (int): Optional. Set origin_server_ts (For application
-                services only)
+            timestamp (int): Set origin_server_ts (For application services only)
         """
         path = "/rooms/%s/state/%s" % (
             quote(room_id), quote(event_type),
@@ -231,8 +230,7 @@ class MatrixHttpApi(object):
             event_type (str): The event type to send.
             content (dict): The JSON content to send.
             txn_id (int): Optional. The transaction ID to use.
-            timestamp (int): Optional. Set origin_server_ts (For application
-                services only)
+            timestamp (int): Set origin_server_ts (For application services only)
         """
         if not txn_id:
             txn_id = str(self.txn_id) + str(int(time() * 1000))
@@ -300,8 +298,7 @@ class MatrixHttpApi(object):
             name (str): Description for the location.
             thumb_url (str): URL to the thumbnail of the location.
             thumb_info (dict): Metadata about the thumbnail, type ImageInfo.
-            timestamp (int): Optional. Set origin_server_ts (For application
-                services only)
+            timestamp (int): Set origin_server_ts (For application services only)
         """
         content_pack = {
             "geo_uri": geo_uri,
@@ -322,8 +319,7 @@ class MatrixHttpApi(object):
         Args:
             room_id (str): The room ID to send the event in.
             text_content (str): The m.text body to send.
-            timestamp (int): Optional. Set origin_server_ts (For application
-                services only)
+            timestamp (int): Set origin_server_ts (For application services only)
         """
         return self.send_message_event(
             room_id, "m.room.message",
@@ -337,8 +333,7 @@ class MatrixHttpApi(object):
         Args:
             room_id (str): The room ID to send the event in.
             text_content (str): The m.emote body to send.
-            timestamp (int): Optional. Set origin_server_ts (For application
-                services only)
+            timestamp (int): Set origin_server_ts (For application services only)
         """
         return self.send_message_event(
             room_id, "m.room.message",
@@ -352,8 +347,7 @@ class MatrixHttpApi(object):
         Args:
             room_id (str): The room ID to send the event in.
             text_content (str): The m.notice body to send.
-            timestamp (int): Optional. Set origin_server_ts (For application
-                services only)
+            timestamp (int): Set origin_server_ts (For application services only)
         """
         body = {
             "msgtype": "m.notice",
@@ -397,8 +391,7 @@ class MatrixHttpApi(object):
         Args:
             room_id (str): The room ID
             name (str): The new room name
-            timestamp (int): Optional. Set origin_server_ts (For application
-                services only)
+            timestamp (int): Set origin_server_ts (For application services only)
         """
         body = {
             "name": name
@@ -417,8 +410,7 @@ class MatrixHttpApi(object):
         Args:
             room_id (str): The room ID
             topic (str): The new room topic
-            timestamp (int): Optional. Set origin_server_ts (For application
-                services only)
+            timestamp (int): Set origin_server_ts (For application services only)
         """
         body = {
             "topic": topic
@@ -441,10 +433,11 @@ class MatrixHttpApi(object):
         in the content arg are reset to default values.
 
         Args:
-            room_id(str): The room ID
-            content(dict): The JSON content to send. See example content below.
+            room_id (str): The room ID
+            content (dict): The JSON content to send. See example content below.
 
-        Usage:
+        Example::
+
             api = MatrixHttpApi("http://example.com", token="foobar")
             api.set_power_levels("!exampleroom:example.com",
                 {
@@ -520,13 +513,13 @@ class MatrixHttpApi(object):
     def set_membership(self, room_id, user_id, membership, reason="", profile={},
                        timestamp=None):
         """Perform PUT /rooms/$room_id/state/m.room.member/$user_id
+
         Args:
             room_id (str): The room ID
             user_id (str): The user ID
             membership (str): New membership value
             reason (str): The reason
-            timestamp (int): Optional. Set origin_server_ts (For application
-                services only)
+            timestamp (int): Set origin_server_ts (For application services only)
         """
         body = {
             "membership": membership,
