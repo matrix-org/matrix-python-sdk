@@ -14,9 +14,13 @@
 # limitations under the License.
 
 import json
+import logging
 import requests
 from time import time, sleep
 from .errors import MatrixError, MatrixRequestError, MatrixHttpLibError
+
+logger = logging.getLogger(__name__)
+logging.captureWarnings(True)
 
 try:
     from urllib import quote
@@ -62,6 +66,7 @@ class MatrixHttpApi(object):
         Args:
             limit (int): The limit= param to provide.
         """
+        logger.warning('initial_sync is deprecated. Use sync instead', DeprecationWarning)
         return self._send("GET", "/initialSync", query_params={"limit": limit})
 
     def sync(self, since=None, timeout_ms=30000, filter=None,
@@ -192,6 +197,7 @@ class MatrixHttpApi(object):
             from_token (str): The 'from' query parameter.
             timeout (int): Optional. The 'timeout' query parameter.
         """
+        logger.warning('event_stream is deprecated. Use sync instead', DeprecationWarning)
         path = "/events"
         return self._send(
             "GET", path, query_params={
