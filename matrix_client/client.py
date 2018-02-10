@@ -21,6 +21,7 @@ from time import sleep
 from uuid import uuid4
 import logging
 import sys
+import warnings
 
 logger = logging.getLogger(__name__)
 
@@ -211,8 +212,6 @@ class MatrixClient(object):
         Args:
             username (str): Account username
             password (str): Account password
-            limit (int): Deprecated. How many messages to return when syncing.
-                This will be replaced by a filter API in a later release.
 
         Returns:
             str: Access token
@@ -409,6 +408,7 @@ class MatrixClient(object):
             timeout_ms (int): How long to poll the Home Server for before
                retrying.
         """
+        warnings.warn("listen_for_events is deprecated. Use _sync instead.", DeprecationWarning)
         self._sync(timeout_ms)
 
     def listen_forever(self, timeout_ms=30000, exception_handler=None,
