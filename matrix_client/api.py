@@ -15,6 +15,7 @@
 
 import json
 import requests
+import warnings
 from time import time, sleep
 from .errors import MatrixError, MatrixRequestError, MatrixHttpLibError
 
@@ -62,6 +63,7 @@ class MatrixHttpApi(object):
         Args:
             limit (int): The limit= param to provide.
         """
+        warnings.warn("initial_sync is deprecated. Use sync instead.", DeprecationWarning)
         return self._send("GET", "/initialSync", query_params={"limit": limit})
 
     def sync(self, since=None, timeout_ms=30000, filter=None,
@@ -192,6 +194,7 @@ class MatrixHttpApi(object):
             from_token (str): The 'from' query parameter.
             timeout (int): Optional. The 'timeout' query parameter.
         """
+        warnings.warn("event_stream is deprecated. Use event_stream instead.", DeprecationWarning)
         path = "/events"
         return self._send(
             "GET", path, query_params={
