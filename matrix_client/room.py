@@ -34,6 +34,7 @@ class Room(object):
         self.aliases = []
         self.topic = None
         self.invite_only = None
+        self.guest_access = None
         self._prev_batch = None
         self._members = []
 
@@ -639,6 +640,23 @@ class Room(object):
         try:
             self.client.api.set_join_rule(self.room_id, join_rule)
             self.invite_only = invite_only
+            return True
+        except MatrixRequestError:
+            return False
+
+    def set_guest_access(self, allow_guests):
+        """Set whether guests can join the room.
+
+        Args:
+            allow_guests(bool): If True, guests can join.
+
+        Returns:
+            True if successful, False if not
+        """
+        guest_access = "can_join" if allow_guests else "forbidden"
+        try:
+            self.client.api.set_guest_access(self.room_id, guest_access)
+            self.guest_access = allow_guests
             return True
         except MatrixRequestError:
             return False

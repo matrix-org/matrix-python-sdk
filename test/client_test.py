@@ -123,6 +123,13 @@ def test_state_event():
     client._process_state_event(ev, room)
     assert room.invite_only
 
+    # test guest_access
+    room.guest_access = False
+    ev["type"] = "m.room.guest_access"
+    ev["content"] = {"guest_access": "can_join"}
+    client._process_state_event(ev, room)
+    assert room.guest_access
+
 
 def test_get_user():
     client = MatrixClient("http://example.com")
@@ -429,3 +436,19 @@ def test_room_join_rules():
 
     assert room.set_invite_only(True)
     assert room.invite_only
+
+
+@responses.activate
+def test_room_guest_access():
+    client = MatrixClient(HOSTNAME)
+    room_id = "!UcYsUzyxTGDxLBEvLz:matrix.org"
+    room = client._mkroom(room_id)
+    assert room.guest_access is None
+    guest_access_state_path = HOSTNAME + MATRIX_V2_API_PATH + \
+        "/rooms/" + quote(room_id) + "/state/m.room.guest_access"
+
+    responses.add(responses.PUT, guest_access_state_path,
+                  json=response_examples.example_event_response)
+
+    assert room.set_guest_access(True)
+    assert room.guest_access

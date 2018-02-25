@@ -509,6 +509,8 @@ class MatrixClient(object):
                 current_room.aliases = econtent.get("aliases")
             elif etype == "m.room.join_rules":
                 current_room.invite_only = econtent["join_rule"] == "invite"
+            elif etype == "m.room.guest_access":
+                current_room.guest_access = econtent["guest_access"] == "can_join"
             elif etype == "m.room.member" and self._cache_level == CACHE.ALL:
                 # tracking room members can be large e.g. #matrix:matrix.org
                 if econtent["membership"] == "join":
