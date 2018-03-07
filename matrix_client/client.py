@@ -16,6 +16,7 @@ from .api import MatrixHttpApi
 from .errors import MatrixRequestError, MatrixUnexpectedResponse
 from .room import Room
 from .user import User
+from enum import Enum
 from threading import Thread
 from time import sleep
 from uuid import uuid4
@@ -25,54 +26,84 @@ import sys
 logger = logging.getLogger(__name__)
 
 
+# Cache constants used when instantiating Matrix Client to specify level of caching
+class CACHE(Enum):
+    NONE = -1
+    SOME = 0
+    ALL = 1
+
+
 class MatrixClient(object):
     """
     The client API for Matrix. For the raw HTTP calls, see MatrixHttpApi.
 
-    Usage (new user):
-        client = MatrixClient("https://matrix.org")
-        token = client.register_with_password(username="foobar",
-            password="monkey")
-        room = client.create_room("myroom")
-        room.send_image(file_like_object)
+    Args:
+        base_url (str): The url of the HS preceding /_matrix.
+            e.g. (ex: https://localhost:8008 )
+        token (Optional[str]): If you have an access token
+            supply it here.
+        user_id (Optional[str]): You must supply the user_id
+            (as obtained when initially logging in to obtain
+            the token) if supplying a token; otherwise, ignored.
+        valid_cert_check (bool): Check the homeservers
+            certificate on connections?
 
-    Usage (logged in):
-        client = MatrixClient("https://matrix.org", token="foobar",
-            user_id="@foobar:matrix.org")
-        rooms = client.get_rooms()  # NB: From initial sync
-        client.add_listener(func)  # NB: event stream callback
-        rooms[0].add_listener(func)  # NB: callbacks just for this room.
-        room = client.join_room("#matrix:matrix.org")
-        response = room.send_text("Hello!")
-        response = room.kick("@bob:matrix.org")
+    Returns:
+        `MatrixClient`
 
-    Incoming event callbacks (scopes):
+    Raises:
+        `MatrixRequestError`, `ValueError`
 
-        def user_callback(user, incoming_event):
-            pass
+    Examples:
 
-        def room_callback(room, incoming_event):
-            pass
+        Create a new user and send a message::
 
-        def global_callback(incoming_event):
-            pass
+            client = MatrixClient("https://matrix.org")
+            token = client.register_with_password(username="foobar",
+                password="monkey")
+            room = client.create_room("myroom")
+            room.send_image(file_like_object)
 
+        Send a message with an already logged in user::
+
+            client = MatrixClient("https://matrix.org", token="foobar",
+                user_id="@foobar:matrix.org")
+            rooms = client.get_rooms()  # NB: From initial sync
+            client.add_listener(func)  # NB: event stream callback
+            rooms[0].add_listener(func)  # NB: callbacks just for this room.
+            room = client.join_room("#matrix:matrix.org")
+            response = room.send_text("Hello!")
+            response = room.kick("@bob:matrix.org")
+
+        Incoming event callbacks (scopes)::
+
+            def user_callback(user, incoming_event):
+                pass
+
+            def room_callback(room, incoming_event):
+                pass
+
+            def global_callback(incoming_event):
+                pass
     """
 
     def __init__(self, base_url, token=None, user_id=None,
-                 valid_cert_check=True, sync_filter_limit=20):
+                 valid_cert_check=True, sync_filter_limit=20,
+                 cache_level=CACHE.ALL):
         """ Create a new Matrix Client object.
 
         Args:
             base_url (str): The url of the HS preceding /_matrix.
                 e.g. (ex: https://localhost:8008 )
-            token (Optional[str]): If you have an access token
+            token (str): Optional. If you have an access token
                 supply it here.
-            user_id (Optional[str]): You must supply the user_id
+            user_id (str): Optional. You must supply the user_id
                 (as obtained when initially logging in to obtain
                 the token) if supplying a token; otherwise, ignored.
             valid_cert_check (bool): Check the homeservers
                 certificate on connections?
+            cache_level (CACHE): One of CACHE.NONE, CACHE.SOME, or
+                CACHE.ALL (defined in module namespace).
 
         Returns:
             MatrixClient
@@ -90,6 +121,13 @@ class MatrixClient(object):
         self.invite_listeners = []
         self.left_listeners = []
         self.ephemeral_listeners = []
+        if isinstance(cache_level, CACHE):
+            self._cache_level = cache_level
+        else:
+            self._cache_level = CACHE.ALL
+            raise ValueError(
+                "cache_level must be one of CACHE.NONE, CACHE.SOME, CACHE.ALL"
+            )
 
         self.sync_token = None
         self.sync_filter = '{ "room": { "timeline" : { "limit" : %i } } }' \
@@ -458,23 +496,26 @@ class MatrixClient(object):
             return  # Ignore event
         etype = state_event["type"]
 
-        if etype == "m.room.name":
-            current_room.name = state_event["content"].get("name", None)
-        elif etype == "m.room.canonical_alias":
-            current_room.canonical_alias = state_event["content"].get("alias")
-        elif etype == "m.room.topic":
-            current_room.topic = state_event["content"].get("topic", None)
-        elif etype == "m.room.aliases":
-            current_room.aliases = state_event["content"].get("aliases", None)
-        elif etype == "m.room.member":
-            if state_event["content"]["membership"] == "join":
-                current_room._mkmembers(
-                    User(self.api,
-                         state_event["state_key"],
-                         state_event["content"].get("displayname", None))
-                )
-            elif state_event["content"]["membership"] in ("leave", "kick", "invite"):
-                current_room._rmmembers(state_event["state_key"])
+        # Don't keep track of room state if caching turned off
+        if self._cache_level.value >= 0:
+            if etype == "m.room.name":
+                current_room.name = state_event["content"].get("name", None)
+            elif etype == "m.room.canonical_alias":
+                current_room.canonical_alias = state_event["content"].get("alias")
+            elif etype == "m.room.topic":
+                current_room.topic = state_event["content"].get("topic", None)
+            elif etype == "m.room.aliases":
+                current_room.aliases = state_event["content"].get("aliases", None)
+            elif etype == "m.room.member" and self._cache_level == CACHE.ALL:
+                # tracking room members can be large e.g. #matrix:matrix.org
+                if state_event["content"]["membership"] == "join":
+                    current_room._mkmembers(
+                        User(self.api,
+                             state_event["state_key"],
+                             state_event["content"].get("displayname", None))
+                    )
+                elif state_event["content"]["membership"] in ("leave", "kick", "invite"):
+                    current_room._rmmembers(state_event["state_key"])
 
         for listener in current_room.state_listeners:
             if (
@@ -504,6 +545,7 @@ class MatrixClient(object):
 
         for room_id, sync_room in response['rooms']['join'].items():
             if room_id not in self.rooms:
+                # TODO: don't keep track of joined rooms for self._cache_level==CACHE.NONE
                 self._mkroom(room_id)
             room = self.rooms[room_id]
             room.prev_batch = sync_room["timeline"]["prev_batch"]
