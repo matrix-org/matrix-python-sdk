@@ -1,8 +1,4 @@
-import re
-from uuid import uuid4
-
 from .room import Room
-from .user import User
 from .errors import MatrixRequestError
 
 

@@ -765,7 +765,7 @@ class MatrixHttpApi(object):
             user_id (str): The user ID of the invitee
         """
         return self._send("PUT", "/groups/{}/admin/users/invite/{}".format(
-                                    quote(group_id), quote(user_id)))
+            quote(group_id), quote(user_id)))
 
     def kick_user_from_group(self, group_id, user_id):
         """Kick a user from a group.
@@ -775,7 +775,7 @@ class MatrixHttpApi(object):
             user_id (str): The user ID of the user to be kicked
         """
         return self._send("PUT", "/groups/{}/admin/users/remove/{}".format(
-                                    quote(group_id), quote(user_id)))
+            quote(group_id), quote(user_id)))
 
     def add_room_to_group(self, group_id, room_id):
         """Add a room to a group.
@@ -785,7 +785,7 @@ class MatrixHttpApi(object):
             room_id (str): The room ID of the room to be added
         """
         return self._send("PUT", "/groups/{}/admin/rooms/{}".format(
-                                    quote(group_id), quote(room_id)))
+            quote(group_id), quote(room_id)))
 
     def remove_room_from_group(self, group_id, room_id):
         """Removes a room from a group.
@@ -817,7 +817,8 @@ class MatrixHttpApi(object):
                 | group.
             group_id (str): The group ID
         """
-        self._send("POST", "/groups/{}/profile".format(quote(group_id)), body)
+        self._send("POST", "/groups/{}/profile".format(quote(group_id)),
+                   profile_data)
 
     def get_group_profile(self, group_id):
         """Retrieve the profile of a group.
@@ -842,7 +843,7 @@ class MatrixHttpApi(object):
             group_id (str): The group ID
         """
         return self._send("GET", "/groups/{}/invited_users".format(
-                                quote(group_id)))
+                          quote(group_id)))
 
     def get_rooms_in_group(self, group_id):
         """Retrieve rooms in a group.
@@ -859,7 +860,7 @@ class MatrixHttpApi(object):
             group_id (str): The group ID
         """
         return self._send("PUT", "/groups/{}/self/accept_invite".format(
-                                quote(group_id)))
+            quote(group_id)))
 
     def leave_group(self, group_id):
         """Leave a group.
@@ -868,7 +869,7 @@ class MatrixHttpApi(object):
             group_id (str): The group ID
         """
         return self._send("PUT", "/groups/{}/self/leave".format(
-                                quote(group_id)))
+            quote(group_id)))
 
     def publicise_group(self, group_id, make_public):
         """Leave a group.
@@ -878,7 +879,7 @@ class MatrixHttpApi(object):
             make_public (bool): Set to True to show this group in your profile
         """
         return self._send("PUT", "/groups/{}/self/update_publicity".format(
-                                quote(group_id)), {'publicise': make_public})
+            quote(group_id)), {'publicise': make_public})
 
     def get_joined_groups(self):
         """Get the groups that the user has joined.
