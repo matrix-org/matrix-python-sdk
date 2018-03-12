@@ -744,3 +744,143 @@ class MatrixHttpApi(object):
             room_id (str): The room to get the member events for.
         """
         return self._send("GET", "/rooms/{}/members".format(quote(room_id)))
+
+    def create_group(self, localpart):
+        """Create a new group.
+
+        Args:
+            localpart (str): The local part (the thing before the ':') of the
+            new group to be created.
+        """
+        body = {
+            "localpart": localpart
+        }
+        return self._send("POST", "/create_group", body)
+
+    def invite_user_to_group(self, group_id, user_id):
+        """Invite a user to a group.
+
+        Args:
+            group_id (str): The group ID
+            user_id (str): The user ID of the invitee
+        """
+        return self._send("PUT", "/groups/{}/admin/users/invite/{}".format(
+                                    quote(group_id), quote(user_id)))
+
+    def kick_user_from_group(self, group_id, user_id):
+        """Kick a user from a group.
+
+        Args:
+            group_id (str): The group ID
+            user_id (str): The user ID of the user to be kicked
+        """
+        return self._send("PUT", "/groups/{}/admin/users/remove/{}".format(
+                                    quote(group_id), quote(user_id)))
+
+    def add_room_to_group(self, group_id, room_id):
+        """Add a room to a group.
+
+        Args:
+            group_id (str): The group ID
+            room_id (str): The room ID of the room to be added
+        """
+        return self._send("PUT", "/groups/{}/admin/rooms/{}".format(
+                                    quote(group_id), quote(room_id)))
+
+    def remove_room_from_group(self, group_id, room_id):
+        """Removes a room from a group.
+
+        Args:
+            group_id (str): The group ID
+            room_id (str): The room ID of the room to be removed
+        """
+        return self._send("DELETE", "/groups/{}/admin/rooms/{}".format(
+                                    quote(group_id), quote(room_id)))
+
+    def update_group_profile(self, group_id, profile_data):
+        """Update the profile of a group.
+
+        Args:
+            profile_data (dict): The request payload.
+
+                | Includes all the data to be updated in the group profile.
+
+                | name (string): The new name of the group
+
+                | avatar_url (URL): A URL pointing to the new URL for the
+                | group's avatar.
+
+                | short_description (string): The new short description of the
+                | group.
+
+                | long_description (string): The new long description of the
+                | group.
+            group_id (str): The group ID
+        """
+        self._send("POST", "/groups/{}/profile".format(quote(group_id)), body)
+
+    def get_group_profile(self, group_id):
+        """Retrieve the profile of a group.
+
+        Args:
+            group_id (str): The group ID
+        """
+        return self._send("GET", "/groups/{}/profile".format(quote(group_id)))
+
+    def get_users_in_group(self, group_id):
+        """Retrieve the users in a group.
+
+        Args:
+            group_id (str): The group ID
+        """
+        return self._send("GET", "/groups/{}/users".format(quote(group_id)))
+
+    def get_invited_users_in_group(self, group_id):
+        """Retrieve invitations in a group.
+
+        Args:
+            group_id (str): The group ID
+        """
+        return self._send("GET", "/groups/{}/invited_users".format(
+                                quote(group_id)))
+
+    def get_rooms_in_group(self, group_id):
+        """Retrieve rooms in a group.
+
+        Args:
+            group_id (str): The group ID
+        """
+        return self._send("GET", "/groups/{}/rooms".format(quote(group_id)))
+
+    def accept_group_invitation(self, group_id):
+        """Accept an invitation to a group.
+
+        Args:
+            group_id (str): The group ID
+        """
+        return self._send("PUT", "/groups/{}/self/accept_invite".format(
+                                quote(group_id)))
+
+    def leave_group(self, group_id):
+        """Leave a group.
+
+        Args:
+            group_id (str): The group ID
+        """
+        return self._send("PUT", "/groups/{}/self/leave".format(
+                                quote(group_id)))
+
+    def publicise_group(self, group_id, make_public):
+        """Leave a group.
+
+        Args:
+            group_id (str): The group ID
+            make_public (bool): Set to True to show this group in your profile
+        """
+        return self._send("PUT", "/groups/{}/self/update_publicity".format(
+                                quote(group_id)), {'publicise': make_public})
+
+    def get_joined_groups(self):
+        """Get the groups that the user has joined.
+        """
+        return self._send("GET", "/joined_groups")
