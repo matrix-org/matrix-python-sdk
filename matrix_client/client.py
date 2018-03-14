@@ -495,26 +495,27 @@ class MatrixClient(object):
         if "type" not in state_event:
             return  # Ignore event
         etype = state_event["type"]
+        econtent = state_event["content"]
 
         # Don't keep track of room state if caching turned off
         if self._cache_level.value >= 0:
             if etype == "m.room.name":
-                current_room.name = state_event["content"].get("name", None)
+                current_room.name = econtent.get("name")
             elif etype == "m.room.canonical_alias":
-                current_room.canonical_alias = state_event["content"].get("alias")
+                current_room.canonical_alias = econtent.get("alias")
             elif etype == "m.room.topic":
-                current_room.topic = state_event["content"].get("topic", None)
+                current_room.topic = econtent.get("topic")
             elif etype == "m.room.aliases":
-                current_room.aliases = state_event["content"].get("aliases", None)
+                current_room.aliases = econtent.get("aliases")
             elif etype == "m.room.member" and self._cache_level == CACHE.ALL:
                 # tracking room members can be large e.g. #matrix:matrix.org
-                if state_event["content"]["membership"] == "join":
+                if econtent["membership"] == "join":
                     current_room._mkmembers(
                         User(self.api,
                              state_event["state_key"],
-                             state_event["content"].get("displayname", None))
+                             econtent.get("displayname"))
                     )
-                elif state_event["content"]["membership"] in ("leave", "kick", "invite"):
+                elif econtent["membership"] in ("leave", "kick", "invite"):
                     current_room._rmmembers(state_event["state_key"])
 
         for listener in current_room.state_listeners:
