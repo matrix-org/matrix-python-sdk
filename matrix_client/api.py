@@ -817,8 +817,8 @@ class MatrixHttpApi(object):
                 | group.
             group_id (str): The group ID
         """
-        self._send("POST", "/groups/{}/profile".format(quote(group_id)),
-                   profile_data)
+        return self._send("POST", "/groups/{}/profile".format(quote(group_id)),
+                          profile_data)
 
     def get_group_profile(self, group_id):
         """Retrieve the profile of a group.
@@ -872,7 +872,7 @@ class MatrixHttpApi(object):
             quote(group_id)))
 
     def publicise_group(self, group_id, make_public):
-        """Leave a group.
+        """Publicise or depublicise a group in your profile.
 
         Args:
             group_id (str): The group ID
