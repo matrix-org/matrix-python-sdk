@@ -35,15 +35,14 @@ class Enum(object):
     def __contains__(self, item):
         return item in self._values
 
+
 class Cache(Enum):
     def __init__(self):
-        Enum.__init__(self,
-            NONE = -1,
-            SOME = 0,
-            ALL = 1
-        )
+        Enum.__init__(self, NONE = -1, SOME = 0, ALL = 1)
+
 
 CACHE = Cache()
+
 
 class MatrixClient(object):
     """
