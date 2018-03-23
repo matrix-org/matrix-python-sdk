@@ -435,8 +435,10 @@ class MatrixClient(object):
                     sleep(bad_sync_timeout)
                     bad_sync_timeout = min(bad_sync_timeout * 2,
                                            self.bad_sync_timeout_limit)
+                elif exception_handler is not None:
+                    exception_handler(e)
                 else:
-                    raise e
+                    raise
             except Exception as e:
                 logger.exception("Exception thrown during sync")
                 if exception_handler is not None:
