@@ -411,7 +411,8 @@ class MatrixClient(object):
         """
         self._sync(timeout_ms)
 
-    def listen_forever(self, timeout_ms=30000, exception_handler=None):
+    def listen_forever(self, timeout_ms=30000, exception_handler=None,
+                       bad_sync_timeout=5):
         """ Keep listening for events forever.
 
         Args:
@@ -420,21 +421,23 @@ class MatrixClient(object):
             exception_handler (func(exception)): Optional exception handler
                function which can be used to handle exceptions in the caller
                thread.
+            aad_sync_timeout (int): Base time to wait after an error before
+                retrying. Will be increased according to exponential backoff.
         """
-        bad_sync_timeout = 5000
+        _bad_sync_timeout = bad_sync_timeout
         self.should_listen = True
         while (self.should_listen):
             try:
                 self._sync(timeout_ms)
-                bad_sync_timeout = 5
+                _bad_sync_timeout = bad_sync_timeout
             except MatrixRequestError as e:
                 logger.warning("A MatrixRequestError occured during sync.")
                 if e.code >= 500:
                     logger.warning("Problem occured serverside. Waiting %i seconds",
                                    bad_sync_timeout)
                     sleep(bad_sync_timeout)
-                    bad_sync_timeout = min(bad_sync_timeout * 2,
-                                           self.bad_sync_timeout_limit)
+                    _bad_sync_timeout = min(_bad_sync_timeout * 2,
+                                            self.bad_sync_timeout_limit)
                 elif exception_handler is not None:
                     exception_handler(e)
                 else:
