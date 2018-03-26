@@ -421,7 +421,7 @@ class MatrixClient(object):
                function which can be used to handle exceptions in the caller
                thread.
         """
-        bad_sync_timeout = 5000
+        bad_sync_timeout = 5
         self.should_listen = True
         while (self.should_listen):
             try:
