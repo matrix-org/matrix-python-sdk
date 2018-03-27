@@ -61,8 +61,8 @@ copyright = '2016, matrix.org'
 author = 'matrix.org'
 
 
-version = '0.0.6+dev'
-release = '0.0.6'
+version = '0.1.0'
+release = '0.1.0'
 
 language = None
 
