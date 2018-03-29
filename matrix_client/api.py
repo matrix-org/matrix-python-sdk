@@ -194,7 +194,8 @@ class MatrixHttpApi(object):
             from_token (str): The 'from' query parameter.
             timeout (int): Optional. The 'timeout' query parameter.
         """
-        warnings.warn("event_stream is deprecated. Use event_stream instead.", DeprecationWarning)
+        warnings.warn("event_stream is deprecated. Use event_stream instead.",
+                      DeprecationWarning)
         path = "/events"
         return self._send(
             "GET", path, query_params={

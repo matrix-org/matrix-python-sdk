@@ -408,7 +408,8 @@ class MatrixClient(object):
             timeout_ms (int): How long to poll the Home Server for before
                retrying.
         """
-        warnings.warn("listen_for_events is deprecated. Use _sync instead.", DeprecationWarning)
+        warnings.warn("listen_for_events is deprecated. Use _sync instead.",
+                      DeprecationWarning)
         self._sync(timeout_ms)
 
     def listen_forever(self, timeout_ms=30000, exception_handler=None,
