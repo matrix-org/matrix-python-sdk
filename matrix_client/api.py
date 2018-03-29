@@ -14,7 +14,7 @@
 # limitations under the License.
 
 import json
-import requests
+from requests import Session, RequestException
 from time import time, sleep
 from .errors import MatrixError, MatrixRequestError, MatrixHttpLibError
 
@@ -50,6 +50,7 @@ class MatrixHttpApi(object):
         self.identity = identity
         self.txn_id = 0
         self.validate_cert = True
+        self.session = Session()
 
     def initial_sync(self, limit=1):
         """
@@ -645,17 +646,16 @@ class MatrixHttpApi(object):
         if headers["Content-Type"] == "application/json" and content is not None:
             content = json.dumps(content)
 
-        response = None
         while True:
             try:
-                response = requests.request(
+                response = self.session.request(
                     method, endpoint,
                     params=query_params,
                     data=content,
                     headers=headers,
                     verify=self.validate_cert
                 )
-            except requests.exceptions.RequestException as e:
+            except RequestException as e:
                 raise MatrixHttpLibError(e, method, endpoint)
 
             if response.status_code == 429:
