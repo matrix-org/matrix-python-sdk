@@ -23,7 +23,7 @@ import logging
 import sys
 
 logger = logging.getLogger(__name__)
-
+logging.captureWarnings(True)
 
 # Cache constants used when instantiating Matrix Client to specify level of caching
 class Enum(object):
@@ -409,6 +409,7 @@ class MatrixClient(object):
             timeout_ms (int): How long to poll the Home Server for before
                retrying.
         """
+        logger.warning("listen_for_events is deprecated", DeprecationWarning)
         self._sync(timeout_ms)
 
     def listen_forever(self, timeout_ms=30000, exception_handler=None,
