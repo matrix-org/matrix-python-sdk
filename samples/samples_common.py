@@ -9,19 +9,19 @@ except NameError:
 
 
 def get_user_details(argv):
-    if len(argv) > 1:
+    try:
         host = argv[1]
-    else:
+    except IndexError:
         host = get_input("Host (ex: http://localhost:8008 ): ")
 
-    if len(argv) > 2:
+    try:
         username = argv[2]
-    else:
+    except IndexError:
         username = get_input("Username: ")
 
-    if len(argv) > 3:
+    try:
         password = argv[3]
-    else:
+    except IndexError:
         password = getpass()  # Hide user input
 
     return host, username, password
