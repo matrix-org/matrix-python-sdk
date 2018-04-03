@@ -45,14 +45,14 @@ class MatrixHttpApi(object):
             response = matrix.send_message("!roomid:matrix.org", "Hello!")
     """
 
-    def __init__(self, base_url, token=None, identity=None):
+    def __init__(self, base_url, token=None, identity=None, default_429_wait_ms=5000):
         self.base_url = base_url
         self.token = token
         self.identity = identity
         self.txn_id = 0
         self.validate_cert = True
         self.session = Session()
-        self.default_429_wait_ms = 5000
+        self.default_429_wait_ms = default_429_wait_ms
 
     def initial_sync(self, limit=1):
         """
