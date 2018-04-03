@@ -52,6 +52,7 @@ class MatrixHttpApi(object):
         self.txn_id = 0
         self.validate_cert = True
         self.session = Session()
+        self.default_429_wait_ms = 5000
 
     def initial_sync(self, limit=1):
         """
@@ -663,7 +664,16 @@ class MatrixHttpApi(object):
                 raise MatrixHttpLibError(e, method, endpoint)
 
             if response.status_code == 429:
-                sleep(response.json()['retry_after_ms'] / 1000)
+                try:
+                    waittime=response.json()['retry_after_ms'] / 1000
+                except KeyError:
+                    try:
+                        errordata=json.loads(response.json()['error'])
+                        waittime=errordata['retry_after_ms'] / 1000
+                    except KeyError:
+                        waittime=self.default_429_wait_ms / 1000
+                finally:
+                    sleep(waittime)
             else:
                 break
 
