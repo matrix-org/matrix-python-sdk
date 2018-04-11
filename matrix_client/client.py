@@ -21,7 +21,6 @@ from time import sleep
 from uuid import uuid4
 import logging
 import sys
-import warnings
 
 logger = logging.getLogger(__name__)
 
@@ -401,15 +400,18 @@ class MatrixClient(object):
         self.left_listeners.append(callback)
 
     def listen_for_events(self, timeout_ms=30000):
-        """Deprecated. sync now pulls events from the request.
+        """
         This function just calls _sync()
+
+        In a future version of this sdk, this function will be deprecated and
+        _sync method will be renamed sync with the intention of it being called
+        by downstream code.
 
         Args:
             timeout_ms (int): How long to poll the Home Server for before
                retrying.
         """
-        warnings.warn("listen_for_events is deprecated. Use _sync instead.",
-                      DeprecationWarning)
+        # TODO: see docstring
         self._sync(timeout_ms)
 
     def listen_forever(self, timeout_ms=30000, exception_handler=None,
