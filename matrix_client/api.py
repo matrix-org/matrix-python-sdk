@@ -37,10 +37,8 @@ class MatrixHttpApi(object):
         token (str): Optional. The client's access token.
         identity (str): Optional. The mxid to act as (For application services only).
         default_429_wait_ms (int): Optional. Time in millseconds to wait before retrying
-                                             a request when in the last attempt
-                                             the server returned a HTTP 429 response
-                                             without a 'retry_after_ms' argument.
-                                             Default to 5000ms
+                                             a request when server returns a HTTP 429
+                                             response without a 'retry_after_ms' key.
 
     Examples:
         Create a client and send a message::
