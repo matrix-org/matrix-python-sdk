@@ -36,6 +36,11 @@ class MatrixHttpApi(object):
         base_url (str): The home server URL e.g. 'http://localhost:8008'
         token (str): Optional. The client's access token.
         identity (str): Optional. The mxid to act as (For application services only).
+        default_429_wait_ms (int): Optional. Time in millseconds to wait before retrying
+                                             a request when in the last attempt
+                                             the server returned a HTTP 429 response
+                                             without a 'retry_after_ms' argument.
+                                             Default to 5000ms
 
     Examples:
         Create a client and send a message::
@@ -45,13 +50,14 @@ class MatrixHttpApi(object):
             response = matrix.send_message("!roomid:matrix.org", "Hello!")
     """
 
-    def __init__(self, base_url, token=None, identity=None):
+    def __init__(self, base_url, token=None, identity=None, default_429_wait_ms=5000):
         self.base_url = base_url
         self.token = token
         self.identity = identity
         self.txn_id = 0
         self.validate_cert = True
         self.session = Session()
+        self.default_429_wait_ms = default_429_wait_ms
 
     def initial_sync(self, limit=1):
         """
@@ -663,7 +669,16 @@ class MatrixHttpApi(object):
                 raise MatrixHttpLibError(e, method, endpoint)
 
             if response.status_code == 429:
-                sleep(response.json()['retry_after_ms'] / 1000)
+                try:
+                    waittime = response.json()['retry_after_ms'] / 1000
+                except KeyError:
+                    try:
+                        errordata = json.loads(response.json()['error'])
+                        waittime = errordata['retry_after_ms'] / 1000
+                    except KeyError:
+                        waittime = self.default_429_wait_ms / 1000
+                finally:
+                    sleep(waittime)
             else:
                 break
 
