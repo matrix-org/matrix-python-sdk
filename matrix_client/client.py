@@ -15,6 +15,7 @@
 from .api import MatrixHttpApi
 from .errors import MatrixRequestError, MatrixUnexpectedResponse
 from .room import Room
+from .group import Group
 from .user import User
 from threading import Thread
 from time import sleep
@@ -151,6 +152,9 @@ class MatrixClient(object):
         self.rooms = {
             # room_id: Room
         }
+        self.groups = {
+            # group_id: Group
+        }
         if token:
             self.user_id = user_id
             self._sync()
@@ -272,6 +276,21 @@ class MatrixClient(object):
         response = self.api.create_room(alias, is_public, invitees)
         return self._mkroom(response["room_id"])
 
+    def create_group(self, localpart):
+        """ Create a new group on the homeserver.
+
+        Args:
+            localpart (str): The part before the ':' of the new room ID.
+
+        Returns:
+            Group
+
+        Raises:
+            MatrixRequestError
+        """
+        response = self.api.create_group(localpart)
+        return self._mkgroup(response["group_id"])
+
     def join_room(self, room_id_or_alias):
         """ Join a room.
 
@@ -298,6 +317,21 @@ class MatrixClient(object):
 
         """
         return self.rooms
+
+    def get_groups(self):
+        """ Return a dict of {group_id: Group object} that the user has joined.
+
+        TODO: As soon as group joins / leaves come down the event stream,
+        polling is not necessary here anymore.
+
+        Returns:
+            Group{}: Groups the user has joined.
+        """
+        response = self.api.get_joined_groups()
+        for group_id in response["groups"]:
+            if group_id not in self.groups:
+                self._mkgroup(group_id)
+        return self.groups
 
     def add_listener(self, callback, event_type=None):
         """ Add a listener that will send a callback when the client recieves
@@ -505,6 +539,10 @@ class MatrixClient(object):
                 code=e.code,
                 content="Upload failed: %s" % e
             )
+
+    def _mkgroup(self, group_id):
+        self.groups[group_id] = Group(self, group_id)
+        return self.groups[group_id]
 
     def _mkroom(self, room_id):
         self.rooms[room_id] = Room(self, room_id)
