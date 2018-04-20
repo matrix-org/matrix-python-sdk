@@ -19,6 +19,7 @@ from .user import User
 from threading import Thread
 from time import sleep
 from uuid import uuid4
+from warnings import warn
 import logging
 import sys
 
@@ -81,9 +82,8 @@ class MatrixClient(object):
 
             client = MatrixClient("https://matrix.org", token="foobar",
                 user_id="@foobar:matrix.org")
-            rooms = client.get_rooms()  # NB: From initial sync
             client.add_listener(func)  # NB: event stream callback
-            rooms[0].add_listener(func)  # NB: callbacks just for this room.
+            client.rooms[0].add_listener(func)  # NB: callbacks just for this room.
             room = client.join_room("#matrix:matrix.org")
             response = room.send_text("Hello!")
             response = room.kick("@bob:matrix.org")
@@ -158,12 +158,18 @@ class MatrixClient(object):
             self._sync()
 
     def get_sync_token(self):
+        warn("get_sync_token is deprecated. Directly access MatrixClient.sync_token.",
+             DeprecationWarning)
         return self.sync_token
 
     def set_sync_token(self, token):
+        warn("set_sync_token is deprecated. Directly access MatrixClient.sync_token.",
+             DeprecationWarning)
         self.sync_token = token
 
     def set_user_id(self, user_id):
+        warn("set_user_id is deprecated. Directly access MatrixClient.user_id.",
+             DeprecationWarning)
         self.user_id = user_id
 
     #TODO: combine register methods into single register method controlled by kwargs
@@ -436,7 +442,7 @@ class MatrixClient(object):
             exception_handler (func(exception)): Optional exception handler
                function which can be used to handle exceptions in the caller
                thread.
-            aad_sync_timeout (int): Base time to wait after an error before
+            bad_sync_timeout (int): Base time to wait after an error before
                 retrying. Will be increased according to exponential backoff.
         """
         _bad_sync_timeout = bad_sync_timeout
