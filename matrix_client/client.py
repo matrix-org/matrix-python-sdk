@@ -40,10 +40,11 @@ class Enum(object):
 class Cache(Enum):
     def __init__(self):
         Enum.__init__(self, NONE=-1, SOME=0, ALL=1)
-# TODO: rather than having Cache.NONE as kwarg to MatrixClient, there should be a separate
+
+
+# TODO: rather than having CACHE.NONE as kwarg to MatrixClient, there should be a separate
 # LightweightMatrixClient that only implements global listeners and doesn't hook into
 # User, Room, etc. classes at all.
-
 CACHE = Cache()
 
 
@@ -172,7 +173,7 @@ class MatrixClient(object):
              DeprecationWarning)
         self.user_id = user_id
 
-    #TODO: combine register methods into single register method controlled by kwargs
+    # TODO: combine register methods into single register method controlled by kwargs
     def register_as_guest(self):
         """ Register a guest account on this HS.
         Note: HS must have guest registration enabled.
@@ -214,7 +215,7 @@ class MatrixClient(object):
         self._sync()
         return self.token
 
-    #TODO: combine login methods into single method controlled by kwargs
+    # TODO: combine login methods into single method controlled by kwargs
     def login_with_password_no_sync(self, username, password):
         """ Login to the homeserver.
 
@@ -312,8 +313,8 @@ class MatrixClient(object):
              DeprecationWarning)
         return self.rooms
 
-    #TODO: create Listener class and push as much of this logic there as possible
-    #NOTE: listeners related to things in rooms should be attached to Room objects
+    # TODO: create Listener class and push as much of this logic there as possible
+    # NOTE: listeners related to things in rooms should be attached to Room objects
     def add_listener(self, callback, event_type=None):
         """ Add a listener that will send a callback when the client recieves
         an event.
@@ -530,7 +531,7 @@ class MatrixClient(object):
         self.rooms[room_id] = Room(self, room_id)
         return self.rooms[room_id]
 
-    #TODO: this logic belongs in Room class
+    # TODO: this logic belongs in Room class
     def _process_state_event(self, state_event, current_room):
         if "type" not in state_event:
             return  # Ignore event
