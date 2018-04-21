@@ -1,12 +1,11 @@
 """
 This is a asyncio wrapper for the matrix API class.
 """
-import json
 from asyncio import sleep
 from urllib.parse import quote
 
 from matrix_client.api import MatrixHttpApi, MATRIX_V2_API_PATH
-from matrix_client.errors import MatrixError, MatrixRequestError
+from matrix_client.errors import MatrixRequestError
 
 
 class AsyncHTTPAPI(MatrixHttpApi):
@@ -68,11 +67,11 @@ class AsyncHTTPAPI(MatrixHttpApi):
 
     # We only need to re-define methods that do something after _send
     async def get_display_name(self, user_id):
-        content = await self._send("GET", "/profile/%s/displayname" % user_id)
+        content = await self._send("GET", "/profile/{}/displayname".format(user_id))
         return content.get('displayname', None)
 
     async def get_avatar_url(self, user_id):
-        content = await self._send("GET", "/profile/%s/avatar_url" % user_id)
+        content = await self._send("GET", "/profile/{}/avatar_url".format(user_id))
         return content.get('avatar_url', None)
 
     async def get_room_id(self, room_alias):
