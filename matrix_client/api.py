@@ -688,21 +688,27 @@ class MatrixHttpApi(object):
                           "/user/{userId}/filter".format(userId=user_id),
                           filter_params)
 
-    def _send(self, method, path, content=None, query_params=None, headers=None,
-              api_path=MATRIX_V2_API_PATH, return_json=True):
-        if query_params is None:
+    def _prepare_send(self, method, content, query_params, headers, path, api_path):
+        """
+        Process the arguments to the _send method.
+
+        This is factored out of _send as it is shared by the asyncio class.
+        """
+        method = method.upper()
+        if method not in ["GET", "PUT", "DELETE", "POST"]:
+            raise MatrixError("Unsupported HTTP method: %s" % method)
+
+        if not content:
+            content = {}
+        if not query_params:
             query_params = {}
-        if headers is None:
+        if not headers:
             headers = {}
 
         if "User-Agent" not in headers:
             headers["User-Agent"] = "matrix-python-sdk/%s" % __version__
 
-        method = method.upper()
-        if method not in ["GET", "PUT", "DELETE", "POST"]:
-            raise MatrixError("Unsupported HTTP method: %s" % method)
-
-        if "Content-Type" not in headers:
+         if "Content-Type" not in headers:
             headers["Content-Type"] = "application/json"
 
         if self.use_authorization_header:
@@ -718,6 +724,31 @@ class MatrixHttpApi(object):
         if headers["Content-Type"] == "application/json" and content is not None:
             content = json.dumps(content)
 
+        return content, query_params, headers, endpoint
+
+    def _get_waittime(self, responsejson):
+        """
+        Read the response from a 429 and return a time in seconds to wait.
+
+        This is factored out of _send as it is shared by the asyncio class.
+        """
+        try:
+            waittime = responsejson['retry_after_ms'] / 1000
+        except KeyError:
+            try:
+                errordata = json.loads(responsejson['error'])
+                waittime = errordata['retry_after_ms'] / 1000
+            except KeyError:
+                waittime = self.default_429_wait_ms / 1000
+        finally:
+            return waittime
+
+    def _send(self, method, path, content=None, query_params=None, headers=None,
+              api_path=MATRIX_V2_API_PATH):
+
+        args = self._prepare_send(method, content, query_params, headers, path, api_path)
+        content, query_params, headers, endpoint = args
+
         while True:
             try:
                 response = self.session.request(
@@ -731,16 +762,7 @@ class MatrixHttpApi(object):
                 raise MatrixHttpLibError(e, method, endpoint)
 
             if response.status_code == 429:
-                waittime = self.default_429_wait_ms / 1000
-                try:
-                    waittime = response.json()['retry_after_ms'] / 1000
-                except KeyError:
-                    try:
-                        errordata = json.loads(response.json()['error'])
-                        waittime = errordata['retry_after_ms'] / 1000
-                    except KeyError:
-                        pass
-                sleep(waittime)
+                sleep(self._get_waittime(response.json()))
             else:
                 break
 
