@@ -418,7 +418,7 @@ def test_cache():
     assert m_all.rooms[room_id].name == room_name
 
     assert m_none.rooms[room_id]._members == m_some.rooms[room_id]._members == []
-    assert len(m_all.rooms[room_id]._members) == 1
+    assert len(m_all.rooms[room_id]._members) == 2
     assert m_all.rooms[room_id]._members[0].user_id == "@alice:example.com"
 
 
