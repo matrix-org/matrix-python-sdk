@@ -64,7 +64,7 @@ def test_bad_state_events():
         "tomato": False
     }
 
-    client._process_state_event(ev, room)
+    room._process_state_event(ev)
 
 
 def test_state_event():
@@ -80,54 +80,54 @@ def test_state_event():
         "content": {}
     }
 
-    client._process_state_event(ev, room)
+    room._process_state_event(ev)
     assert room.name is None
 
     ev["content"]["name"] = "TestName"
-    client._process_state_event(ev, room)
+    room._process_state_event(ev)
     assert room.name is "TestName"
 
     ev["type"] = "m.room.topic"
-    client._process_state_event(ev, room)
+    room._process_state_event(ev)
     assert room.topic is None
 
     ev["content"]["topic"] = "TestTopic"
-    client._process_state_event(ev, room)
+    room._process_state_event(ev)
     assert room.topic is "TestTopic"
 
     ev["type"] = "m.room.aliases"
-    client._process_state_event(ev, room)
+    room._process_state_event(ev)
     assert room.aliases is None
 
     aliases = ["#foo:matrix.org", "#bar:matrix.org"]
     ev["content"]["aliases"] = aliases
-    client._process_state_event(ev, room)
+    room._process_state_event(ev)
     assert room.aliases is aliases
 
     # test member join event
     ev["type"] = "m.room.member"
     ev["content"] = {'membership': 'join', 'displayname': 'stereo'}
     ev["state_key"] = "@stereo:xxx.org"
-    client._process_state_event(ev, room)
+    room._process_state_event(ev)
     assert len(room._members) == 1
     assert room._members[0].user_id == "@stereo:xxx.org"
     # test member leave event
     ev["content"]['membership'] = 'leave'
-    client._process_state_event(ev, room)
+    room._process_state_event(ev)
     assert len(room._members) == 0
 
     # test join_rules
     room.invite_only = False
     ev["type"] = "m.room.join_rules"
     ev["content"] = {"join_rule": "invite"}
-    client._process_state_event(ev, room)
+    room._process_state_event(ev)
     assert room.invite_only
 
     # test guest_access
     room.guest_access = False
     ev["type"] = "m.room.guest_access"
     ev["content"] = {"guest_access": "can_join"}
-    client._process_state_event(ev, room)
+    room._process_state_event(ev)
     assert room.guest_access
 
 
