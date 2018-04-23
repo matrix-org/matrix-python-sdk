@@ -761,3 +761,29 @@ class MatrixHttpApi(object):
             room_id (str): The room to get the member events for.
         """
         return self._send("GET", "/rooms/{}/members".format(quote(room_id)))
+
+    def set_join_rule(self, room_id, join_rule):
+        """Set the rule for users wishing to join the room.
+
+        Args:
+            room_id(str): The room to set the rules for.
+            join_rule(str): The chosen rule. One of: ["public", "knock",
+                "invite", "private"]
+        """
+        content = {
+            "join_rule": join_rule
+        }
+        return self.send_state_event(room_id, "m.room.join_rules", content)
+
+    def set_guest_access(self, room_id, guest_access):
+        """Set the guest access policy of the room.
+
+        Args:
+            room_id(str): The room to set the rules for.
+            guest_access(str): Wether guests can join. One of: ["can_join",
+                "forbidden"]
+        """
+        content = {
+            "guest_access": guest_access
+        }
+        return self.send_state_event(room_id, "m.room.guest_access", content)

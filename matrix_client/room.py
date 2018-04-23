@@ -33,6 +33,8 @@ class Room(object):
         self.canonical_alias = None
         self.aliases = []
         self.topic = None
+        self.invite_only = None
+        self.guest_access = None
         self._prev_batch = None
         self._members = []
 
@@ -620,6 +622,41 @@ class Room(object):
                         del content["events"][event]
 
             self.client.api.set_power_levels(self.room_id, content)
+            return True
+        except MatrixRequestError:
+            return False
+
+    def set_invite_only(self, invite_only):
+        """Set how the room can be joined.
+
+        Args:
+            invite_only(bool): If True, users will have to be invited to join
+                the room. If False, anyone who knows the room link can join.
+
+        Returns:
+            True if successful, False if not
+        """
+        join_rule = "invite" if invite_only else "public"
+        try:
+            self.client.api.set_join_rule(self.room_id, join_rule)
+            self.invite_only = invite_only
+            return True
+        except MatrixRequestError:
+            return False
+
+    def set_guest_access(self, allow_guests):
+        """Set whether guests can join the room.
+
+        Args:
+            allow_guests(bool): If True, guests can join.
+
+        Returns:
+            True if successful, False if not
+        """
+        guest_access = "can_join" if allow_guests else "forbidden"
+        try:
+            self.client.api.set_guest_access(self.room_id, guest_access)
+            self.guest_access = allow_guests
             return True
         except MatrixRequestError:
             return False
