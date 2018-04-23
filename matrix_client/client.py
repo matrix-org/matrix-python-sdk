@@ -26,22 +26,13 @@ logger = logging.getLogger(__name__)
 
 
 # Cache constants used when instantiating Matrix Client to specify level of caching
-class Enum(object):
-    def __init__(self, **kwargs):
-        self._values = kwargs.values()
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-
-    def __contains__(self, item):
-        return item in self._values
+class CACHE(int):
+    pass
 
 
-class Cache(Enum):
-    def __init__(self):
-        Enum.__init__(self, NONE=-1, SOME=0, ALL=1)
-
-
-CACHE = Cache()
+CACHE.NONE = CACHE(-1)
+CACHE.SOME = CACHE(0)
+CACHE.ALL = CACHE(1)
 
 
 class MatrixClient(object):
@@ -132,7 +123,7 @@ class MatrixClient(object):
         self.invite_listeners = []
         self.left_listeners = []
         self.ephemeral_listeners = []
-        if cache_level in CACHE:
+        if isinstance(cache_level, CACHE):
             self._cache_level = cache_level
         else:
             self._cache_level = CACHE.ALL
