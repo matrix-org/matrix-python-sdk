@@ -301,11 +301,12 @@ class Room(object):
                 'event_type': event_type
             }
         )
-
     def _put_event(self, event):
         self.events.append(event)
         if len(self.events) > self.event_history_limit:
             self.events.pop(0)
+        if 'state_key' in event:
+            self._process_state_event(event)
 
         # Dispatch for room-specific listeners
         for listener in self.listeners:
