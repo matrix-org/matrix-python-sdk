@@ -301,11 +301,12 @@ class Room(object):
                 'event_type': event_type
             }
         )
-
     def _put_event(self, event):
         self.events.append(event)
         if len(self.events) > self.event_history_limit:
             self.events.pop(0)
+        if 'state_key' in event:
+            self._process_state_event(event)
 
         # Dispatch for room-specific listeners
         for listener in self.listeners:
@@ -660,6 +661,45 @@ class Room(object):
             return True
         except MatrixRequestError:
             return False
+
+    def _process_state_event(self, state_event):
+        if "type" not in state_event:
+            return  # Ignore event
+        etype = state_event["type"]
+        econtent = state_event["content"]
+        clevel = self.client._cache_level
+
+        # Don't keep track of room state if caching turned off
+        if clevel >= 0:
+            if etype == "m.room.name":
+                self.name = econtent.get("name")
+            elif etype == "m.room.canonical_alias":
+                self.canonical_alias = econtent.get("alias")
+            elif etype == "m.room.topic":
+                self.topic = econtent.get("topic")
+            elif etype == "m.room.aliases":
+                self.aliases = econtent.get("aliases")
+            elif etype == "m.room.join_rules":
+                self.invite_only = econtent["join_rule"] == "invite"
+            elif etype == "m.room.guest_access":
+                self.guest_access = econtent["guest_access"] == "can_join"
+            elif etype == "m.room.member" and clevel == clevel.ALL:
+                # tracking room members can be large e.g. #matrix:matrix.org
+                if econtent["membership"] == "join":
+                    self._mkmembers(
+                        User(self.client.api,
+                             state_event["state_key"],
+                             econtent.get("displayname"))
+                    )
+                elif econtent["membership"] in ("leave", "kick", "invite"):
+                    self._rmmembers(state_event["state_key"])
+
+        for listener in self.state_listeners:
+            if (
+                listener['event_type'] is None or
+                listener['event_type'] == state_event['type']
+            ):
+                listener['callback'](state_event)
 
     @property
     def prev_batch(self):

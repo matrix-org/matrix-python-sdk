@@ -26,22 +26,13 @@ logger = logging.getLogger(__name__)
 
 
 # Cache constants used when instantiating Matrix Client to specify level of caching
-class Enum(object):
-    def __init__(self, **kwargs):
-        self._values = kwargs.values()
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-
-    def __contains__(self, item):
-        return item in self._values
+class CACHE(int):
+    pass
 
 
-class Cache(Enum):
-    def __init__(self):
-        Enum.__init__(self, NONE=-1, SOME=0, ALL=1)
-
-
-CACHE = Cache()
+CACHE.NONE = CACHE(-1)
+CACHE.SOME = CACHE(0)
+CACHE.ALL = CACHE(1)
 
 
 class MatrixClient(object):
@@ -132,7 +123,7 @@ class MatrixClient(object):
         self.invite_listeners = []
         self.left_listeners = []
         self.ephemeral_listeners = []
-        if cache_level in CACHE:
+        if isinstance(cache_level, CACHE):
             self._cache_level = cache_level
         else:
             self._cache_level = CACHE.ALL
@@ -510,44 +501,6 @@ class MatrixClient(object):
         self.rooms[room_id] = Room(self, room_id)
         return self.rooms[room_id]
 
-    def _process_state_event(self, state_event, current_room):
-        if "type" not in state_event:
-            return  # Ignore event
-        etype = state_event["type"]
-        econtent = state_event["content"]
-
-        # Don't keep track of room state if caching turned off
-        if self._cache_level >= 0:
-            if etype == "m.room.name":
-                current_room.name = econtent.get("name")
-            elif etype == "m.room.canonical_alias":
-                current_room.canonical_alias = econtent.get("alias")
-            elif etype == "m.room.topic":
-                current_room.topic = econtent.get("topic")
-            elif etype == "m.room.aliases":
-                current_room.aliases = econtent.get("aliases")
-            elif etype == "m.room.join_rules":
-                current_room.invite_only = econtent["join_rule"] == "invite"
-            elif etype == "m.room.guest_access":
-                current_room.guest_access = econtent["guest_access"] == "can_join"
-            elif etype == "m.room.member" and self._cache_level == CACHE.ALL:
-                # tracking room members can be large e.g. #matrix:matrix.org
-                if econtent["membership"] == "join":
-                    current_room._mkmembers(
-                        User(self.api,
-                             state_event["state_key"],
-                             econtent.get("displayname"))
-                    )
-                elif econtent["membership"] in ("leave", "kick", "invite"):
-                    current_room._rmmembers(state_event["state_key"])
-
-        for listener in current_room.state_listeners:
-            if (
-                listener['event_type'] is None or
-                listener['event_type'] == state_event['type']
-            ):
-                listener['callback'](state_event)
-
     def _sync(self, timeout_ms=30000):
         # TODO: Deal with left rooms
         response = self.api.sync(self.sync_token, timeout_ms, filter=self.sync_filter)
@@ -576,7 +529,7 @@ class MatrixClient(object):
 
             for event in sync_room["state"]["events"]:
                 event['room_id'] = room_id
-                self._process_state_event(event, room)
+                room._process_state_event(event)
 
             for event in sync_room["timeline"]["events"]:
                 event['room_id'] = room_id
