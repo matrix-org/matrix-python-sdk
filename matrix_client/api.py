@@ -253,6 +253,71 @@ class MatrixHttpApi(object):
         if timestamp:
             params["ts"] = timestamp
         return self._send("PUT", path, content, query_params=params)
+    
+    def send_call_invite(self, room_id, call_id, sdp, version, lifetime, msgtype="m.call.invite", timestamp=None):
+        """Perform PUT /rooms/$room_id/send/m.room.call.invite
+
+        Args:
+            room_id (str): The room ID to send the event in.
+            call_id (str): Call identifier string.
+            sdp (dict): Session Description Protocol dict.
+            version (int): The version of the VoIP specification this messages adheres to.
+            lifetime (int): The time in milliseconds that the invite is valid for.
+            timestamp (int): Set origin_server_ts (For application services only)
+        """
+        return self.send_message_event(
+            room_id, "m.call.invite",
+            self.get_call_invite_content(call_id, sdp, version, lifetime),
+            timestamp=timestamp
+            )
+
+    def send_call_answer(self, room_id, call_id, sdp, version, lifetime, msgtype="m.call.answer", timestamp=None):
+        """Perform PUT /rooms/$room_id/send/m.room.call.answer
+
+        Args:
+            room_id (str): The room ID to send the event in.
+            call_id (str): Call identifier string.
+            sdp (dict): Session Description Protocol dict.
+            version (int): The version of the VoIP specification this messages adheres to.
+            lifetime (int): The time in milliseconds that the answer is valid for.
+            timestamp (int): Set origin_server_ts (For application services only)
+        """
+        return self.send_message_event(
+            room_id, "m.call.answer",
+            self.get_call_answer_content(call_id, sdp, lifetime, version),
+            timestamp=timestamp
+            )
+        
+    def send_call_candidates(self, room_id, call_id, candidates, version, msgtype="m.call.candidates", timestamp=None):
+        """Perform PUT /rooms/$room_id/send/m.room.call.candidates
+
+        Args:
+            room_id (str): The room ID to send the event in.
+            call_id (str): The call identifier string.
+            candidates (array of dicts): The candidates to send, each array element contains 'candidate', 'sdpMLineIndex', and 'sdpMid'
+            version (int): The version of the VoIP specification this messages adheres to.
+            timestamp (int): Set origin_server_ts (For application services only)
+        """
+        return  self.send_message_event(
+            room_id, "m.call.candidates",
+            self.get_call_candidates_content(call_id, candidates, version),
+            timestamp=timestamp
+            )
+
+    def send_call_hangup(self,room_id,call_id,version,msgtype="m.call.hangup",timestamp=None):
+        """Perform PUT /rooms/$room_id/send/m.room.call.hangup
+
+        Args:
+            room_id (str): The room ID to send the event in.
+            call_id (str): The call identifier string.
+            version (int): The version of the VoIP specification this messages adheres to.
+            timestamp (int): Set origin_server_ts (For application services only)
+        """
+        return  self.send_message_event(
+            room_id, "m.call.hangup",
+            self.get_call_hangup_content(call_id, version),
+            timestamp=timestamp
+            )
 
     def redact_event(self, room_id, event_id, reason=None, txn_id=None, timestamp=None):
         """Perform PUT /rooms/$room_id/redact/$event_id/$txn_id/
@@ -620,6 +685,41 @@ class MatrixHttpApi(object):
             "msgtype": msgtype,
             "body": text
         }
+        
+    def get_call_invite_content(self,call_id, sdp, version, lifetime,types="offer"):
+        return{
+                "call_id": call_id,
+                "lifetime": lifetime,
+                "offer": {
+                        "spd": sdp,
+                        "type": types 
+                        },
+                "version": version
+                }
+
+    def get_call_answer_content(self,call_id, sdp, lifetime, version,types="answer"):
+        return{
+                "call_id": call_id,
+                "lifetime": lifetime,
+                "answer": {
+                        "sdp": sdp,
+                        "type": types 
+                        },
+                "version": version
+                }
+                
+    def get_call_candidates_content(self, call_id, candidates, version):
+        return{
+                "call_id": call_id,
+                "candidates": candidates,
+                "version": version
+                }
+        
+    def get_call_hangup_content(self,call_id,version):
+        return{
+                "call_id": call_id,
+                "version": version
+                }
 
     def get_emote_body(self, text):
         return {

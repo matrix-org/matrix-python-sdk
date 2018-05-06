@@ -222,6 +222,47 @@ class Room(object):
         return self.client.api.send_content(self.room_id, url, name, "m.audio",
                                             extra_information=audioinfo)
 
+    def send_call_invite(self, call_id, sdp, version, lifetime):
+        """ Send a call invite event to the room.
+
+        Args:
+            call_id (str): Random call identifier string.
+            sdp (dict): Invite Session Description Protocol dict.
+            version (int): The version of the VoIP specification this message adheres to.
+            lifetime (int): The time in milliseconds that the invite is valid for.
+        """
+        return self.client.api.send_call_invite(self.room_id, call_id, sdp, version, lifetime)
+    
+    def send_call_answer(self, call_id, sdp, version, lifetime):
+        """ Send a call answer event to the room.
+
+        Args:
+            call_id (str): The call identifier string.
+            sdp (dict): Session Description Protocol dict.
+            version (int): The version of the VoIP specification this messages adheres to.
+            lifetime (int): The time in milliseconds that the answer is valid for. 
+        """
+        return self.client.api.send_call_answer(self.room_id, call_id, sdp, version, lifetime)
+    
+    def send_call_candidates(self, call_id, candidates, version):
+        """ Send a call candidates event to the room.
+
+        Args:
+            call_id (str): The call identifier string.
+            candidates (dict): The candidates to send
+            version (int): The version of the VoIP specification this messages adheres to.
+        """
+        return self.client.api.send_call_candidates(self.room_id, call_id, candidates, version)
+    
+    def send_call_hangup(self, call_id, version):
+        """ Send a call hangup event to the room.
+
+        Args:
+            call_id (str): The call identifier string.
+            version (int): The version of the VoIP specification this messages adheres to.
+        """
+        return self.client.api.send_call_hangup(self.room_id, call_id, version)
+    
     def redact_message(self, event_id, reason=None):
         """ Redacts the message with specified event_id in the room.
         See https://matrix.org/docs/spec/r0.0.1/client_server.html#id112
