@@ -297,8 +297,8 @@ class MatrixHttpApi(object):
         Args:
             room_id (str): The room ID to send the event in.
             call_id (str): The call identifier string.
-            candidates (array of dicts): The candidates to send, each array element 
-            contains 'candidate', 'sdpMLineIndex', and 'sdpMid'
+            candidates (array of dicts): The candidates to send:
+            each array element contains 'candidate', 'sdpMLineIndex', and 'sdpMid'
             version (int): The version of the VoIP specification this messages adheres to.
             timestamp (int): Set origin_server_ts (For application services only)
         """
@@ -722,7 +722,7 @@ class MatrixHttpApi(object):
 
     def get_call_hangup_content(self, call_id, version):
         return{
-            "call_id": call_id, 
+            "call_id": call_id,
             "version": version
         }
 
