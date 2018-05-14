@@ -25,7 +25,6 @@ except ImportError:
     from urllib.parse import quote
 
 MATRIX_V2_API_PATH = "/_matrix/client/r0"
-MATRIX_UNSTABLE_API_PATH = "/_matrix/client/unstable"
 
 
 class MatrixHttpApi(object):
@@ -793,15 +792,13 @@ class MatrixHttpApi(object):
         """
             Gets information about all devices for the current user
         """
-        return self._send("GET", "/devices",
-                          api_path=MATRIX_UNSTABLE_API_PATH)
+        return self._send("GET", "/devices")
 
     def get_device(self, device_id):
         """
             Gets information on a single device, by device id.
         """
-        return self._send("GET", "/devices/%s" % device_id,
-                          api_path=MATRIX_UNSTABLE_API_PATH)
+        return self._send("GET", "/devices/%s" % device_id)
 
     def update_device_info(self, device_id, display_name):
         """ Update the display name of a device.
@@ -815,8 +812,7 @@ class MatrixHttpApi(object):
         return self._send(
             "PUT",
             "/devices/%s" % device_id,
-            content=content,
-            api_path=MATRIX_UNSTABLE_API_PATH)
+            content=content)
 
     def delete_device(self, auth_body, device_id):
         """ Deletes the given device, and invalidates any access token assoicated with it.
@@ -831,8 +827,7 @@ class MatrixHttpApi(object):
         return self._send(
             "DELETE",
             "/devices/%s" % device_id,
-            content=content,
-            api_path=MATRIX_UNSTABLE_API_PATH)
+            content=content)
 
     def delete_devices(self, auth_body, devices):
         """ Bulk deletion of devices.
@@ -848,5 +843,4 @@ class MatrixHttpApi(object):
         return self._send(
             "POST",
             "/delete_devices",
-            content=content,
-            api_path=MATRIX_UNSTABLE_API_PATH)
+            content=content)
