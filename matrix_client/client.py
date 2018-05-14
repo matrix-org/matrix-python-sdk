@@ -34,10 +34,10 @@ class CACHE(int):
 CACHE.NONE = CACHE(-1)
 CACHE.SOME = CACHE(0)
 CACHE.ALL = CACHE(1)
-
 # TODO: rather than having CACHE.NONE as kwarg to MatrixClient, there should be a separate
 # LightweightMatrixClient that only implements global listeners and doesn't hook into
 # User, Room, etc. classes at all.
+
 
 class MatrixClient(object):
     """
