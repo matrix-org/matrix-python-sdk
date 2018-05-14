@@ -19,6 +19,7 @@ from .user import User
 from threading import Thread
 from time import sleep
 from uuid import uuid4
+from warnings import warn
 import logging
 import sys
 
@@ -34,6 +35,9 @@ CACHE.NONE = CACHE(-1)
 CACHE.SOME = CACHE(0)
 CACHE.ALL = CACHE(1)
 
+# TODO: rather than having CACHE.NONE as kwarg to MatrixClient, there should be a separate
+# LightweightMatrixClient that only implements global listeners and doesn't hook into
+# User, Room, etc. classes at all.
 
 class MatrixClient(object):
     """
@@ -70,9 +74,8 @@ class MatrixClient(object):
 
             client = MatrixClient("https://matrix.org", token="foobar",
                 user_id="@foobar:matrix.org")
-            rooms = client.get_rooms()  # NB: From initial sync
             client.add_listener(func)  # NB: event stream callback
-            rooms[0].add_listener(func)  # NB: callbacks just for this room.
+            client.rooms[0].add_listener(func)  # NB: callbacks just for this room.
             room = client.join_room("#matrix:matrix.org")
             response = room.send_text("Hello!")
             response = room.kick("@bob:matrix.org")
@@ -147,14 +150,21 @@ class MatrixClient(object):
             self._sync()
 
     def get_sync_token(self):
+        warn("get_sync_token is deprecated. Directly access MatrixClient.sync_token.",
+             DeprecationWarning)
         return self.sync_token
 
     def set_sync_token(self, token):
+        warn("set_sync_token is deprecated. Directly access MatrixClient.sync_token.",
+             DeprecationWarning)
         self.sync_token = token
 
     def set_user_id(self, user_id):
+        warn("set_user_id is deprecated. Directly access MatrixClient.user_id.",
+             DeprecationWarning)
         self.user_id = user_id
 
+    # TODO: combine register methods into single register method controlled by kwargs
     def register_as_guest(self):
         """ Register a guest account on this HS.
         Note: HS must have guest registration enabled.
@@ -196,6 +206,7 @@ class MatrixClient(object):
         self._sync()
         return self.token
 
+    # TODO: combine login methods into single method controlled by kwargs
     def login_with_password_no_sync(self, username, password):
         """ Login to the homeserver.
 
@@ -246,6 +257,8 @@ class MatrixClient(object):
         self.stop_listener_thread()
         self.api.logout()
 
+    # TODO: move room creation/joining to User class for future application service usage
+    # NOTE: we may want to leave thin wrappers here for convenience
     def create_room(self, alias=None, is_public=False, invitees=()):
         """ Create a new room on the homeserver.
 
@@ -286,10 +299,13 @@ class MatrixClient(object):
 
         Returns:
             Room{}: Rooms the user has joined.
-
         """
+        warn("get_rooms is deprecated. Directly access MatrixClient.rooms.",
+             DeprecationWarning)
         return self.rooms
 
+    # TODO: create Listener class and push as much of this logic there as possible
+    # NOTE: listeners related to things in rooms should be attached to Room objects
     def add_listener(self, callback, event_type=None):
         """ Add a listener that will send a callback when the client recieves
         an event.
@@ -302,6 +318,9 @@ class MatrixClient(object):
             uuid.UUID: Unique id of the listener, can be used to identify the listener.
         """
         listener_uid = uuid4()
+        # TODO: listeners should be stored in dict and accessed/deleted directly. Add
+        # convenience method such that MatrixClient.listeners.new(Listener(...)) performs
+        # MatrixClient.listeners[uuid4()] = Listener(...)
         self.listeners.append(
             {
                 'uid': listener_uid,
@@ -415,7 +434,7 @@ class MatrixClient(object):
             exception_handler (func(exception)): Optional exception handler
                function which can be used to handle exceptions in the caller
                thread.
-            aad_sync_timeout (int): Base time to wait after an error before
+            bad_sync_timeout (int): Base time to wait after an error before
                 retrying. Will be increased according to exponential backoff.
         """
         _bad_sync_timeout = bad_sync_timeout
@@ -424,6 +443,7 @@ class MatrixClient(object):
             try:
                 self._sync(timeout_ms)
                 _bad_sync_timeout = bad_sync_timeout
+            # TODO: we should also handle MatrixHttpLibError for retry in case no response
             except MatrixRequestError as e:
                 logger.warning("A MatrixRequestError occured during sync.")
                 if e.code >= 500:
@@ -472,6 +492,7 @@ class MatrixClient(object):
             self.sync_thread.join()
             self.sync_thread = None
 
+    # TODO: move to User class. Consider creating lightweight Media class.
     def upload(self, content, content_type):
         """ Upload content to the home server and recieve a MXC url.
 
@@ -502,7 +523,6 @@ class MatrixClient(object):
         return self.rooms[room_id]
 
     def _sync(self, timeout_ms=30000):
-        # TODO: Deal with left rooms
         response = self.api.sync(self.sync_token, timeout_ms, filter=self.sync_filter)
         self.sync_token = response["next_batch"]
 
@@ -522,9 +542,9 @@ class MatrixClient(object):
 
         for room_id, sync_room in response['rooms']['join'].items():
             if room_id not in self.rooms:
-                # TODO: don't keep track of joined rooms for self._cache_level==CACHE.NONE
                 self._mkroom(room_id)
             room = self.rooms[room_id]
+            # TODO: the rest of this for loop should be in room object method
             room.prev_batch = sync_room["timeline"]["prev_batch"]
 
             for event in sync_room["state"]["events"]:
@@ -534,6 +554,9 @@ class MatrixClient(object):
             for event in sync_room["timeline"]["events"]:
                 event['room_id'] = room_id
                 room._put_event(event)
+
+                # TODO: global listeners can still exist but work by each
+                # room.listeners[uuid] having reference to global listener
 
                 # Dispatch for client (global) listeners
                 for listener in self.listeners:
@@ -563,9 +586,9 @@ class MatrixClient(object):
         Args:
             user_id (str): The matrix user id of a user.
         """
-
         return User(self.api, user_id)
 
+    # TODO: move to Room class
     def remove_room_alias(self, room_alias):
         """Remove mapping of an alias
 
