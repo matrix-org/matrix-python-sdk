@@ -38,7 +38,9 @@ class User(object):
 
     def get_avatar_url(self):
         mxcurl = self.api.get_avatar_url(self.user_id)
-        url = self.api.get_download_url(mxcurl)
+        url = None
+        if mxcurl is not None:
+            url = self.api.get_download_url(mxcurl)
         return url
 
     def set_avatar_url(self, avatar_url):
