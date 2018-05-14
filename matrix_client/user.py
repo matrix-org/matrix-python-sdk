@@ -1,12 +1,11 @@
+from .checks import check_user_id
+
+
 class User(object):
     """ The User class can be used to call user specific functions.
     """
     def __init__(self, api, user_id, displayname=None):
-        if not user_id.startswith("@"):
-            raise ValueError("UserIDs start with @")
-
-        if ":" not in user_id:
-            raise ValueError("UserIDs must have a domain component, seperated by a :")
+        check_user_id(user_id)
 
         self.user_id = user_id
         self.displayname = displayname

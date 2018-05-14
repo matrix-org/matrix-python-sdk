@@ -1,6 +1,7 @@
 import re
 from uuid import uuid4
 
+from .checks import check_room_id
 from .user import User
 from .errors import MatrixRequestError
 
@@ -16,11 +17,7 @@ class Room(object):
             NOTE: This should ideally be called from within the Client.
             NOTE: This does not verify the room with the Home Server.
         """
-        if not room_id.startswith("!"):
-            raise ValueError("RoomIDs start with !")
-
-        if ":" not in room_id:
-            raise ValueError("RoomIDs must have a domain component, seperated by a :")
+        check_room_id(room_id)
 
         self.room_id = room_id
         self.client = client

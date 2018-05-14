@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from .api import MatrixHttpApi
+from .checks import check_user_id
 from .errors import MatrixRequestError, MatrixUnexpectedResponse
 from .room import Room
 from .user import User
@@ -146,6 +147,7 @@ class MatrixClient(object):
             # room_id: Room
         }
         if token:
+            check_user_id(user_id)
             self.user_id = user_id
             self._sync()
 
