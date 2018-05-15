@@ -514,7 +514,7 @@ class Room(object):
         """Query joined members of this room.
 
         Returns:
-            {user_id: {"displayname": str or None}}: Dictionary of joined members.
+            list(User): List of joined members (User objects).
         """
         if self._members:
             return self._members
