@@ -667,6 +667,7 @@ class MatrixHttpApi(object):
                 raise MatrixHttpLibError(e, method, endpoint)
 
             if response.status_code == 429:
+                waittime = self.default_429_wait_ms / 1000
                 try:
                     waittime = response.json()['retry_after_ms'] / 1000
                 except KeyError:
@@ -674,9 +675,8 @@ class MatrixHttpApi(object):
                         errordata = json.loads(response.json()['error'])
                         waittime = errordata['retry_after_ms'] / 1000
                     except KeyError:
-                        waittime = self.default_429_wait_ms / 1000
-                finally:
-                    sleep(waittime)
+                        pass
+                sleep(waittime)
             else:
                 break
 
