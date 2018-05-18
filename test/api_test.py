@@ -148,3 +148,69 @@ class TestDeviceApi:
 
         with pytest.raises(MatrixRequestError):
             self.cli.api.delete_devices(self.auth_body, [self.device_id])
+
+
+class TestKeysApi:
+    cli = client.MatrixClient("http://example.com")
+    user_id = "@alice:matrix.org"
+    device_id = "JLAFKJWSCS"
+    one_time_keys = {"curve25519:AAAAAQ": "/qyvZvwjiTxGdGU0RCguDCLeR+nmsb3FfNG3/Ve4vU8"}
+    device_keys = {
+        "user_id": "@alice:example.com",
+        "device_id": "JLAFKJWSCS",
+        "algorithms": [
+            "m.olm.curve25519-aes-sha256",
+            "m.megolm.v1.aes-sha"
+        ],
+        "keys": {
+            "curve25519:JLAFKJWSCS": "3C5BFWi2Y8MaVvjM8M22DBmh24PmgR0nPvJOIArzgyI",
+            "ed25519:JLAFKJWSCS": "lEuiRJBit0IG6nUf5pUzWTUEsRVVe/HJkoKuEww9ULI"
+        },
+        "signatures": {
+            "@alice:example.com": {
+                "ed25519:JLAFKJWSCS": ("dSO80A01XiigH3uBiDVx/EjzaoycHcjq9lfQX0uWsqxl2gi"
+                                       "MIiSPR8a4d291W1ihKJL/a+myXS367WT6NAIcBA")
+            }
+        }
+    }
+
+    @responses.activate
+    @pytest.mark.parametrize("args", [
+        {},
+        {'device_keys': device_keys},
+        {'one_time_keys': one_time_keys}
+    ])
+    def test_upload_keys(self, args):
+        upload_keys_url = "http://example.com/_matrix/client/r0/keys/upload"
+        responses.add(responses.POST, upload_keys_url, body='{}')
+        self.cli.api.upload_keys(**args)
+        req = responses.calls[0].request
+        assert req.url == upload_keys_url
+        assert req.method == 'POST'
+
+    @responses.activate
+    def test_query_keys(self):
+        query_user_keys_url = "http://example.com/_matrix/client/r0/keys/query"
+        responses.add(responses.POST, query_user_keys_url, body='{}')
+        self.cli.api.query_keys({self.user_id: self.device_id}, timeout=10)
+        req = responses.calls[0].request
+        assert req.url == query_user_keys_url
+        assert req.method == 'POST'
+
+    @responses.activate
+    def test_claim_keys(self):
+        claim_keys_url = "http://example.com/_matrix/client/r0/keys/claim"
+        responses.add(responses.POST, claim_keys_url, body='{}')
+        self.cli.api.claim_keys({self.user_id: {self.device_id: "algo"}}, timeout=1000)
+        req = responses.calls[0].request
+        assert req.url == claim_keys_url
+        assert req.method == 'POST'
+
+    @responses.activate
+    def test_key_changes(self):
+        key_changes_url = "http://example.com/_matrix/client/r0/keys/changes"
+        responses.add(responses.GET, key_changes_url, body='{}')
+        self.cli.api.key_changes('s72594_4483_1934', 's75689_5632_2435')
+        req = responses.calls[0].request
+        assert req.url.split('?')[0] == key_changes_url
+        assert req.method == 'GET'
