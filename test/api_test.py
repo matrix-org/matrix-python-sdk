@@ -73,8 +73,7 @@ class TestUnbanApi:
     def test_unban(self):
         unban_url = "http://example.com" \
                     "/_matrix/client/r0/rooms/#foo:matrix.org/unban"
-        body = '{"user_id": "' + self.user_id + '"}'
-        responses.add(responses.POST, unban_url, body=body)
+        responses.add(responses.POST, unban_url, body='{}')
         self.cli.api.unban_user(self.room_id, self.user_id)
         req = responses.calls[0].request
         assert req.url == unban_url
