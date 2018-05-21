@@ -787,3 +787,52 @@ class MatrixHttpApi(object):
             "guest_access": guest_access
         }
         return self.send_state_event(room_id, "m.room.guest_access", content)
+
+    def get_devices(self):
+        """Gets information about all devices for the current user."""
+        return self._send("GET", "/devices")
+
+    def get_device(self, device_id):
+        """Gets information on a single device, by device id."""
+        return self._send("GET", "/devices/%s" % device_id)
+
+    def update_device_info(self, device_id, display_name):
+        """Update the display name of a device.
+
+        Args:
+            device_id (str): The device ID of the device to update.
+            display_name (str): New display name for the device.
+        """
+        content = {
+            "display_name": display_name
+        }
+        return self._send("PUT", "/devices/%s" % device_id, content=content)
+
+    def delete_device(self, auth_body, device_id):
+        """Deletes the given device, and invalidates any access token associated with it.
+
+        NOTE: This endpoint uses the User-Interactive Authentication API.
+
+        Args:
+            auth_body (dict): Authentication params.
+            device_id (str): The device ID of the device to delete.
+        """
+        content = {
+            "auth": auth_body
+        }
+        return self._send("DELETE", "/devices/%s" % device_id, content=content)
+
+    def delete_devices(self, auth_body, devices):
+        """Bulk deletion of devices.
+
+        NOTE: This endpoint uses the User-Interactive Authentication API.
+
+        Args:
+            auth_body (dict): Authentication params.
+            devices (list): List of device ID"s to delete.
+        """
+        content = {
+            "auth": auth_body,
+            "devices": devices
+        }
+        return self._send("POST", "/delete_devices", content=content)
