@@ -55,3 +55,44 @@ class OlmDevice(object):
             json['unsigned'] = unsigned
 
         return json
+
+    def verify_json(self, json, user_key, user_id, device_id):
+        """Verifies a signed key object's signature.
+
+        The object must have a 'signatures' key associated with an object of the form
+        `user_id: {key_id: signature}`.
+
+        Args:
+            json (dict): The JSON object to verify.
+            user_key (str): The public ed25519 key which was used to sign the object.
+            user_id (str): The user who owns the device.
+            device_id (str): The device who owns the key.
+
+        Returns:
+            True if the verification was successful, False if not.
+        """
+        try:
+            signatures = json.pop('signatures')
+        except KeyError:
+            return False
+
+        key_id = 'ed25519:{}'.format(device_id)
+        try:
+            signature_base64 = signatures[user_id][key_id]
+        except KeyError:
+            json['signatures'] = signatures
+            return False
+
+        unsigned = json.pop('unsigned', None)
+
+        try:
+            olm.ed25519_verify(user_key, encode_canonical_json(json), signature_base64)
+            success = True
+        except olm.utility.OlmVerifyError:
+            success = False
+
+        json['signatures'] = signatures
+        if unsigned:
+            json['unsigned'] = unsigned
+
+        return success
