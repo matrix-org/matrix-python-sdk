@@ -48,3 +48,11 @@ matrix_client.errors
     :members:
     :undoc-members:
     :show-inheritance:
+
+matrix_client.crypto
+------------------------
+
+.. automodule:: matrix_client.crypto.olm_device
+    :members:
+    :undoc-members:
+    :show-inheritance:
