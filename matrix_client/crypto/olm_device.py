@@ -1,3 +1,4 @@
+import json
 import logging
 from collections import defaultdict
 
@@ -63,6 +64,7 @@ class OlmDevice(object):
                                                         keys_threshold)
         self.device_keys = defaultdict(dict)
         self.device_list = DeviceList(self, api, self.device_keys)
+        self.olm_sessions = defaultdict(list)
 
     def upload_identity_keys(self):
         """Uploads this device's identity keys to HS.
@@ -139,6 +141,235 @@ class OlmDevice(object):
         if self.one_time_keys_manager.should_upload():
             logger.info('Uploading new one-time keys.')
             self.upload_one_time_keys()
+
+    def olm_start_sessions(self, user_devices):
+        """Start olm sessions with the given devices.
+
+        NOTE: those device keys must already be known.
+
+        Args:
+            user_devices (dict): A map from user_id to an iterable of device_ids.
+                The format is ``<user_id>: [<device_id>]``.
+        """
+        logger.info('Trying to establish Olm sessions with devices: %s.',
+                    dict(user_devices))
+        payload = defaultdict(dict)
+        for user_id in user_devices:
+            for device_id in user_devices[user_id]:
+                payload[user_id][device_id] = 'signed_curve25519'
+
+        resp = self.api.claim_keys(payload)
+        if resp.get('failures'):
+            logger.warning('Failed to claim one-time keys from the following unreachable '
+                           'homeservers: %s.', resp['failures'])
+        keys = resp['one_time_keys']
+        if logger.level >= logging.WARNING:
+            missing = {}
+            for user_id, device_ids in user_devices.items():
+                if user_id not in keys:
+                    missing[user_id] = device_ids
+                else:
+                    missing_devices = set(device_ids) - set(keys[user_id])
+                    if missing_devices:
+                        missing[user_id] = missing_devices
+            logger.warning('Failed to claim the keys of %s.', missing)
+
+        for user_id in user_devices:
+            for device_id, one_time_key in keys.get(user_id, {}).items():
+                try:
+                    device_keys = self.device_keys[user_id][device_id]
+                except KeyError:
+                    logger.warning('Key for device %s of user %s not found, could not '
+                                   'start Olm session.', device_id, user_id)
+                    continue
+                key_object = next(iter(one_time_key.values()))
+                verified = self.verify_json(key_object,
+                                            device_keys['ed25519'],
+                                            user_id,
+                                            device_id)
+                if verified:
+                    session = olm.OutboundSession(self.olm_account,
+                                                  device_keys['curve25519'],
+                                                  key_object['key'])
+                    sessions = self.olm_sessions[device_keys['curve25519']]
+                    sessions.append(session)
+                    logger.info('Established Olm session %s with device %s of user '
+                                '%s.', device_id, session.id, user_id)
+                else:
+                    logger.warning('Signature verification for one-time key of device %s '
+                                   'of user %s failed, could not start olm session.',
+                                   device_id, user_id)
+
+    def olm_build_encrypted_event(self, event_type, content, user_id, device_id):
+        """Encrypt an event using Olm.
+
+        NOTE: a session with this device must already be established.
+
+        Args:
+            event_type (str): The event type, will be encrypted.
+            content (dict): The event content, will be encrypted.
+            user_id (str): The intended recipient of the event.
+            device_id (str): The device to encrypt to.
+
+        Returns:
+            The Olm encrypted event, as JSON.
+        """
+        try:
+            keys = self.device_keys[user_id][device_id]
+        except KeyError:
+            raise RuntimeError('Device is unknown, could not encrypt.')
+
+        signing_key = keys['ed25519']
+        identity_key = keys['curve25519']
+
+        payload = {
+            'type': event_type,
+            'content': content,
+            'sender': self.user_id,
+            'sender_device': self.device_id,
+            'keys': {
+                'ed25519': self.identity_keys['ed25519']
+            },
+            'recipient': user_id,
+            'recipient_keys': {
+                'ed25519': signing_key
+            }
+        }
+
+        sessions = self.olm_sessions[identity_key]
+        if sessions:
+            session = sorted(sessions, key=lambda s: s.id)[0]
+        else:
+            raise RuntimeError('No session for this device, could not encrypt.')
+
+        encrypted_message = session.encrypt(json.dumps(payload))
+        ciphertext_payload = {
+            identity_key: {
+                'type': encrypted_message.message_type,
+                'body': encrypted_message.ciphertext
+            }
+        }
+
+        event = {
+            'algorithm': self._olm_algorithm,
+            'sender_key': self.identity_keys['curve25519'],
+            'ciphertext': ciphertext_payload
+        }
+        return event
+
+    def olm_decrypt_event(self, content, user_id):
+        """Decrypt an Olm encrypted event, and check its properties.
+
+        Args:
+            event (dict): The content property of a m.room.encrypted event.
+            user_id (str): The sender of the event.
+
+        Retuns:
+            The decrypted event held by the initial event.
+
+        Raises:
+            RuntimeError: Error in the decryption process. Nothing can be done. The text
+                of the exception indicates what went wrong, and should be logged or
+                displayed to the user.
+            KeyError: The event is missing a required field.
+        """
+        if content['algorithm'] != self._olm_algorithm:
+            raise RuntimeError('Event was not encrypted with {}.'
+                               .format(self._olm_algorithm))
+
+        ciphertext = content['ciphertext']
+        try:
+            payload = ciphertext[self.identity_keys['curve25519']]
+        except KeyError:
+            raise RuntimeError('This message was not encrypted for us.')
+
+        msg_type = payload['type']
+        if msg_type == 0:
+            encrypted_message = olm.OlmPreKeyMessage(payload['body'])
+        else:
+            encrypted_message = olm.OlmMessage(payload['body'])
+
+        decrypted_event = self._olm_decrypt(encrypted_message, content['sender_key'])
+
+        if decrypted_event['sender'] != user_id:
+            raise RuntimeError(
+                'Found user {} instead of sender {} in Olm plaintext {}.'
+                .format(decrypted_event['sender'], user_id, decrypted_event)
+            )
+        if decrypted_event['recipient'] != self.user_id:
+            raise RuntimeError(
+                'Found user {} instead of us ({}) in Olm plaintext {}.'
+                .format(decrypted_event['recipient'], self.user_id, decrypted_event)
+            )
+        our_key = decrypted_event['recipient_keys']['ed25519']
+        if our_key != self.identity_keys['ed25519']:
+            raise RuntimeError(
+                'Found key {} instead of ours own ed25519 key {} in Olm plaintext {}.'
+                .format(our_key, self.identity_keys['ed25519'], decrypted_event)
+            )
+
+        return decrypted_event
+
+    def _olm_decrypt(self, olm_message, sender_key):
+        """Decrypt an Olm encrypted event.
+
+        NOTE: This does no implement any security check.
+
+        Try to decrypt using existing sessions. If it fails, start an new one when
+            possible.
+
+        Args:
+            olm_message (OlmMessage): Olm encrypted payload.
+            sender_key (str): The sender's curve25519 identity key.
+
+        Returns:
+            The decrypted event held by the initial payload, as JSON.
+        """
+
+        sessions = self.olm_sessions[sender_key]
+
+        # Try to decrypt message body using one of the known sessions for that device
+        for session in sessions:
+            try:
+                event = session.decrypt(olm_message)
+                logger.info('Success decrypting Olm event using existing session %s.',
+                            session.id)
+                break
+            except olm.session.OlmSessionError as e:
+                if olm_message.message_type == 0:
+                    if session.matches(olm_message, sender_key):
+                        # We had a matching session for a pre-key message, but it didn't
+                        # work. This means something is wrong, so we fail now.
+                        raise RuntimeError('Error decrypting pre-key message with '
+                                           'existing Olm session {}, reason: {}.'
+                                           .format(session.id, e))
+                # Simply keep trying otherwise
+        else:
+            if olm_message.message_type > 0:
+                # Not a pre-key message, we should have had a matching session
+                if sessions:
+                    raise RuntimeError('Error decrypting with existing sessions.')
+                raise RuntimeError('No existing sessions.')
+
+            # We have a pre-key message without any matching session, in this case
+            # we should try to create one.
+            try:
+                session = olm.session.InboundSession(
+                    self.olm_account, olm_message, sender_key)
+            except olm.session.OlmSessionError as e:
+                raise RuntimeError('Error decrypting pre-key message when trying to '
+                                   'establish a new session: {}.'.format(e))
+
+            logger.info('Created new Olm session %s.', session.id)
+            try:
+                event = session.decrypt(olm_message)
+            except olm.session.OlmSessionError as e:
+                raise RuntimeError('Error decrypting pre-key message with new session: '
+                                   '{}.'.format(e))
+            self.olm_account.remove_one_time_keys(session)
+            sessions.append(session)
+
+        return json.loads(event)
 
     def sign_json(self, json):
         """Signs a JSON object.
