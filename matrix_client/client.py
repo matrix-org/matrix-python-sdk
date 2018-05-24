@@ -581,6 +581,15 @@ class MatrixClient(object):
     # TODO better handling of the blocking I/O caused by update_one_time_key_counts
     def _sync(self, timeout_ms=30000):
         response = self.api.sync(self.sync_token, timeout_ms, filter=self.sync_filter)
+
+        if self._encryption and 'device_lists' in response:
+            if response['device_lists'].get('changed'):
+                self.olm_device.device_list.update_user_device_keys(
+                    response['device_lists']['changed'], self.sync_token)
+            if response['device_lists'].get('left'):
+                self.olm_device.device_list.stop_tracking_users(
+                    response['device_lists']['left'])
+
         self.sync_token = response["next_batch"]
 
         for presence_update in response['presence']['events']:

@@ -1,10 +1,12 @@
 import logging
+from collections import defaultdict
 
 import olm
 from canonicaljson import encode_canonical_json
 
 from matrix_client.checks import check_user_id
 from matrix_client.crypto.one_time_keys import OneTimeKeysManager
+from matrix_client.crypto.device_list import DeviceList
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +61,8 @@ class OlmDevice(object):
         self.one_time_keys_manager = OneTimeKeysManager(target_keys_number,
                                                         signed_keys_proportion,
                                                         keys_threshold)
+        self.device_keys = defaultdict(dict)
+        self.device_list = DeviceList(self, api, self.device_keys)
 
     def upload_identity_keys(self):
         """Uploads this device's identity keys to HS.
