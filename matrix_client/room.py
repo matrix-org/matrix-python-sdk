@@ -411,7 +411,7 @@ class Room(object):
         except MatrixRequestError:
             return False
 
-    def send_state_event(self, event_type, content, state_key):
+    def send_state_event(self, event_type, content, state_key=""):
         """Send a state event to the room.
 
         Args:
