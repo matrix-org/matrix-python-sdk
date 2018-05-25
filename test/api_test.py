@@ -5,13 +5,16 @@ from matrix_client.errors import MatrixRequestError
 
 
 class TestTagsApi:
+    base_url = "http://example.com"
     cli = client.MatrixClient("http://example.com")
     user_id = "@user:matrix.org"
     room_id = "#foo:matrix.org"
 
     @responses.activate
     def test_get_user_tags(self):
-        tags_url = "http://example.com" "/_matrix/client/r0/user/@user:matrix.org/rooms/#foo:matrix.org/tags"
+        tags_url = self.base_url + "/_matrix/client/r0/user/{}/rooms/{}/tags".format(
+            self.user_id, self.room_id
+        )
         responses.add(responses.GET, tags_url, body="{}")
         self.cli.api.get_user_tags(self.user_id, self.room_id)
         req = responses.calls[0].request
@@ -20,7 +23,9 @@ class TestTagsApi:
 
     @responses.activate
     def test_add_user_tags(self):
-        tags_url = "http://example.com" "/_matrix/client/r0/user/@user:matrix.org/rooms/#foo:matrix.org/tags/foo"
+        tags_url = self.base_url + "/_matrix/client/r0/user/{}/rooms/{}/tags/foo".format(
+            self.user_id, self.room_id
+        )
         responses.add(responses.PUT, tags_url, body="{}")
         self.cli.api.add_user_tag(self.user_id, self.room_id, "foo", body={"order": "5"})
         req = responses.calls[0].request
@@ -29,7 +34,9 @@ class TestTagsApi:
 
     @responses.activate
     def test_remove_user_tags(self):
-        tags_url = "http://example.com" "/_matrix/client/r0/user/@user:matrix.org/rooms/#foo:matrix.org/tags/foo"
+        tags_url = self.base_url + "/_matrix/client/r0/user/{}/rooms/{}/tags/foo".format(
+            self.user_id, self.room_id
+        )
         responses.add(responses.DELETE, tags_url, body="{}")
         self.cli.api.remove_user_tag(self.user_id, self.room_id, "foo")
         req = responses.calls[0].request
@@ -38,13 +45,17 @@ class TestTagsApi:
 
 
 class TestAccountDataApi:
+    base_url = "http://example.com"
     cli = client.MatrixClient("http://example.com")
     user_id = "@user:matrix.org"
     room_id = "#foo:matrix.org"
 
     @responses.activate
     def test_set_account_data(self):
-        account_data_url = "http://example.com" "/_matrix/client/r0/user/@user:matrix.org/account_data/foo"
+        account_data_url = (
+            self.base_url
+            + "/_matrix/client/r0/user/{}/account_data/foo".format(self.user_id)
+        )
         responses.add(responses.PUT, account_data_url, body="{}")
         self.cli.api.set_account_data(self.user_id, "foo", {"bar": 1})
         req = responses.calls[0].request
@@ -53,7 +64,12 @@ class TestAccountDataApi:
 
     @responses.activate
     def test_set_room_account_data(self):
-        account_data_url = "http://example.com/_matrix/client/r0/user" "/@user:matrix.org/rooms/#foo:matrix.org/account_data/foo"
+        account_data_url = (
+            self.base_url
+            + "/_matrix/client/r0/user/{}/rooms/{}/account_data/foo".format(
+                self.user_id, self.room_id
+            )
+        )
         responses.add(responses.PUT, account_data_url, body="{}")
         self.cli.api.set_room_account_data(self.user_id, self.room_id, "foo", {"bar": 1})
         req = responses.calls[0].request
@@ -62,13 +78,16 @@ class TestAccountDataApi:
 
 
 class TestUnbanApi:
+    base_url = "http://example.com"
     cli = client.MatrixClient("http://example.com")
     user_id = "@user:matrix.org"
     room_id = "#foo:matrix.org"
 
     @responses.activate
     def test_unban(self):
-        unban_url = "http://example.com" "/_matrix/client/r0/rooms/#foo:matrix.org/unban"
+        unban_url = self.base_url + "/_matrix/client/r0/rooms/{}/unban".format(
+            self.room_id
+        )
         responses.add(responses.POST, unban_url, body="{}")
         self.cli.api.unban_user(self.room_id, self.user_id)
         req = responses.calls[0].request
