@@ -469,3 +469,19 @@ def test_enable_encryption():
     client.login("@example:localhost", "password", sync=False)
 
     assert client.olm_device
+
+
+@responses.activate
+def test_enable_encryption_in_room():
+    client = MatrixClient(HOSTNAME)
+    room_id = "!UcYsUzyxTGDxLBEvLz:matrix.org"
+    room = client._mkroom(room_id)
+    assert not room.encrypted
+    encryption_state_path = HOSTNAME + MATRIX_V2_API_PATH + \
+        "/rooms/" + quote(room_id) + "/state/m.room.encryption"
+
+    responses.add(responses.PUT, encryption_state_path,
+                  json=response_examples.example_event_response)
+
+    assert room.enable_encryption()
+    assert room.encrypted
