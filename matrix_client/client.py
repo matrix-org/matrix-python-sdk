@@ -93,9 +93,15 @@ class MatrixClient(object):
                 pass
     """
 
-    def __init__(self, base_url, token=None, user_id=None,
-                 valid_cert_check=True, sync_filter_limit=20,
-                 cache_level=CACHE.ALL):
+    def __init__(
+        self,
+        base_url,
+        token=None,
+        user_id=None,
+        valid_cert_check=True,
+        sync_filter_limit=20,
+        cache_level=CACHE.ALL,
+    ):
         """ Create a new Matrix Client object.
 
         Args:
@@ -136,8 +142,9 @@ class MatrixClient(object):
             )
 
         self.sync_token = None
-        self.sync_filter = '{ "room": { "timeline" : { "limit" : %i } } }' \
-            % sync_filter_limit
+        self.sync_filter = (
+            '{ "room": { "timeline" : { "limit" : %i } } }' % sync_filter_limit
+        )
         self.sync_thread = None
         self.should_listen = False
 
@@ -152,18 +159,24 @@ class MatrixClient(object):
             self._sync()
 
     def get_sync_token(self):
-        warn("get_sync_token is deprecated. Directly access MatrixClient.sync_token.",
-             DeprecationWarning)
+        warn(
+            "get_sync_token is deprecated. Directly access MatrixClient.sync_token.",
+            DeprecationWarning,
+        )
         return self.sync_token
 
     def set_sync_token(self, token):
-        warn("set_sync_token is deprecated. Directly access MatrixClient.sync_token.",
-             DeprecationWarning)
+        warn(
+            "set_sync_token is deprecated. Directly access MatrixClient.sync_token.",
+            DeprecationWarning,
+        )
         self.sync_token = token
 
     def set_user_id(self, user_id):
-        warn("set_user_id is deprecated. Directly access MatrixClient.user_id.",
-             DeprecationWarning)
+        warn(
+            "set_user_id is deprecated. Directly access MatrixClient.user_id.",
+            DeprecationWarning,
+        )
         self.user_id = user_id
 
     # TODO: combine register methods into single register method controlled by kwargs
@@ -175,7 +188,7 @@ class MatrixClient(object):
         Raises:
             MatrixRequestError
         """
-        response = self.api.register(kind='guest')
+        response = self.api.register(kind="guest")
         return self._post_registration(response)
 
     def register_with_password(self, username, password):
@@ -195,7 +208,7 @@ class MatrixClient(object):
             {
                 "auth": {"type": "m.login.dummy"},
                 "username": username,
-                "password": password
+                "password": password,
             }
         )
         return self._post_registration(response)
@@ -222,9 +235,7 @@ class MatrixClient(object):
         Raises:
             MatrixRequestError
         """
-        response = self.api.login(
-            "m.login.password", user=username, password=password
-        )
+        response = self.api.login("m.login.password", user=username, password=password)
         self.user_id = response["user_id"]
         self.token = response["access_token"]
         self.hs = response["home_server"]
@@ -291,9 +302,7 @@ class MatrixClient(object):
             MatrixRequestError
         """
         response = self.api.join_room(room_id_or_alias)
-        room_id = (
-            response["room_id"] if "room_id" in response else room_id_or_alias
-        )
+        room_id = response["room_id"] if "room_id" in response else room_id_or_alias
         return self._mkroom(room_id)
 
     def get_rooms(self):
@@ -302,8 +311,10 @@ class MatrixClient(object):
         Returns:
             Room{}: Rooms the user has joined.
         """
-        warn("get_rooms is deprecated. Directly access MatrixClient.rooms.",
-             DeprecationWarning)
+        warn(
+            "get_rooms is deprecated. Directly access MatrixClient.rooms.",
+            DeprecationWarning,
+        )
         return self.rooms
 
     # TODO: create Listener class and push as much of this logic there as possible
@@ -324,11 +335,7 @@ class MatrixClient(object):
         # convenience method such that MatrixClient.listeners.new(Listener(...)) performs
         # MatrixClient.listeners[uuid4()] = Listener(...)
         self.listeners.append(
-            {
-                'uid': listener_uid,
-                'callback': callback,
-                'event_type': event_type
-            }
+            {"uid": listener_uid, "callback": callback, "event_type": event_type}
         )
         return listener_uid
 
@@ -338,8 +345,9 @@ class MatrixClient(object):
         Args:
             uuid.UUID: Unique id of the listener to remove.
         """
-        self.listeners[:] = (listener for listener in self.listeners
-                             if listener['uid'] != uid)
+        self.listeners[:] = (
+            listener for listener in self.listeners if listener["uid"] != uid
+        )
 
     def add_presence_listener(self, callback):
         """ Add a presence listener that will send a callback when the client receives
@@ -376,11 +384,7 @@ class MatrixClient(object):
         """
         listener_id = uuid4()
         self.ephemeral_listeners.append(
-            {
-                'uid': listener_id,
-                'callback': callback,
-                'event_type': event_type
-            }
+            {"uid": listener_id, "callback": callback, "event_type": event_type}
         )
         return listener_id
 
@@ -390,8 +394,9 @@ class MatrixClient(object):
         Args:
             uuid.UUID: Unique id of the listener to remove.
         """
-        self.ephemeral_listeners[:] = (listener for listener in self.ephemeral_listeners
-                                       if listener['uid'] != uid)
+        self.ephemeral_listeners[:] = (
+            listener for listener in self.ephemeral_listeners if listener["uid"] != uid
+        )
 
     def add_invite_listener(self, callback):
         """ Add a listener that will send a callback when the client receives
@@ -426,8 +431,9 @@ class MatrixClient(object):
         # TODO: see docstring
         self._sync(timeout_ms)
 
-    def listen_forever(self, timeout_ms=30000, exception_handler=None,
-                       bad_sync_timeout=5):
+    def listen_forever(
+        self, timeout_ms=30000, exception_handler=None, bad_sync_timeout=5
+    ):
         """ Keep listening for events forever.
 
         Args:
@@ -441,7 +447,7 @@ class MatrixClient(object):
         """
         _bad_sync_timeout = bad_sync_timeout
         self.should_listen = True
-        while (self.should_listen):
+        while self.should_listen:
             try:
                 self._sync(timeout_ms)
                 _bad_sync_timeout = bad_sync_timeout
@@ -449,11 +455,13 @@ class MatrixClient(object):
             except MatrixRequestError as e:
                 logger.warning("A MatrixRequestError occured during sync.")
                 if e.code >= 500:
-                    logger.warning("Problem occured serverside. Waiting %i seconds",
-                                   bad_sync_timeout)
+                    logger.warning(
+                        "Problem occured serverside. Waiting %i seconds", bad_sync_timeout
+                    )
                     sleep(bad_sync_timeout)
-                    _bad_sync_timeout = min(_bad_sync_timeout * 2,
-                                            self.bad_sync_timeout_limit)
+                    _bad_sync_timeout = min(
+                        _bad_sync_timeout * 2, self.bad_sync_timeout_limit
+                    )
                 elif exception_handler is not None:
                     exception_handler(e)
                 else:
@@ -476,8 +484,9 @@ class MatrixClient(object):
                thread.
         """
         try:
-            thread = Thread(target=self.listen_forever,
-                            args=(timeout_ms, exception_handler))
+            thread = Thread(
+                target=self.listen_forever, args=(timeout_ms, exception_handler)
+            )
             thread.daemon = True
             self.sync_thread = thread
             self.should_listen = True
@@ -515,10 +524,7 @@ class MatrixClient(object):
                     "The upload was successful, but content_uri wasn't found."
                 )
         except MatrixRequestError as e:
-            raise MatrixRequestError(
-                code=e.code,
-                content="Upload failed: %s" % e
-            )
+            raise MatrixRequestError(code=e.code, content="Upload failed: %s" % e)
 
     def _mkroom(self, room_id):
         self.rooms[room_id] = Room(self, room_id)
@@ -528,21 +534,21 @@ class MatrixClient(object):
         response = self.api.sync(self.sync_token, timeout_ms, filter=self.sync_filter)
         self.sync_token = response["next_batch"]
 
-        for presence_update in response['presence']['events']:
+        for presence_update in response["presence"]["events"]:
             for callback in self.presence_listeners.values():
                 callback(presence_update)
 
-        for room_id, invite_room in response['rooms']['invite'].items():
+        for room_id, invite_room in response["rooms"]["invite"].items():
             for listener in self.invite_listeners:
-                listener(room_id, invite_room['invite_state'])
+                listener(room_id, invite_room["invite_state"])
 
-        for room_id, left_room in response['rooms']['leave'].items():
+        for room_id, left_room in response["rooms"]["leave"].items():
             for listener in self.left_listeners:
                 listener(room_id, left_room)
             if room_id in self.rooms:
                 del self.rooms[room_id]
 
-        for room_id, sync_room in response['rooms']['join'].items():
+        for room_id, sync_room in response["rooms"]["join"].items():
             if room_id not in self.rooms:
                 self._mkroom(room_id)
             room = self.rooms[room_id]
@@ -550,11 +556,11 @@ class MatrixClient(object):
             room.prev_batch = sync_room["timeline"]["prev_batch"]
 
             for event in sync_room["state"]["events"]:
-                event['room_id'] = room_id
+                event["room_id"] = room_id
                 room._process_state_event(event)
 
             for event in sync_room["timeline"]["events"]:
-                event['room_id'] = room_id
+                event["room_id"] = room_id
                 room._put_event(event)
 
                 # TODO: global listeners can still exist but work by each
@@ -563,21 +569,21 @@ class MatrixClient(object):
                 # Dispatch for client (global) listeners
                 for listener in self.listeners:
                     if (
-                        listener['event_type'] is None or
-                        listener['event_type'] == event['type']
+                        listener["event_type"] is None
+                        or listener["event_type"] == event["type"]
                     ):
-                        listener['callback'](event)
+                        listener["callback"](event)
 
-            for event in sync_room['ephemeral']['events']:
-                event['room_id'] = room_id
+            for event in sync_room["ephemeral"]["events"]:
+                event["room_id"] = room_id
                 room._put_ephemeral_event(event)
 
                 for listener in self.ephemeral_listeners:
                     if (
-                        listener['event_type'] is None or
-                        listener['event_type'] == event['type']
+                        listener["event_type"] is None
+                        or listener["event_type"] == event["type"]
                     ):
-                        listener['callback'](event)
+                        listener["callback"](event)
 
     def get_user(self, user_id):
         """ Return a User by their id.

@@ -26,13 +26,13 @@ def example(host, user, password, token):
     client = None
     try:
         if token:
-            print('token login')
+            print("token login")
             client = MatrixClient(host, token=token, user_id=user)
         else:
-            print('password login')
+            print("password login")
             client = MatrixClient(host)
             token = client.login_with_password(user, password)
-            print('got token: %s' % token)
+            print("got token: %s" % token)
     except MatrixRequestError as e:
         print(e)
         if e.code == 403:
@@ -66,7 +66,7 @@ def main():
     parser.add_argument("--token", type=str)
     args = parser.parse_args()
     if not args.password and not args.token:
-        print('password or token is required')
+        print("password or token is required")
         exit(1)
     example(args.host, args.user, args.password, args.token)
 

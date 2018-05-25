@@ -5,9 +5,7 @@ example_sync = {
             {
                 "sender": "@alice:example.com",
                 "type": "m.presence",
-                "content": {
-                    "presence": "online"
-                }
+                "content": {"presence": "online"},
             }
         ]
     },
@@ -15,9 +13,7 @@ example_sync = {
         "events": [
             {
                 "type": "org.example.custom.config",
-                "content": {
-                    "custom_config_key": "custom_config_value"
-                }
+                "content": {"custom_config_key": "custom_config_value"},
             }
         ]
     },
@@ -30,11 +26,9 @@ example_sync = {
                             "sender": "@alice:example.com",
                             "type": "m.room.member",
                             "state_key": "@alice:example.com",
-                            "content": {
-                                "membership": "join"
-                            },
+                            "content": {"membership": "join"},
                             "origin_server_ts": 1417731086795,
-                            "event_id": "$66697273743031:example.com"
+                            "event_id": "$66697273743031:example.com",
                         }
                     ]
                 },
@@ -44,63 +38,41 @@ example_sync = {
                             "sender": "@bob:example.com",
                             "type": "m.room.member",
                             "state_key": "@bob:example.com",
-                            "content": {
-                                "membership": "join"
-                            },
-                            "prev_content": {
-                                "membership": "invite"
-                            },
+                            "content": {"membership": "join"},
+                            "prev_content": {"membership": "invite"},
                             "origin_server_ts": 1417731086795,
-                            "event_id": "$7365636s6r6432:example.com"
+                            "event_id": "$7365636s6r6432:example.com",
                         },
                         {
                             "sender": "@alice:example.com",
                             "type": "m.room.message",
                             "age": 124524,
                             "txn_id": "1234",
-                            "content": {
-                                "body": "I am a fish",
-                                "msgtype": "m.text"
-                            },
+                            "content": {"body": "I am a fish", "msgtype": "m.text"},
                             "origin_server_ts": 1417731086797,
-                            "event_id": "$74686972643033:example.com"
-                        }
+                            "event_id": "$74686972643033:example.com",
+                        },
                     ],
                     "limited": True,
-                    "prev_batch": "t34-23535_0_0"
+                    "prev_batch": "t34-23535_0_0",
                 },
                 "ephemeral": {
                     "events": [
                         {
                             "type": "m.typing",
-                            "content": {
-                                "user_ids": [
-                                    "@alice:example.com"
-                                ]
-                            }
+                            "content": {"user_ids": ["@alice:example.com"]},
                         }
                     ]
                 },
                 "account_data": {
                     "events": [
-                        {
-                            "type": "m.tag",
-                            "content": {
-                                "tags": {
-                                    "work": {
-                                        "order": 1
-                                    }
-                                }
-                            }
-                        },
+                        {"type": "m.tag", "content": {"tags": {"work": {"order": 1}}}},
                         {
                             "type": "org.example.custom.room.config",
-                            "content": {
-                                "custom_config_key": "custom_config_value"
-                            }
-                        }
+                            "content": {"custom_config_key": "custom_config_value"},
+                        },
                     ]
-                }
+                },
             }
         },
         "invite": {
@@ -111,52 +83,41 @@ example_sync = {
                             "sender": "@alice:example.com",
                             "type": "m.room.name",
                             "state_key": "",
-                            "content": {
-                                "name": "My Room Name"
-                            }
+                            "content": {"name": "My Room Name"},
                         },
                         {
                             "sender": "@alice:example.com",
                             "type": "m.room.member",
                             "state_key": "@bob:example.com",
-                            "content": {
-                                "membership": "invite"
-                            }
-                        }
+                            "content": {"membership": "invite"},
+                        },
                     ]
                 }
             }
         },
-        "leave": {}
-    }
+        "leave": {},
+    },
 }
 
 example_pl_event = {
     "age": 242352,
     "content": {
         "ban": 50,
-        "events": {
-            "m.room.name": 100,
-            "m.room.power_levels": 100
-        },
+        "events": {"m.room.name": 100, "m.room.power_levels": 100},
         "events_default": 0,
         "invite": 50,
         "kick": 50,
         "redact": 50,
         "state_default": 50,
-        "users": {
-            "@example:localhost": 100
-        },
-        "users_default": 0
+        "users": {"@example:localhost": 100},
+        "users_default": 0,
     },
     "event_id": "$WLGTSEFSEF:localhost",
     "origin_server_ts": 1431961217939,
     "room_id": "!Cuyf34gef24t:localhost",
     "sender": "@example:localhost",
     "state_key": "",
-    "type": "m.room.power_levels"
+    "type": "m.room.power_levels",
 }
 
-example_event_response = {
-    "event_id": "YUwRidLecu"
-}
+example_event_response = {"event_id": "YUwRidLecu"}

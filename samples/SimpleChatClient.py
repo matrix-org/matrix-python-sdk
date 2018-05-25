@@ -22,14 +22,14 @@ from requests.exceptions import MissingSchema
 
 # Called when a message is recieved.
 def on_message(room, event):
-    if event['type'] == "m.room.member":
-        if event['membership'] == "join":
-            print("{0} joined".format(event['content']['displayname']))
-    elif event['type'] == "m.room.message":
-        if event['content']['msgtype'] == "m.text":
-            print("{0}: {1}".format(event['sender'], event['content']['body']))
+    if event["type"] == "m.room.member":
+        if event["membership"] == "join":
+            print("{0} joined".format(event["content"]["displayname"]))
+    elif event["type"] == "m.room.message":
+        if event["content"]["msgtype"] == "m.text":
+            print("{0}: {1}".format(event["sender"], event["content"]["body"]))
     else:
-        print(event['type'])
+        print(event["type"])
 
 
 def main(host, username, password, room_id_alias):
@@ -72,7 +72,7 @@ def main(host, username, password, room_id_alias):
             room.send_text(msg)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logging.basicConfig(level=logging.WARNING)
     host, username, password = samples_common.get_user_details(sys.argv)
 

@@ -48,10 +48,12 @@ class Room(object):
         self._prev_batch = None
         self._members = []
 
-    def set_user_profile(self,
-                         displayname=None,
-                         avatar_url=None,
-                         reason="Changing room profile information"):
+    def set_user_profile(
+        self,
+        displayname=None,
+        avatar_url=None,
+        reason="Changing room profile information",
+    ):
         """Set user profile within a room.
 
         This sets displayname and avatar_url for the logged in user only in a
@@ -67,11 +69,9 @@ class Room(object):
         self.client.api.set_membership(
             self.room_id,
             self.client.user_id,
-            'join',
-            reason, {
-                "displayname": displayname,
-                "avatar_url": avatar_url
-            }
+            "join",
+            reason,
+            {"displayname": displayname, "avatar_url": avatar_url},
         )
 
     @property
@@ -84,19 +84,16 @@ class Room(object):
 
         members = self.get_joined_members()
         # members without me
-        members[:] = [u.get_display_name() for u in members if
-                      self.client.user_id != u.user_id]
+        members[:] = [
+            u.get_display_name() for u in members if self.client.user_id != u.user_id
+        ]
         first_two = members[:2]
         if len(first_two) == 1:
             return first_two[0]
         elif len(members) == 2:
-            return "{0} and {1}".format(
-                first_two[0],
-                first_two[1])
+            return "{0} and {1}".format(first_two[0], first_two[1])
         elif len(members) > 2:
-            return "{0} and {1} others".format(
-                first_two[0],
-                len(members) - 1)
+            return "{0} and {1} others".format(first_two[0], len(members) - 1)
         elif len(first_two) == 0:
             # TODO i18n
             return "Empty room"
@@ -109,10 +106,10 @@ class Room(object):
 
     def get_html_content(self, html, body=None, msgtype="m.text"):
         return {
-            "body": body if body else re.sub('<[^<]+?>', '', html),
+            "body": body if body else re.sub("<[^<]+?>", "", html),
             "msgtype": msgtype,
             "format": "org.matrix.custom.html",
-            "formatted_body": html
+            "formatted_body": html,
         }
 
     def send_html(self, html, body=None, msgtype="m.text"):
@@ -123,24 +120,23 @@ class Room(object):
             body (str): The unformatted body of the message to be sent.
         """
         return self.client.api.send_message_event(
-            self.room_id, "m.room.message", self.get_html_content(html, body, msgtype))
+            self.room_id, "m.room.message", self.get_html_content(html, body, msgtype)
+        )
 
     def set_account_data(self, type, account_data):
         return self.client.api.set_room_account_data(
-            self.client.user_id, self.room_id, type, account_data)
+            self.client.user_id, self.room_id, type, account_data
+        )
 
     def get_tags(self):
         return self.client.api.get_user_tags(self.client.user_id, self.room_id)
 
     def remove_tag(self, tag):
-        return self.client.api.remove_user_tag(
-            self.client.user_id, self.room_id, tag
-        )
+        return self.client.api.remove_user_tag(self.client.user_id, self.room_id, tag)
 
     def add_tag(self, tag, order=None, content=None):
         return self.client.api.add_user_tag(
-            self.client.user_id, self.room_id,
-            tag, order, content
+            self.client.user_id, self.room_id, tag, order, content
         )
 
     def send_emote(self, text):
@@ -160,8 +156,7 @@ class Room(object):
         """
 
         return self.client.api.send_content(
-            self.room_id, url, name, "m.file",
-            extra_information=fileinfo
+            self.room_id, url, name, "m.file", extra_information=fileinfo
         )
 
     def send_notice(self, text):
@@ -182,8 +177,7 @@ class Room(object):
             imageinfo (): Extra information about the image.
         """
         return self.client.api.send_content(
-            self.room_id, url, name, "m.image",
-            extra_information=imageinfo
+            self.room_id, url, name, "m.image", extra_information=imageinfo
         )
 
     def send_location(self, geo_uri, name, thumb_url=None, **thumb_info):
@@ -198,8 +192,9 @@ class Room(object):
             thumb_url (str): URL to the thumbnail of the location.
             thumb_info (): Metadata about the thumbnail, type ImageInfo.
         """
-        return self.client.api.send_location(self.room_id, geo_uri, name,
-                                             thumb_url, thumb_info)
+        return self.client.api.send_location(
+            self.room_id, geo_uri, name, thumb_url, thumb_info
+        )
 
     def send_video(self, url, name, **videoinfo):
         """Send a pre-uploaded video to the room.
@@ -212,8 +207,9 @@ class Room(object):
             name (str): The filename of the video.
             videoinfo (): Extra information about the video.
         """
-        return self.client.api.send_content(self.room_id, url, name, "m.video",
-                                            extra_information=videoinfo)
+        return self.client.api.send_content(
+            self.room_id, url, name, "m.video", extra_information=videoinfo
+        )
 
     def send_audio(self, url, name, **audioinfo):
         """Send a pre-uploaded audio to the room.
@@ -226,8 +222,9 @@ class Room(object):
             name (str): The filename of the audio.
             audioinfo (): Extra information about the audio.
         """
-        return self.client.api.send_content(self.room_id, url, name, "m.audio",
-                                            extra_information=audioinfo)
+        return self.client.api.send_content(
+            self.room_id, url, name, "m.audio", extra_information=audioinfo
+        )
 
     def redact_message(self, event_id, reason=None):
         """Redacts the message with specified event_id for the given reason.
@@ -247,18 +244,15 @@ class Room(object):
         """
         listener_id = uuid4()
         self.listeners.append(
-            {
-                'uid': listener_id,
-                'callback': callback,
-                'event_type': event_type
-            }
+            {"uid": listener_id, "callback": callback, "event_type": event_type}
         )
         return listener_id
 
     def remove_listener(self, uid):
         """Remove listener with given uid."""
-        self.listeners[:] = (listener for listener in self.listeners
-                             if listener['uid'] != uid)
+        self.listeners[:] = (
+            listener for listener in self.listeners if listener["uid"] != uid
+        )
 
     def add_ephemeral_listener(self, callback, event_type=None):
         """Add a callback handler for ephemeral events going to this room.
@@ -271,18 +265,15 @@ class Room(object):
         """
         listener_id = uuid4()
         self.ephemeral_listeners.append(
-            {
-                'uid': listener_id,
-                'callback': callback,
-                'event_type': event_type
-            }
+            {"uid": listener_id, "callback": callback, "event_type": event_type}
         )
         return listener_id
 
     def remove_ephemeral_listener(self, uid):
         """Remove ephemeral listener with given uid."""
-        self.ephemeral_listeners[:] = (listener for listener in self.ephemeral_listeners
-                                       if listener['uid'] != uid)
+        self.ephemeral_listeners[:] = (
+            listener for listener in self.ephemeral_listeners if listener["uid"] != uid
+        )
 
     def add_state_listener(self, callback, event_type=None):
         """Add a callback handler for state events going to this room.
@@ -291,30 +282,25 @@ class Room(object):
             callback (func(roomchunk)): Callback called when an event arrives.
             event_type (str): The event_type to filter for.
         """
-        self.state_listeners.append(
-            {
-                'callback': callback,
-                'event_type': event_type
-            }
-        )
+        self.state_listeners.append({"callback": callback, "event_type": event_type})
 
     def _put_event(self, event):
         self.events.append(event)
         if len(self.events) > self.event_history_limit:
             self.events.pop(0)
-        if 'state_key' in event:
+        if "state_key" in event:
             self._process_state_event(event)
 
         # Dispatch for room-specific listeners
         for listener in self.listeners:
-            if listener['event_type'] is None or listener['event_type'] == event['type']:
-                listener['callback'](self, event)
+            if listener["event_type"] is None or listener["event_type"] == event["type"]:
+                listener["callback"](self, event)
 
     def _put_ephemeral_event(self, event):
         # Dispatch for room-specific listeners
         for listener in self.ephemeral_listeners:
-            if listener['event_type'] is None or listener['event_type'] == event['type']:
-                listener['callback'](self, event)
+            if listener["event_type"] is None or listener["event_type"] == event["type"]:
+                listener["callback"](self, event)
 
     def get_events(self):
         """Get the most recent events for this room."""
@@ -420,10 +406,7 @@ class Room(object):
             state_key (str, optional): A unique key to identify the state.
         """
         return self.client.api.send_state_event(
-            self.room_id,
-            event_type,
-            content,
-            state_key
+            self.room_id, event_type, content, state_key
         )
 
     def update_room_topic(self):
@@ -485,9 +468,11 @@ class Room(object):
         for event in response["chunk"]:
             if event["content"]["membership"] == "join":
                 self._mkmembers(
-                    User(self.client.api,
-                         event["state_key"],
-                         event["content"].get("displayname"))
+                    User(
+                        self.client.api,
+                        event["state_key"],
+                        event["content"].get("displayname"),
+                    )
                 )
         return self._members
 
@@ -506,8 +491,9 @@ class Room(object):
                 order (old to new), otherwise the order will be reversed (new to old).
             limit (int): Number of messages to go back.
         """
-        res = self.client.api.get_room_messages(self.room_id, self.prev_batch,
-                                                direction="b", limit=limit)
+        res = self.client.api.get_room_messages(
+            self.room_id, self.prev_batch, direction="b", limit=limit
+        )
         events = res["chunk"]
         if not reverse:
             events = reversed(events)
@@ -644,19 +630,21 @@ class Room(object):
                 # tracking room members can be large e.g. #matrix:matrix.org
                 if econtent["membership"] == "join":
                     self._mkmembers(
-                        User(self.client.api,
-                             state_event["state_key"],
-                             econtent.get("displayname"))
+                        User(
+                            self.client.api,
+                            state_event["state_key"],
+                            econtent.get("displayname"),
+                        )
                     )
                 elif econtent["membership"] in ("leave", "kick", "invite"):
                     self._rmmembers(state_event["state_key"])
 
         for listener in self.state_listeners:
             if (
-                listener['event_type'] is None or
-                listener['event_type'] == state_event['type']
+                listener["event_type"] is None
+                or listener["event_type"] == state_event["type"]
             ):
-                listener['callback'](state_event)
+                listener["callback"](state_event)
 
     @property
     def prev_batch(self):

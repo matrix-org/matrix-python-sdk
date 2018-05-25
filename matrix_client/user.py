@@ -18,6 +18,7 @@ from .checks import check_user_id
 class User(object):
     """ The User class can be used to call user specific functions.
     """
+
     def __init__(self, api, user_id, displayname=None):
         check_user_id(user_id)
 
