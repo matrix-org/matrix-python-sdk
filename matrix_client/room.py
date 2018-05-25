@@ -46,6 +46,7 @@ class Room(object):
         self.guest_access = None
         self._prev_batch = None
         self._members = []
+        self.encrypted = False
 
     def set_user_profile(self,
                          displayname=None,
@@ -612,6 +613,22 @@ class Room(object):
         try:
             self.client.api.set_guest_access(self.room_id, guest_access)
             self.guest_access = allow_guests
+            return True
+        except MatrixRequestError:
+            return False
+
+    def enable_encryption(self):
+        """Enables encryption in the room.
+
+        NOTE: Once enabled, encryption cannot be disabled.
+
+        Returns:
+        True if successful, False if not
+        """
+        try:
+            self.send_state_event("m.room.encryption",
+                                  {"algorithm": "m.megolm.v1.aes-sha2"})
+            self.encrypted = True
             return True
         except MatrixRequestError:
             return False
