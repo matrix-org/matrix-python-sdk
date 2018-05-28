@@ -654,6 +654,9 @@ class Room(object):
                 self.invite_only = econtent["join_rule"] == "invite"
             elif etype == "m.room.guest_access":
                 self.guest_access = econtent["guest_access"] == "can_join"
+            elif etype == "m.room.encryption":
+                if econtent.get("algorithm") == "m.megolm.v1.aes-sha2":
+                    self.encrypted = True
             elif etype == "m.room.member" and clevel == clevel.ALL:
                 # tracking room members can be large e.g. #matrix:matrix.org
                 if econtent["membership"] == "join":
