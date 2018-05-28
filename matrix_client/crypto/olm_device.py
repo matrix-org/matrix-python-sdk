@@ -8,6 +8,7 @@ from canonicaljson import encode_canonical_json
 from matrix_client.checks import check_user_id
 from matrix_client.crypto.one_time_keys import OneTimeKeysManager
 from matrix_client.crypto.device_list import DeviceList
+from matrix_client.crypto.megolm_outbound_session import MegolmOutboundSession
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +66,7 @@ class OlmDevice(object):
         self.device_keys = defaultdict(dict)
         self.device_list = DeviceList(self, api, self.device_keys)
         self.olm_sessions = defaultdict(list)
+        self.megolm_outbound_sessions = {}
 
     def upload_identity_keys(self):
         """Uploads this device's identity keys to HS.
@@ -389,6 +391,122 @@ class OlmDevice(object):
                     user_devices_no_session[user_id].append(device_id)
         if user_devices_no_session:
             self.olm_start_sessions(user_devices_no_session)
+
+    def megolm_start_session(self, room):
+        """Start a megolm session in a room, and share it with its members.
+
+        Args:
+            room (Room): The room to use.
+
+        Returns:
+            The newly created session.
+        """
+        session = MegolmOutboundSession()
+        self.megolm_outbound_sessions[room.room_id] = session
+        logger.info('Starting a new Meglom outbound session %s in %s.',
+                    session.id, room.room_id)
+
+        users = room.get_joined_members()
+        user_devices = {user.user_id: list(self.device_keys[user.user_id])
+                        for user in users}
+        self.device_list.get_room_device_keys(room)
+        self.megolm_share_session(room.room_id, user_devices, session)
+        return session
+
+    def megolm_share_session(self, room_id, user_devices, session):
+        """Share an already existing outbound megolm session with the specified devices.
+
+        Args:
+            room_id (str): The room corresponding to the session.
+            user_devices (dict): A map from user ids to a list of device ids.
+            session (MegolmOutboundSession): The session object.
+        """
+
+        logger.info('Attempting to share Megolm session %s in %s with %s.',
+                    session.id, room_id, user_devices)
+        self.olm_ensure_sessions(user_devices)
+
+        event = {
+            'algorithm': self._megolm_algorithm,
+            'room_id': room_id,
+            'session_id': session.id,
+            'session_key': session.session_key
+        }
+
+        messages = defaultdict(dict)
+        new_devices = set()
+        for user_id in user_devices:
+            for device_id in user_devices[user_id]:
+                try:
+                    messages[user_id][device_id] = self.olm_build_encrypted_event(
+                        'm.room_key', event, user_id, device_id
+                    )
+                except RuntimeError as e:
+                    logger.warning('Could not share megolm session %s with device %s of '
+                                   'user %s: %s', session.id,
+                                   device_id, user_id, e)
+                # We will not retry to share session with failed devices
+                new_devices.add(device_id)
+        self.api.send_to_device('m.room.encrypted', messages)
+        session.add_devices(new_devices)
+
+    def megolm_share_session_with_new_devices(self, room, session):
+        """Share a megolm session with new devices in a room.
+
+        Args:
+            room (Room): The room corresponding to the session.
+            session (MegolmOutboundSession): The session to share.
+        """
+        user_devices = {}
+        users = room.get_joined_members()
+        for user in users:
+            user_id = user.user_id
+            missing_devices = list(set(self.device_keys[user_id].keys()) -
+                                   self.megolm_outbound_sessions[room.room_id].devices)
+            if missing_devices:
+                user_devices[user_id] = missing_devices
+        if user_devices:
+            logger.info('Sharing existing Megolm outbound session %s with new devices: '
+                        '%s', session.id, user_devices)
+            self.megolm_share_session(room.room_id, user_devices, session)
+
+    def megolm_build_encrypted_event(self, room, event):
+        """Build an encrypted Megolm payload from a plaintext event.
+
+        If no session exists in the room, a new one will be initiated. Also takes care
+        of rotating the session periodically.
+
+        Args:
+            room (Room): The room the event will be sent in.
+            event (dict): Matrix event.
+
+        Returns:
+            The encrypted event, as a dict.
+        """
+        room_id = room.room_id
+
+        session = self.megolm_outbound_sessions.get(room_id)
+        if not session or session.should_rotate():
+            session = self.megolm_start_session(room)
+        else:
+            self.megolm_share_session_with_new_devices(room, session)
+
+        payload = {
+            'type': event['type'],
+            'content': event['content'],
+            'room_id': room_id
+        }
+
+        encrypted_payload = session.encrypt(json.dumps(payload))
+
+        encrypted_event = {
+            'algorithm': self._megolm_algorithm,
+            'sender_key': self.identity_keys['curve25519'],
+            'ciphertext': encrypted_payload,
+            'session_id': session.id,
+            'device_id': self.device_id
+        }
+        return encrypted_event
 
     def sign_json(self, json):
         """Signs a JSON object.
