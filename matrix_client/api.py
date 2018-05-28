@@ -242,9 +242,7 @@ class MatrixHttpApi(object):
             timestamp (int): Set origin_server_ts (For application services only)
         """
         if not txn_id:
-            txn_id = str(self.txn_id) + str(int(time() * 1000))
-
-        self.txn_id = self.txn_id + 1
+            txn_id = self._make_txn_id()
 
         path = "/rooms/%s/send/%s/%s" % (
             quote(room_id), quote(event_type), quote(str(txn_id)),
@@ -265,9 +263,8 @@ class MatrixHttpApi(object):
             timestamp(int): Optional. Set origin_server_ts (For application services only)
         """
         if not txn_id:
-            txn_id = str(self.txn_id) + str(int(time() * 1000))
+            txn_id = self._make_txn_id()
 
-        self.txn_id = self.txn_id + 1
         path = '/rooms/%s/redact/%s/%s' % (
             room_id, event_id, txn_id
         )
@@ -913,3 +910,8 @@ class MatrixHttpApi(object):
         """
         params = {"from": from_token, "to": to_token}
         return self._send("GET", "/keys/changes", query_params=params)
+
+    def _make_txn_id(self):
+        txn_id = str(self.txn_id) + str(int(time() * 1000))
+        self.txn_id += 1
+        return txn_id
