@@ -152,7 +152,8 @@ class MatrixHttpApi(object):
             "type": login_type
         }
         for key in kwargs:
-            content[key] = kwargs[key]
+            if kwargs[key]:
+                content[key] = kwargs[key]
 
         return self._send("POST", "/login", content)
 

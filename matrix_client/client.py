@@ -249,7 +249,7 @@ class MatrixClient(object):
              DeprecationWarning)
         return self.login(username, password, limit, sync=True)
 
-    def login(self, username, password, limit=10, sync=True):
+    def login(self, username, password, limit=10, sync=True, device_id=None):
         """Login to the homeserver.
 
         Args:
@@ -258,6 +258,8 @@ class MatrixClient(object):
             limit (int): Deprecated. How many messages to return when syncing.
                 This will be replaced by a filter API in a later release.
             sync (bool): Optional. Whether to initiate a /sync request after logging in.
+            device_id (str): Optional. ID of the client device. The server will
+                auto-generate a device_id if this is not specified.
 
         Returns:
             str: Access token
@@ -266,7 +268,7 @@ class MatrixClient(object):
             MatrixRequestError
         """
         response = self.api.login(
-            "m.login.password", user=username, password=password
+            "m.login.password", user=username, password=password, device_id=device_id
         )
         self.user_id = response["user_id"]
         self.token = response["access_token"]
