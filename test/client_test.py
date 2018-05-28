@@ -130,6 +130,17 @@ def test_state_event():
     room._process_state_event(ev)
     assert room.guest_access
 
+    # test encryption
+    room.encrypted = False
+    ev["type"] = "m.room.encryption"
+    ev["content"] = {"algorithm": "m.megolm.v1.aes-sha2"}
+    room._process_state_event(ev)
+    assert room.encrypted
+    # encrypted flag must not be cleared on configuration change
+    ev["content"] = {"algorithm": None}
+    room._process_state_event(ev)
+    assert room.encrypted
+
 
 def test_get_user():
     client = MatrixClient("http://example.com")
