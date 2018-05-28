@@ -911,6 +911,24 @@ class MatrixHttpApi(object):
         params = {"from": from_token, "to": to_token}
         return self._send("GET", "/keys/changes", query_params=params)
 
+    def send_to_device(self, event_type, messages, txn_id=None):
+        """Sends send-to-device events to a set of client devices.
+
+        Args:
+            event_type (str): The type of event to send.
+            messages (dict): The messages to send. Format should be
+                <user_id>: {<device_id>: <event_content>}.
+                The device ID may also be '*', meaning all known devices for the user.
+            txn_id (str): Optional. The transaction ID for this event, will be generated
+                automatically otherwise.
+        """
+        txn_id = txn_id if txn_id else self._make_txn_id()
+        return self._send(
+            "PUT",
+            "/sendToDevice/{}/{}".format(event_type, txn_id),
+            content={"messages": messages}
+        )
+
     def _make_txn_id(self):
         txn_id = str(self.txn_id) + str(int(time() * 1000))
         self.txn_id += 1

@@ -214,3 +214,21 @@ class TestKeysApi:
         req = responses.calls[0].request
         assert req.url.split('?')[0] == key_changes_url
         assert req.method == 'GET'
+
+
+class TestSendToDeviceApi:
+    cli = client.MatrixClient("http://example.com")
+    user_id = "@alice:matrix.org"
+    device_id = "JLAFKJWSCS"
+
+    @responses.activate
+    def test_send_to_device(self):
+        txn_id = self.cli.api._make_txn_id()
+        send_to_device_url = \
+            "http://example.com/_matrix/client/r0/sendToDevice/m.new_device/" + txn_id
+        responses.add(responses.PUT, send_to_device_url, body='{}')
+        payload = {self.user_id: {self.device_id: {"test": 1}}}
+        self.cli.api.send_to_device("m.new_device", payload, txn_id)
+        req = responses.calls[0].request
+        assert req.url == send_to_device_url
+        assert req.method == 'PUT'
