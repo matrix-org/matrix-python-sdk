@@ -396,3 +396,23 @@ class TestOlmDevice:
         with pytest.raises(RuntimeError):
             self.device.olm_decrypt_event(encrypted_event, self.alice)
         self.device.identity_keys['ed25519'] = backup
+
+    @responses.activate
+    def test_olm_ensure_sessions(self):
+        claim_url = HOSTNAME + MATRIX_V2_API_PATH + '/keys/claim'
+        responses.add(responses.POST, claim_url, json=example_claim_keys_response)
+        self.device.olm_sessions.clear()
+        alice_device_id = 'JLAFKJWSCS'
+        alice_curve_key = 'mmFRSHuJVq3aTudx3KB3w5ZvSFQhgEcy8d+m+vkEfUQ'
+        self.device.device_keys[self.alice][alice_device_id] = {
+            'curve25519': alice_curve_key,
+            'ed25519': '4VjV3OhFUxWFAcO5YOaQVmTIn29JdRmtNh9iAxoyhkc'
+        }
+        user_devices = {self.alice: [alice_device_id]}
+
+        self.device.olm_ensure_sessions(user_devices)
+        assert self.device.olm_sessions[alice_curve_key]
+        assert len(responses.calls) == 1
+
+        self.device.olm_ensure_sessions(user_devices)
+        assert len(responses.calls) == 1
