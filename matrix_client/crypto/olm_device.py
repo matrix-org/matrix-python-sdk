@@ -19,6 +19,10 @@ class OlmDevice(object):
         device_id (str): Must match the one used when logging in.
     """
 
+    _olm_algorithm = 'm.olm.v1.curve25519-aes-sha2'
+    _megolm_algorithm = 'm.megolm.v1.aes-sha2'
+    _algorithms = [_olm_algorithm, _megolm_algorithm]
+
     def __init__(self, api, user_id, device_id):
         self.api = api
         check_user_id(user_id)
@@ -26,6 +30,25 @@ class OlmDevice(object):
         self.device_id = device_id
         self.olm_account = olm.Account()
         logger.info('Initialised Olm Device.')
+        self.identity_keys = self.olm_account.identity_keys
+        self.one_time_key_counts = {}
+
+    def upload_identity_keys(self):
+        """Uploads this device's identity keys to HS.
+
+        This device must be the one used when logging in.
+        """
+        device_keys = {
+            'user_id': self.user_id,
+            'device_id': self.device_id,
+            'algorithms': self._algorithms,
+            'keys': {'{}:{}'.format(alg, self.device_id): key
+                     for alg, key in self.identity_keys.items()}
+        }
+        self.sign_json(device_keys)
+        ret = self.api.upload_keys(device_keys=device_keys)
+        self.one_time_key_counts = ret['one_time_key_counts']
+        logger.info('Uploaded identity keys.')
 
     def sign_json(self, json):
         """Signs a JSON object.
