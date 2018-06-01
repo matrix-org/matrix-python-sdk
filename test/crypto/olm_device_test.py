@@ -1,10 +1,15 @@
 import pytest
 pytest.importorskip("olm")  # noqa
 
+import json
 from copy import deepcopy
 
+import responses
+
+from matrix_client.api import MATRIX_V2_API_PATH
 from matrix_client.client import MatrixClient
 from matrix_client.crypto.olm_device import OlmDevice
+from test.response_examples import example_key_upload_response
 
 HOSTNAME = 'http://example.com'
 
@@ -75,3 +80,94 @@ class TestOlmDevice:
         signed_payload = self.device.sign_json(example_payload)
         assert self.device.verify_json(signed_payload, self.signing_key, self.user_id,
                                        self.device_id)
+
+    @responses.activate
+    def test_upload_identity_keys(self):
+        upload_url = HOSTNAME + MATRIX_V2_API_PATH + '/keys/upload'
+        self.device.one_time_keys_manager.server_counts = {}
+        resp = deepcopy(example_key_upload_response)
+
+        responses.add(responses.POST, upload_url, json=resp)
+
+        assert self.device.upload_identity_keys() is None
+        assert self.device.one_time_keys_manager.server_counts == \
+            resp['one_time_key_counts']
+
+        req_device_keys = json.loads(responses.calls[0].request.body)['device_keys']
+        assert req_device_keys['user_id'] == self.user_id
+        assert req_device_keys['device_id'] == self.device_id
+        assert req_device_keys['algorithms'] == self.device._algorithms
+        assert 'keys' in req_device_keys
+        assert 'signatures' in req_device_keys
+        assert self.device.verify_json(req_device_keys, self.signing_key, self.user_id,
+                                       self.device_id)
+
+    @pytest.mark.parametrize('proportion', [-1, 2])
+    def test_upload_identity_keys_invalid(self, proportion):
+        with pytest.raises(ValueError):
+            OlmDevice(self.cli.api,
+                      self.user_id,
+                      self.device_id,
+                      signed_keys_proportion=proportion)
+
+    @responses.activate
+    @pytest.mark.parametrize('proportion', [0, 1, 0.5, 0.33])
+    def test_upload_one_time_keys(self, proportion):
+        upload_url = HOSTNAME + MATRIX_V2_API_PATH + '/keys/upload'
+        resp = deepcopy(example_key_upload_response)
+        counts = resp['one_time_key_counts']
+        counts['curve25519'] = counts['signed_curve25519'] = 10
+        responses.add(responses.POST, upload_url, json=resp)
+
+        device = OlmDevice(
+            self.cli.api, self.user_id, self.device_id, signed_keys_proportion=proportion)
+        assert not device.one_time_keys_manager.server_counts
+
+        max_keys = device.olm_account.max_one_time_keys // 2
+        signed_keys_to_upload = \
+            max(round(max_keys * proportion) - counts['signed_curve25519'], 0)
+        unsigned_keys_to_upload = \
+            max(round(max_keys * (1 - proportion)) - counts['curve25519'], 0)
+        expected_return = {}
+        if signed_keys_to_upload:
+            expected_return['signed_curve25519'] = signed_keys_to_upload
+        if unsigned_keys_to_upload:
+            expected_return['curve25519'] = unsigned_keys_to_upload
+
+        assert device.upload_one_time_keys() == expected_return
+        assert len(responses.calls) == 2
+        assert device.one_time_keys_manager.server_counts == resp['one_time_key_counts']
+
+        req_otk = json.loads(responses.calls[1].request.body)['one_time_keys']
+        assert len(req_otk) == unsigned_keys_to_upload + signed_keys_to_upload
+        assert len([key for key in req_otk if not key.startswith('signed')]) == \
+            unsigned_keys_to_upload
+        assert len([key for key in req_otk if key.startswith('signed')]) == \
+            signed_keys_to_upload
+        for k in req_otk:
+            if k == 'signed_curve25519':
+                device.verify_json(req_otk[k], device.signing_key, device.user_id,
+                                   device.device_id)
+
+    @responses.activate
+    def test_upload_one_time_keys_enough(self):
+        upload_url = HOSTNAME + MATRIX_V2_API_PATH + '/keys/upload'
+        self.device.one_time_keys_manager.server_counts = {}
+        limit = self.device.olm_account.max_one_time_keys // 2
+        resp = {'one_time_key_counts': {'signed_curve25519': limit}}
+        responses.add(responses.POST, upload_url, json=resp)
+
+        assert not self.device.upload_one_time_keys()
+
+    @responses.activate
+    def test_upload_one_time_keys_force_update(self):
+        upload_url = HOSTNAME + MATRIX_V2_API_PATH + '/keys/upload'
+        self.device.one_time_keys_manager.server_counts = {'curve25519': 10}
+        resp = deepcopy(example_key_upload_response)
+        responses.add(responses.POST, upload_url, json=resp)
+
+        self.device.upload_one_time_keys()
+        assert len(responses.calls) == 1
+
+        self.device.upload_one_time_keys(force_update=True)
+        assert len(responses.calls) == 3
