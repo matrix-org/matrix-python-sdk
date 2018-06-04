@@ -13,12 +13,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
 import re
 from uuid import uuid4
 
 from .checks import check_room_id
 from .user import User
 from .errors import MatrixRequestError, MatrixNoEncryptionError
+
+logger = logging.getLogger(__name__)
 
 
 class Room(object):
@@ -332,6 +335,12 @@ class Room(object):
         )
 
     def _put_event(self, event):
+        if self.encrypted and self.client._encryption:
+            if event['type'] == 'm.room.encrypted':
+                try:
+                    self.client.olm_device.megolm_decrypt_event(event)
+                except RuntimeError as e:
+                    logger.warning(e)
         self.events.append(event)
         if len(self.events) > self.event_history_limit:
             self.events.pop(0)
