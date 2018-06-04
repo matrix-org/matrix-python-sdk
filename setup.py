@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from setuptools import setup
+from setuptools import setup, find_packages
 import codecs
 import os
 
@@ -32,7 +32,7 @@ setup(
     author='The Matrix.org Team',
     author_email='team@matrix.org',
     url='https://github.com/matrix-org/matrix-python-sdk',
-    packages=['matrix_client'],
+    packages=find_packages(),
     license='Apache License, Version 2.0',
     classifiers=[
         'Development Status :: 3 - Alpha',
