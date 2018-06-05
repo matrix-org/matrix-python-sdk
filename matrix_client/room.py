@@ -18,7 +18,7 @@ from uuid import uuid4
 
 from .checks import check_room_id
 from .user import User
-from .errors import MatrixRequestError
+from .errors import MatrixRequestError, MatrixNoEncryptionError
 
 
 class Room(object):
@@ -102,7 +102,10 @@ class Room(object):
 
     def send_text(self, text):
         """Send a plain text message to the room."""
-        return self.client.api.send_message(self.room_id, text)
+        if self.encrypted and self.client._encryption:
+            return self.send_encrypted(self.client.api.get_text_body(text))
+        else:
+            return self.client.api.send_message(self.room_id, text)
 
     def get_html_content(self, html, body=None, msgtype="m.text"):
         return {
@@ -119,8 +122,12 @@ class Room(object):
             html (str): The html formatted message to be sent.
             body (str): The unformatted body of the message to be sent.
         """
-        return self.client.api.send_message_event(
-            self.room_id, "m.room.message", self.get_html_content(html, body, msgtype))
+        content = self.get_html_content(html, body, msgtype)
+        if self.encrypted and self.client._encryption:
+            return self.send_encrypted(content)
+        else:
+            return self.client.api.send_message_event(
+                self.room_id, "m.room.message", content)
 
     def set_account_data(self, type, account_data):
         return self.client.api.set_room_account_data(
@@ -142,7 +149,10 @@ class Room(object):
 
     def send_emote(self, text):
         """Send an emote (/me style) message to the room."""
-        return self.client.api.send_emote(self.room_id, text)
+        if self.encrypted and self.client._encryption:
+            return self.send_encrypted(self.client.api.get_emote_body(text))
+        else:
+            return self.client.api.send_emote(self.room_id, text)
 
     def send_file(self, url, name, **fileinfo):
         """Send a pre-uploaded file to the room.
@@ -163,7 +173,10 @@ class Room(object):
 
     def send_notice(self, text):
         """Send a notice (from bot) message to the room."""
-        return self.client.api.send_notice(self.room_id, text)
+        if self.encrypted and self.client._encryption:
+            return self.send_encrypted(self.client.api.get_notice_body(text))
+        else:
+            return self.client.api.send_notice(self.room_id, text)
 
     # See http://matrix.org/docs/spec/r0.0.1/client_server.html#m-image for the
     # imageinfo args.
@@ -195,8 +208,13 @@ class Room(object):
             thumb_url (str): URL to the thumbnail of the location.
             thumb_info (): Metadata about the thumbnail, type ImageInfo.
         """
-        return self.client.api.send_location(self.room_id, geo_uri, name,
-                                             thumb_url, thumb_info)
+        if self.encrypted and self.client._encryption:
+            content = self.client.api.get_location_body(
+                geo_uri, name, thumb_url, thumb_info)
+            return self.send_encrypted(content)
+        else:
+            return self.client.api.send_location(self.room_id, geo_uri, name,
+                                                 thumb_url, thumb_info)
 
     def send_video(self, url, name, **videoinfo):
         """Send a pre-uploaded video to the room.
@@ -225,6 +243,22 @@ class Room(object):
         """
         return self.client.api.send_content(self.room_id, url, name, "m.audio",
                                             extra_information=audioinfo)
+
+    def send_encrypted(self, content):
+        """Send an arbitrary encrypted message to the room.
+
+        Args:
+            content (dict): The content of a m.room.message event.
+
+        Raises:
+            ``MatrixNoEncryptionError`` if encryption is not enabled in client, or if
+            the room is unencrypted.
+        """
+        if not self.client._encryption:
+            raise MatrixNoEncryptionError('Encryption is not enabled in client.')
+        if not self.encrypted:
+            raise MatrixNoEncryptionError('Encryption is not enabled in the room.')
+        return self.client.olm_device.send_encrypted_message(self, content)
 
     def redact_message(self, event_id, reason=None):
         """Redacts the message with specified event_id for the given reason.

@@ -46,3 +46,10 @@ class MatrixHttpLibError(MatrixError):
                                                                   original_exception)
         )
         self.original_exception = original_exception
+
+
+class MatrixNoEncryptionError(MatrixError):
+    """Encryption was not available."""
+
+    def __init__(self, content=""):
+        super(MatrixNoEncryptionError, self).__init__(content)

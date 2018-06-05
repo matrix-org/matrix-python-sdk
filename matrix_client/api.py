@@ -343,6 +343,18 @@ class MatrixHttpApi(object):
         return self.send_message_event(room_id, "m.room.message", content_pack,
                                        timestamp=timestamp)
 
+    def get_location_body(self, geo_uri, name, thumb_url=None, thumb_info=None):
+        content_pack = {
+            "geo_uri": geo_uri,
+            "msgtype": "m.location",
+            "body": name,
+        }
+        if thumb_url:
+            content_pack["thumbnail_url"] = thumb_url
+        if thumb_info:
+            content_pack["thumbnail_info"] = thumb_info
+        return content_pack
+
     # http://matrix.org/docs/spec/client_server/r0.2.0.html#m-location
     def send_location(self, room_id, geo_uri, name, thumb_url=None, thumb_info=None,
                       timestamp=None):
@@ -356,15 +368,8 @@ class MatrixHttpApi(object):
             thumb_info (dict): Metadata about the thumbnail, type ImageInfo.
             timestamp (int): Set origin_server_ts (For application services only)
         """
-        content_pack = {
-            "geo_uri": geo_uri,
-            "msgtype": "m.location",
-            "body": name,
-        }
-        if thumb_url:
-            content_pack["thumbnail_url"] = thumb_url
-        if thumb_info:
-            content_pack["thumbnail_info"] = thumb_info
+        content_pack = self.get_location_body(
+            geo_uri, name, thumb_url, thumb_info)
 
         return self.send_message_event(room_id, "m.room.message", content_pack,
                                        timestamp=timestamp)
@@ -405,12 +410,11 @@ class MatrixHttpApi(object):
             text_content (str): The m.notice body to send.
             timestamp (int): Set origin_server_ts (For application services only)
         """
-        body = {
-            "msgtype": "m.notice",
-            "body": text_content
-        }
-        return self.send_message_event(room_id, "m.room.message", body,
-                                       timestamp=timestamp)
+        return self.send_message_event(
+            room_id, "m.room.message",
+            self.get_notice_body(text_content),
+            timestamp=timestamp
+        )
 
     def get_room_messages(self, room_id, token, direction, limit=10, to=None):
         """Perform GET /rooms/{roomId}/messages.
@@ -672,6 +676,12 @@ class MatrixHttpApi(object):
     def get_emote_body(self, text):
         return {
             "msgtype": "m.emote",
+            "body": text
+        }
+
+    def get_notice_body(self, text):
+        return {
+            "msgtype": "m.notice",
             "body": text
         }
 
