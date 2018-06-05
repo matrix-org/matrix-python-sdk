@@ -242,9 +242,7 @@ class MatrixHttpApi(object):
             timestamp (int): Set origin_server_ts (For application services only)
         """
         if not txn_id:
-            txn_id = str(self.txn_id) + str(int(time() * 1000))
-
-        self.txn_id = self.txn_id + 1
+            txn_id = self._make_txn_id()
 
         path = "/rooms/%s/send/%s/%s" % (
             quote(room_id), quote(event_type), quote(str(txn_id)),
@@ -265,9 +263,8 @@ class MatrixHttpApi(object):
             timestamp(int): Optional. Set origin_server_ts (For application services only)
         """
         if not txn_id:
-            txn_id = str(self.txn_id) + str(int(time() * 1000))
+            txn_id = self._make_txn_id()
 
-        self.txn_id = self.txn_id + 1
         path = '/rooms/%s/redact/%s/%s' % (
             room_id, event_id, txn_id
         )
@@ -836,3 +833,103 @@ class MatrixHttpApi(object):
             "devices": devices
         }
         return self._send("POST", "/delete_devices", content=content)
+
+    def upload_keys(self, device_keys=None, one_time_keys=None):
+        """Publishes end-to-end encryption keys for the device.
+
+        Said device must be the one used when logging in.
+
+        Args:
+            device_keys (dict): Optional. Identity keys for the device. The required
+                keys are:
+
+                | user_id (str): The ID of the user the device belongs to. Must match
+                    the user ID used when logging in.
+                | device_id (str): The ID of the device these keys belong to. Must match
+                    the device ID used when logging in.
+                | algorithms (list<str>): The encryption algorithms supported by this
+                    device.
+                | keys (dict): Public identity keys. Should be formatted as
+                    <algorithm:device_id>: <key>.
+                | signatures (dict): Signatures for the device key object. Should be
+                    formatted as <user_id>: {<algorithm:device_id>: <key>}
+
+            one_time_keys (dict): Optional. One-time public keys. Should be
+                formatted as <algorithm:key_id>: <key>, the key format being
+                determined by the algorithm.
+        """
+        content = {}
+        if device_keys:
+            content["device_keys"] = device_keys
+        if one_time_keys:
+            content["one_time_keys"] = one_time_keys
+        return self._send("POST", "/keys/upload", content=content)
+
+    def query_keys(self, user_devices, timeout=None, token=None):
+        """Query HS for public keys by user and optionally device.
+
+        Args:
+            user_devices (dict): The devices whose keys to download. Should be
+                formatted as <user_id>: [<device_ids>]. No device_ids indicates
+                all devices for the corresponding user.
+            timeout (int): Optional. The time (in milliseconds) to wait when
+                downloading keys from remote servers.
+            token (str): Optional. If the client is fetching keys as a result of
+                a device update received in a sync request, this should be the
+                'since' token of that sync request, or any later sync token.
+        """
+        content = {"device_keys": user_devices}
+        if timeout:
+            content["timeout"] = timeout
+        if token:
+            content["token"] = token
+        return self._send("POST", "/keys/query", content=content)
+
+    def claim_keys(self, key_request, timeout=None):
+        """Claims one-time keys for use in pre-key messages.
+
+        Args:
+            key_request (dict): The keys to be claimed. Format should be
+                <user_id>: { <device_id>: <algorithm> }.
+            timeout (int): Optional. The time (in milliseconds) to wait when
+                downloading keys from remote servers.
+        """
+        content = {"one_time_keys": key_request}
+        if timeout:
+            content["timeout"] = timeout
+        return self._send("POST", "/keys/claim", content=content)
+
+    def key_changes(self, from_token, to_token):
+        """Gets a list of users who have updated their device identity keys.
+
+        Args:
+            from_token (str): The desired start point of the list. Should be the
+                next_batch field from a response to an earlier call to /sync.
+            to_token (str): The desired end point of the list. Should be the next_batch
+                field from a recent call to /sync - typically the most recent such call.
+        """
+        params = {"from": from_token, "to": to_token}
+        return self._send("GET", "/keys/changes", query_params=params)
+
+    def send_to_device(self, event_type, messages, txn_id=None):
+        """Sends send-to-device events to a set of client devices.
+
+        Args:
+            event_type (str): The type of event to send.
+            messages (dict): The messages to send. Format should be
+                <user_id>: {<device_id>: <event_content>}.
+                The device ID may also be '*', meaning all known devices for the user.
+            txn_id (str): Optional. The transaction ID for this event, will be generated
+                automatically otherwise.
+        """
+        txn_id = txn_id if txn_id else self._make_txn_id()
+        return self._send(
+            "PUT",
+            "/sendToDevice/{}/{}".format(event_type, txn_id),
+            content={"messages": messages}
+        )
+
+    def _make_txn_id(self):
+        txn_id = str(self.txn_id) + str(int(time() * 1000))
+        self.txn_id += 1
+        return txn_id
