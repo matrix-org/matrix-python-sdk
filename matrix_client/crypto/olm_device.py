@@ -522,6 +522,21 @@ class OlmDevice(object):
         except KeyError:
             pass
 
+    def send_encrypted_message(self, room, content):
+        """Send a m.room.encrypted event in a room.
+
+        Args:
+            room (Room): The room to use.
+            content (dict): The content of the event, will be encrypted.
+
+        Raises:
+            MatrixRequestError if there was an error sending the event.
+        """
+        event = {'content': content, 'room_id': room.room_id, 'type': 'm.room.message'}
+        encrypted_event = self.megolm_build_encrypted_event(room, event)
+        return self.api.send_message_event(
+            room.room_id, 'm.room.encrypted', encrypted_event)
+
     def sign_json(self, json):
         """Signs a JSON object.
 
