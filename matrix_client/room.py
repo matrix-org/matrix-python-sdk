@@ -558,12 +558,13 @@ class Room(object):
                 default level as specified by events_default or state_default.
             **kwargs: Key/value pairs specifying the power levels required for
                     various actions:
-                        events_default(int): Default level for sending message events
-                        state_default(int): Default level for sending state events
-                        invite(int): Inviting a user
-                        redact(int): Redacting an event
-                        ban(int): Banning a user
-                        kick(int): Kicking a user
+
+                    - events_default(int): Default level for sending message events
+                    - state_default(int): Default level for sending state events
+                    - invite(int): Inviting a user
+                    - redact(int): Redacting an event
+                    - ban(int): Banning a user
+                    - kick(int): Kicking a user
 
         Returns:
             True if successful, False if not
