@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>matrix_client.client &mdash; Matrix Python SDK v0.0.6</title>
+  <title>matrix_client.client &mdash; Matrix Python SDK v0.2.0</title>
   
 
   
@@ -24,26 +24,17 @@
 
   
 
-  
-  
-    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../../genindex.html"/>
-        <link rel="search" title="Search" href="../../search.html"/>
-    <link rel="top" title="Matrix Python SDK v0.0.6" href="../../index.html"/>
-        <link rel="up" title="Module code" href="../index.html"/> 
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
 
   
   <script src="../../_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -65,7 +56,7 @@
             
             
               <div class="version">
-                0.0.6
+                0.2.0
               </div>
             
           
@@ -89,8 +80,10 @@
               
             
             
-              <!-- Local TOC -->
-              <div class="local-toc"></div>
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../matrix_client.html">matrix_client package</a></li>
+</ul>
+
             
           
         </div>
@@ -100,7 +93,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../index.html">Matrix Python SDK</a>
@@ -108,9 +101,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -140,8 +134,6 @@
     
       <li class="wy-breadcrumbs-aside">
         
-            
-        
       </li>
     
   </ul>
@@ -167,66 +159,104 @@
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="kn">from</span> <span class="nn">.api</span> <span class="k">import</span> <span class="n">MatrixHttpApi</span>
-<span class="kn">from</span> <span class="nn">.errors</span> <span class="k">import</span> <span class="n">MatrixRequestError</span><span class="p">,</span> <span class="n">MatrixUnexpectedResponse</span>
-<span class="kn">from</span> <span class="nn">.room</span> <span class="k">import</span> <span class="n">Room</span>
-<span class="kn">from</span> <span class="nn">.user</span> <span class="k">import</span> <span class="n">User</span>
-<span class="kn">from</span> <span class="nn">threading</span> <span class="k">import</span> <span class="n">Thread</span>
-<span class="kn">from</span> <span class="nn">time</span> <span class="k">import</span> <span class="n">sleep</span>
-<span class="kn">from</span> <span class="nn">uuid</span> <span class="k">import</span> <span class="n">uuid4</span>
+<span class="kn">from</span> <span class="nn">.api</span> <span class="kn">import</span> <span class="n">MatrixHttpApi</span>
+<span class="kn">from</span> <span class="nn">.checks</span> <span class="kn">import</span> <span class="n">check_user_id</span>
+<span class="kn">from</span> <span class="nn">.errors</span> <span class="kn">import</span> <span class="n">MatrixRequestError</span><span class="p">,</span> <span class="n">MatrixUnexpectedResponse</span>
+<span class="kn">from</span> <span class="nn">.room</span> <span class="kn">import</span> <span class="n">Room</span>
+<span class="kn">from</span> <span class="nn">.user</span> <span class="kn">import</span> <span class="n">User</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Thread</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">sleep</span>
+<span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">uuid4</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
+<span class="c1"># Cache constants used when instantiating Matrix Client to specify level of caching</span>
+<div class="viewcode-block" id="CACHE"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.CACHE">[docs]</a><span class="k">class</span> <span class="nc">CACHE</span><span class="p">(</span><span class="nb">int</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<span class="n">CACHE</span><span class="o">.</span><span class="n">NONE</span> <span class="o">=</span> <span class="n">CACHE</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">CACHE</span><span class="o">.</span><span class="n">SOME</span> <span class="o">=</span> <span class="n">CACHE</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">CACHE</span><span class="o">.</span><span class="n">ALL</span> <span class="o">=</span> <span class="n">CACHE</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="c1"># TODO: rather than having CACHE.NONE as kwarg to MatrixClient, there should be a separate</span>
+<span class="c1"># LightweightMatrixClient that only implements global listeners and doesn&#39;t hook into</span>
+<span class="c1"># User, Room, etc. classes at all.</span>
+
+
 <div class="viewcode-block" id="MatrixClient"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient">[docs]</a><span class="k">class</span> <span class="nc">MatrixClient</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The client API for Matrix. For the raw HTTP calls, see MatrixHttpApi.</span>
 
-<span class="sd">    Usage (new user):</span>
-<span class="sd">        client = MatrixClient(&quot;https://matrix.org&quot;)</span>
-<span class="sd">        token = client.register_with_password(username=&quot;foobar&quot;,</span>
-<span class="sd">            password=&quot;monkey&quot;)</span>
-<span class="sd">        room = client.create_room(&quot;myroom&quot;)</span>
-<span class="sd">        room.send_image(file_like_object)</span>
+<span class="sd">    Args:</span>
+<span class="sd">        base_url (str): The url of the HS preceding /_matrix.</span>
+<span class="sd">            e.g. (ex: https://localhost:8008 )</span>
+<span class="sd">        token (Optional[str]): If you have an access token</span>
+<span class="sd">            supply it here.</span>
+<span class="sd">        user_id (Optional[str]): You must supply the user_id</span>
+<span class="sd">            (as obtained when initially logging in to obtain</span>
+<span class="sd">            the token) if supplying a token; otherwise, ignored.</span>
+<span class="sd">        valid_cert_check (bool): Check the homeservers</span>
+<span class="sd">            certificate on connections?</span>
 
-<span class="sd">    Usage (logged in):</span>
-<span class="sd">        client = MatrixClient(&quot;https://matrix.org&quot;, token=&quot;foobar&quot;,</span>
-<span class="sd">            user_id=&quot;@foobar:matrix.org&quot;)</span>
-<span class="sd">        rooms = client.get_rooms()  # NB: From initial sync</span>
-<span class="sd">        client.add_listener(func)  # NB: event stream callback</span>
-<span class="sd">        rooms[0].add_listener(func)  # NB: callbacks just for this room.</span>
-<span class="sd">        room = client.join_room(&quot;#matrix:matrix.org&quot;)</span>
-<span class="sd">        response = room.send_text(&quot;Hello!&quot;)</span>
-<span class="sd">        response = room.kick(&quot;@bob:matrix.org&quot;)</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        `MatrixClient`</span>
 
-<span class="sd">    Incoming event callbacks (scopes):</span>
+<span class="sd">    Raises:</span>
+<span class="sd">        `MatrixRequestError`, `ValueError`</span>
 
-<span class="sd">        def user_callback(user, incoming_event):</span>
-<span class="sd">            pass</span>
+<span class="sd">    Examples:</span>
 
-<span class="sd">        def room_callback(room, incoming_event):</span>
-<span class="sd">            pass</span>
+<span class="sd">        Create a new user and send a message::</span>
 
-<span class="sd">        def global_callback(incoming_event):</span>
-<span class="sd">            pass</span>
+<span class="sd">            client = MatrixClient(&quot;https://matrix.org&quot;)</span>
+<span class="sd">            token = client.register_with_password(username=&quot;foobar&quot;,</span>
+<span class="sd">                password=&quot;monkey&quot;)</span>
+<span class="sd">            room = client.create_room(&quot;myroom&quot;)</span>
+<span class="sd">            room.send_image(file_like_object)</span>
 
+<span class="sd">        Send a message with an already logged in user::</span>
+
+<span class="sd">            client = MatrixClient(&quot;https://matrix.org&quot;, token=&quot;foobar&quot;,</span>
+<span class="sd">                user_id=&quot;@foobar:matrix.org&quot;)</span>
+<span class="sd">            client.add_listener(func)  # NB: event stream callback</span>
+<span class="sd">            client.rooms[0].add_listener(func)  # NB: callbacks just for this room.</span>
+<span class="sd">            room = client.join_room(&quot;#matrix:matrix.org&quot;)</span>
+<span class="sd">            response = room.send_text(&quot;Hello!&quot;)</span>
+<span class="sd">            response = room.kick(&quot;@bob:matrix.org&quot;)</span>
+
+<span class="sd">        Incoming event callbacks (scopes)::</span>
+
+<span class="sd">            def user_callback(user, incoming_event):</span>
+<span class="sd">                pass</span>
+
+<span class="sd">            def room_callback(room, incoming_event):</span>
+<span class="sd">                pass</span>
+
+<span class="sd">            def global_callback(incoming_event):</span>
+<span class="sd">                pass</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_url</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">user_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">valid_cert_check</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_url</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">user_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">valid_cert_check</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">sync_filter_limit</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+                 <span class="n">cache_level</span><span class="o">=</span><span class="n">CACHE</span><span class="o">.</span><span class="n">ALL</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Create a new Matrix Client object.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            base_url (str): The url of the HS preceding /_matrix.</span>
 <span class="sd">                e.g. (ex: https://localhost:8008 )</span>
-<span class="sd">            token (Optional[str]): If you have an access token</span>
+<span class="sd">            token (str): Optional. If you have an access token</span>
 <span class="sd">                supply it here.</span>
-<span class="sd">            user_id (Optional[str]): You must supply the user_id</span>
+<span class="sd">            user_id (str): Optional. You must supply the user_id</span>
 <span class="sd">                (as obtained when initially logging in to obtain</span>
 <span class="sd">                the token) if supplying a token; otherwise, ignored.</span>
 <span class="sd">            valid_cert_check (bool): Check the homeservers</span>
 <span class="sd">                certificate on connections?</span>
+<span class="sd">            cache_level (CACHE): One of CACHE.NONE, CACHE.SOME, or</span>
+<span class="sd">                CACHE.ALL (defined in module namespace).</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            MatrixClient</span>
@@ -234,20 +264,29 @@
 <span class="sd">        Raises:</span>
 <span class="sd">            MatrixRequestError, ValueError</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">token</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">user_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">token</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">user_id</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;must supply user_id along with token&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">api</span> <span class="o">=</span> <span class="n">MatrixHttpApi</span><span class="p">(</span><span class="n">base_url</span><span class="p">,</span> <span class="n">token</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">validate_certificate</span><span class="p">(</span><span class="n">valid_cert_check</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">listeners</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">presence_listeners</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">invite_listeners</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">left_listeners</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ephemeral_listeners</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cache_level</span><span class="p">,</span> <span class="n">CACHE</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache_level</span> <span class="o">=</span> <span class="n">cache_level</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache_level</span> <span class="o">=</span> <span class="n">CACHE</span><span class="o">.</span><span class="n">ALL</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;cache_level must be one of CACHE.NONE, CACHE.SOME, CACHE.ALL&quot;</span>
+            <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">sync_token</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sync_filter</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sync_thread</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">should_listen</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sync_token</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sync_filter</span> <span class="o">=</span> <span class="s1">&#39;{ &quot;room&quot;: { &quot;timeline&quot; : { &quot;limit&quot; : </span><span class="si">%i</span><span class="s1"> } } }&#39;</span> \
+            <span class="o">%</span> <span class="n">sync_filter_limit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sync_thread</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">should_listen</span> <span class="o">=</span> <span class="bp">False</span>
 
         <span class="sd">&quot;&quot;&quot; Time to wait before attempting a /sync request after failing.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bad_sync_timeout_limit</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span>
@@ -255,22 +294,43 @@
             <span class="c1"># room_id: Room</span>
         <span class="p">}</span>
         <span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+            <span class="n">check_user_id</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span> <span class="o">=</span> <span class="n">user_id</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_sync</span><span class="p">()</span>
 
 <div class="viewcode-block" id="MatrixClient.get_sync_token"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.get_sync_token">[docs]</a>    <span class="k">def</span> <span class="nf">get_sync_token</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">warn</span><span class="p">(</span><span class="s2">&quot;get_sync_token is deprecated. Directly access MatrixClient.sync_token.&quot;</span><span class="p">,</span>
+             <span class="ne">DeprecationWarning</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sync_token</span></div>
 
 <div class="viewcode-block" id="MatrixClient.set_sync_token"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.set_sync_token">[docs]</a>    <span class="k">def</span> <span class="nf">set_sync_token</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token</span><span class="p">):</span>
+        <span class="n">warn</span><span class="p">(</span><span class="s2">&quot;set_sync_token is deprecated. Directly access MatrixClient.sync_token.&quot;</span><span class="p">,</span>
+             <span class="ne">DeprecationWarning</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sync_token</span> <span class="o">=</span> <span class="n">token</span></div>
 
-<div class="viewcode-block" id="MatrixClient.register_with_password"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.register_with_password">[docs]</a>    <span class="k">def</span> <span class="nf">register_with_password</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<div class="viewcode-block" id="MatrixClient.set_user_id"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.set_user_id">[docs]</a>    <span class="k">def</span> <span class="nf">set_user_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+        <span class="n">warn</span><span class="p">(</span><span class="s2">&quot;set_user_id is deprecated. Directly access MatrixClient.user_id.&quot;</span><span class="p">,</span>
+             <span class="ne">DeprecationWarning</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span> <span class="o">=</span> <span class="n">user_id</span></div>
+
+    <span class="c1"># TODO: combine register methods into single register method controlled by kwargs</span>
+<div class="viewcode-block" id="MatrixClient.register_as_guest"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.register_as_guest">[docs]</a>    <span class="k">def</span> <span class="nf">register_as_guest</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Register a guest account on this HS.</span>
+<span class="sd">        Note: HS must have guest registration enabled.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            str: Access Token</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            MatrixRequestError</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;guest&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_post_registration</span><span class="p">(</span><span class="n">response</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixClient.register_with_password"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.register_with_password">[docs]</a>    <span class="k">def</span> <span class="nf">register_with_password</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Register for a new account on this HS.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            username (str): Account username</span>
 <span class="sd">            password (str): Account password</span>
-<span class="sd">            limit (int): Deprecated. How many messages to return when syncing.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            str: Access Token</span>
@@ -279,13 +339,43 @@
 <span class="sd">            MatrixRequestError</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;auth&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;m.login.dummy&quot;</span><span class="p">},</span>
+                <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="n">username</span><span class="p">,</span>
+                <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="n">password</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_post_registration</span><span class="p">(</span><span class="n">response</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_post_registration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;user_id&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">token</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;access_token&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hs</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;home_server&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sync</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span>
+
+    <span class="c1"># TODO: combine login methods into single method controlled by kwargs</span>
+<div class="viewcode-block" id="MatrixClient.login_with_password_no_sync"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.login_with_password_no_sync">[docs]</a>    <span class="k">def</span> <span class="nf">login_with_password_no_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Login to the homeserver.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            username (str): Account username</span>
+<span class="sd">            password (str): Account password</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: Access token</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            MatrixRequestError</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">login</span><span class="p">(</span>
             <span class="s2">&quot;m.login.password&quot;</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="n">password</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;user_id&quot;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">token</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;access_token&quot;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">hs</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;home_server&quot;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sync</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span></div>
 
 <div class="viewcode-block" id="MatrixClient.login_with_password"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.login_with_password">[docs]</a>    <span class="k">def</span> <span class="nf">login_with_password</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
@@ -303,18 +393,12 @@
 <span class="sd">        Raises:</span>
 <span class="sd">            MatrixRequestError</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">login</span><span class="p">(</span>
-            <span class="s2">&quot;m.login.password&quot;</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="n">password</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;user_id&quot;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">token</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;access_token&quot;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">hs</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;home_server&quot;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span>
+        <span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">login_with_password_no_sync</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
 
         <span class="sd">&quot;&quot;&quot; Limit Filter &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sync_filter</span> <span class="o">=</span> <span class="s1">&#39;{ &quot;room&quot;: { &quot;timeline&quot; : { &quot;limit&quot; : </span><span class="si">%i</span><span class="s1"> } } }&#39;</span> <span class="o">%</span> <span class="n">limit</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sync</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span></div>
+        <span class="k">return</span> <span class="n">token</span></div>
 
 <div class="viewcode-block" id="MatrixClient.logout"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.logout">[docs]</a>    <span class="k">def</span> <span class="nf">logout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Logout from the homeserver.</span>
@@ -322,7 +406,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">stop_listener_thread</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">logout</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="MatrixClient.create_room"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.create_room">[docs]</a>    <span class="k">def</span> <span class="nf">create_room</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_public</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">invitees</span><span class="o">=</span><span class="p">()):</span>
+    <span class="c1"># TODO: move room creation/joining to User class for future application service usage</span>
+    <span class="c1"># NOTE: we may want to leave thin wrappers here for convenience</span>
+<div class="viewcode-block" id="MatrixClient.create_room"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.create_room">[docs]</a>    <span class="k">def</span> <span class="nf">create_room</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">is_public</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">invitees</span><span class="o">=</span><span class="p">()):</span>
         <span class="sd">&quot;&quot;&quot; Create a new room on the homeserver.</span>
 
 <span class="sd">        Args:</span>
@@ -362,11 +448,14 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Room{}: Rooms the user has joined.</span>
-
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">warn</span><span class="p">(</span><span class="s2">&quot;get_rooms is deprecated. Directly access MatrixClient.rooms.&quot;</span><span class="p">,</span>
+             <span class="ne">DeprecationWarning</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rooms</span></div>
 
-<div class="viewcode-block" id="MatrixClient.add_listener"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.add_listener">[docs]</a>    <span class="k">def</span> <span class="nf">add_listener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">event_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="c1"># TODO: create Listener class and push as much of this logic there as possible</span>
+    <span class="c1"># NOTE: listeners related to things in rooms should be attached to Room objects</span>
+<div class="viewcode-block" id="MatrixClient.add_listener"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.add_listener">[docs]</a>    <span class="k">def</span> <span class="nf">add_listener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">event_type</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Add a listener that will send a callback when the client recieves</span>
 <span class="sd">        an event.</span>
 
@@ -378,6 +467,9 @@
 <span class="sd">            uuid.UUID: Unique id of the listener, can be used to identify the listener.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">listener_uid</span> <span class="o">=</span> <span class="n">uuid4</span><span class="p">()</span>
+        <span class="c1"># TODO: listeners should be stored in dict and accessed/deleted directly. Add</span>
+        <span class="c1"># convenience method such that MatrixClient.listeners.new(Listener(...)) performs</span>
+        <span class="c1"># MatrixClient.listeners[uuid4()] = Listener(...)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">listeners</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="p">{</span>
                 <span class="s1">&#39;uid&#39;</span><span class="p">:</span> <span class="n">listener_uid</span><span class="p">,</span>
@@ -396,7 +488,29 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">listeners</span><span class="p">[:]</span> <span class="o">=</span> <span class="p">(</span><span class="n">listener</span> <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">listeners</span>
                              <span class="k">if</span> <span class="n">listener</span><span class="p">[</span><span class="s1">&#39;uid&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">uid</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="MatrixClient.add_ephemeral_listener"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.add_ephemeral_listener">[docs]</a>    <span class="k">def</span> <span class="nf">add_ephemeral_listener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">event_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="MatrixClient.add_presence_listener"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.add_presence_listener">[docs]</a>    <span class="k">def</span> <span class="nf">add_presence_listener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add a presence listener that will send a callback when the client receives</span>
+<span class="sd">        a presence update.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            callback (func(roomchunk)): Callback called when a presence update arrives.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            uuid.UUID: Unique id of the listener, can be used to identify the listener.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">listener_uid</span> <span class="o">=</span> <span class="n">uuid4</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">presence_listeners</span><span class="p">[</span><span class="n">listener_uid</span><span class="p">]</span> <span class="o">=</span> <span class="n">callback</span>
+        <span class="k">return</span> <span class="n">listener_uid</span></div>
+
+<div class="viewcode-block" id="MatrixClient.remove_presence_listener"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.remove_presence_listener">[docs]</a>    <span class="k">def</span> <span class="nf">remove_presence_listener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uid</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Remove presence listener with given uid</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            uuid.UUID: Unique id of the listener to remove</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">presence_listeners</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">uid</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixClient.add_ephemeral_listener"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.add_ephemeral_listener">[docs]</a>    <span class="k">def</span> <span class="nf">add_ephemeral_listener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">event_type</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Add an ephemeral listener that will send a callback when the client recieves</span>
 <span class="sd">        an ephemeral event.</span>
 
@@ -437,7 +551,6 @@
 
 <div class="viewcode-block" id="MatrixClient.add_leave_listener"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.add_leave_listener">[docs]</a>    <span class="k">def</span> <span class="nf">add_leave_listener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Add a listener that will send a callback when the client has left a room.</span>
-<span class="sd">        an invite request.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            callback (func(room_id, room)): Callback called when the client</span>
@@ -446,55 +559,77 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">left_listeners</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="MatrixClient.listen_for_events"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.listen_for_events">[docs]</a>    <span class="k">def</span> <span class="nf">listen_for_events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout_ms</span><span class="o">=</span><span class="mi">30000</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Deprecated. sync now pulls events from the request.</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This function just calls _sync()</span>
+
+<span class="sd">        In a future version of this sdk, this function will be deprecated and</span>
+<span class="sd">        _sync method will be renamed sync with the intention of it being called</span>
+<span class="sd">        by downstream code.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            timeout_ms (int): How long to poll the Home Server for before</span>
 <span class="sd">               retrying.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO: see docstring</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sync</span><span class="p">(</span><span class="n">timeout_ms</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="MatrixClient.listen_forever"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.listen_forever">[docs]</a>    <span class="k">def</span> <span class="nf">listen_forever</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout_ms</span><span class="o">=</span><span class="mi">30000</span><span class="p">):</span>
+<div class="viewcode-block" id="MatrixClient.listen_forever"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.listen_forever">[docs]</a>    <span class="k">def</span> <span class="nf">listen_forever</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout_ms</span><span class="o">=</span><span class="mi">30000</span><span class="p">,</span> <span class="n">exception_handler</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                       <span class="n">bad_sync_timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Keep listening for events forever.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            timeout_ms (int): How long to poll the Home Server for before</span>
 <span class="sd">               retrying.</span>
+<span class="sd">            exception_handler (func(exception)): Optional exception handler</span>
+<span class="sd">               function which can be used to handle exceptions in the caller</span>
+<span class="sd">               thread.</span>
+<span class="sd">            bad_sync_timeout (int): Base time to wait after an error before</span>
+<span class="sd">                retrying. Will be increased according to exponential backoff.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">bad_sync_timeout</span> <span class="o">=</span> <span class="mi">5000</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">should_listen</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">_bad_sync_timeout</span> <span class="o">=</span> <span class="n">bad_sync_timeout</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">should_listen</span> <span class="o">=</span> <span class="bp">True</span>
         <span class="k">while</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">should_listen</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_sync</span><span class="p">(</span><span class="n">timeout_ms</span><span class="p">)</span>
-                <span class="n">bad_sync_timeout</span> <span class="o">=</span> <span class="mi">5</span>
+                <span class="n">_bad_sync_timeout</span> <span class="o">=</span> <span class="n">bad_sync_timeout</span>
+            <span class="c1"># TODO: we should also handle MatrixHttpLibError for retry in case no response</span>
             <span class="k">except</span> <span class="n">MatrixRequestError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;A MatrixRequestError occured during sync.&quot;</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">code</span> <span class="o">&gt;=</span> <span class="mi">500</span><span class="p">:</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Problem occured serverside. Waiting </span><span class="si">%i</span><span class="s2"> seconds&quot;</span><span class="p">,</span>
                                    <span class="n">bad_sync_timeout</span><span class="p">)</span>
                     <span class="n">sleep</span><span class="p">(</span><span class="n">bad_sync_timeout</span><span class="p">)</span>
-                    <span class="n">bad_sync_timeout</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">bad_sync_timeout</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span>
-                                           <span class="bp">self</span><span class="o">.</span><span class="n">bad_sync_timeout_limit</span><span class="p">)</span>
+                    <span class="n">_bad_sync_timeout</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">_bad_sync_timeout</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span>
+                                            <span class="bp">self</span><span class="o">.</span><span class="n">bad_sync_timeout_limit</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">exception_handler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">exception_handler</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">e</span>
+                    <span class="k">raise</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Exception thrown during sync&quot;</span><span class="p">)</span></div>
+                <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Exception thrown during sync&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">exception_handler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">exception_handler</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span></div>
 
-<div class="viewcode-block" id="MatrixClient.start_listener_thread"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.start_listener_thread">[docs]</a>    <span class="k">def</span> <span class="nf">start_listener_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout_ms</span><span class="o">=</span><span class="mi">30000</span><span class="p">):</span>
+<div class="viewcode-block" id="MatrixClient.start_listener_thread"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.start_listener_thread">[docs]</a>    <span class="k">def</span> <span class="nf">start_listener_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout_ms</span><span class="o">=</span><span class="mi">30000</span><span class="p">,</span> <span class="n">exception_handler</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Start a listener thread to listen for events in the background.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            timeout (int): How long to poll the Home Server for before</span>
 <span class="sd">               retrying.</span>
+<span class="sd">            exception_handler (func(exception)): Optional exception handler</span>
+<span class="sd">               function which can be used to handle exceptions in the caller</span>
+<span class="sd">               thread.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">thread</span> <span class="o">=</span> <span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">listen_forever</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">timeout_ms</span><span class="p">,</span> <span class="p">))</span>
-            <span class="n">thread</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">thread</span> <span class="o">=</span> <span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">listen_forever</span><span class="p">,</span>
+                            <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">timeout_ms</span><span class="p">,</span> <span class="n">exception_handler</span><span class="p">))</span>
+            <span class="n">thread</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="bp">True</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sync_thread</span> <span class="o">=</span> <span class="n">thread</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">should_listen</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">should_listen</span> <span class="o">=</span> <span class="bp">True</span>
             <span class="n">thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-        <span class="k">except</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
             <span class="n">e</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Error: unable to start thread. </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span></div>
 
@@ -502,10 +637,11 @@
         <span class="sd">&quot;&quot;&quot; Stop listener thread running in the background</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sync_thread</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">should_listen</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">should_listen</span> <span class="o">=</span> <span class="bp">False</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sync_thread</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sync_thread</span> <span class="o">=</span> <span class="kc">None</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sync_thread</span> <span class="o">=</span> <span class="bp">None</span></div>
 
+    <span class="c1"># TODO: move to User class. Consider creating lightweight Media class.</span>
 <div class="viewcode-block" id="MatrixClient.upload"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.upload">[docs]</a>    <span class="k">def</span> <span class="nf">upload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">content_type</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Upload content to the home server and recieve a MXC url.</span>
 
@@ -535,30 +671,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">rooms</span><span class="p">[</span><span class="n">room_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">Room</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room_id</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rooms</span><span class="p">[</span><span class="n">room_id</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">_process_state_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_event</span><span class="p">,</span> <span class="n">current_room</span><span class="p">):</span>
-        <span class="k">if</span> <span class="s2">&quot;type&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">state_event</span><span class="p">:</span>
-            <span class="k">return</span>  <span class="c1"># Ignore event</span>
-        <span class="n">etype</span> <span class="o">=</span> <span class="n">state_event</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span>
-
-        <span class="k">if</span> <span class="n">etype</span> <span class="o">==</span> <span class="s2">&quot;m.room.name&quot;</span><span class="p">:</span>
-            <span class="n">current_room</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">state_event</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">etype</span> <span class="o">==</span> <span class="s2">&quot;m.room.topic&quot;</span><span class="p">:</span>
-            <span class="n">current_room</span><span class="o">.</span><span class="n">topic</span> <span class="o">=</span> <span class="n">state_event</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;topic&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">etype</span> <span class="o">==</span> <span class="s2">&quot;m.room.aliases&quot;</span><span class="p">:</span>
-            <span class="n">current_room</span><span class="o">.</span><span class="n">aliases</span> <span class="o">=</span> <span class="n">state_event</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;aliases&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="n">current_room</span><span class="o">.</span><span class="n">state_listeners</span><span class="p">:</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="n">listener</span><span class="p">[</span><span class="s1">&#39;event_type&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span>
-                <span class="n">listener</span><span class="p">[</span><span class="s1">&#39;event_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">state_event</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
-            <span class="p">):</span>
-                <span class="n">listener</span><span class="p">[</span><span class="s1">&#39;callback&#39;</span><span class="p">](</span><span class="n">state_event</span><span class="p">)</span>
-
     <span class="k">def</span> <span class="nf">_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout_ms</span><span class="o">=</span><span class="mi">30000</span><span class="p">):</span>
-        <span class="c1"># TODO: Deal with presence</span>
-        <span class="c1"># TODO: Deal with left rooms</span>
         <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sync_token</span><span class="p">,</span> <span class="n">timeout_ms</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sync_filter</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sync_token</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;next_batch&quot;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">presence_update</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s1">&#39;presence&#39;</span><span class="p">][</span><span class="s1">&#39;events&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">callback</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">presence_listeners</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="n">callback</span><span class="p">(</span><span class="n">presence_update</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">room_id</span><span class="p">,</span> <span class="n">invite_room</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s1">&#39;rooms&#39;</span><span class="p">][</span><span class="s1">&#39;invite&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">invite_listeners</span><span class="p">:</span>
@@ -574,20 +693,24 @@
             <span class="k">if</span> <span class="n">room_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">rooms</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_mkroom</span><span class="p">(</span><span class="n">room_id</span><span class="p">)</span>
             <span class="n">room</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rooms</span><span class="p">[</span><span class="n">room_id</span><span class="p">]</span>
+            <span class="c1"># TODO: the rest of this for loop should be in room object method</span>
             <span class="n">room</span><span class="o">.</span><span class="n">prev_batch</span> <span class="o">=</span> <span class="n">sync_room</span><span class="p">[</span><span class="s2">&quot;timeline&quot;</span><span class="p">][</span><span class="s2">&quot;prev_batch&quot;</span><span class="p">]</span>
 
             <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">sync_room</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">][</span><span class="s2">&quot;events&quot;</span><span class="p">]:</span>
                 <span class="n">event</span><span class="p">[</span><span class="s1">&#39;room_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">room_id</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_process_state_event</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">room</span><span class="p">)</span>
+                <span class="n">room</span><span class="o">.</span><span class="n">_process_state_event</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
 
             <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">sync_room</span><span class="p">[</span><span class="s2">&quot;timeline&quot;</span><span class="p">][</span><span class="s2">&quot;events&quot;</span><span class="p">]:</span>
                 <span class="n">event</span><span class="p">[</span><span class="s1">&#39;room_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">room_id</span>
                 <span class="n">room</span><span class="o">.</span><span class="n">_put_event</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
 
+                <span class="c1"># TODO: global listeners can still exist but work by each</span>
+                <span class="c1"># room.listeners[uuid] having reference to global listener</span>
+
                 <span class="c1"># Dispatch for client (global) listeners</span>
                 <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">listeners</span><span class="p">:</span>
                     <span class="k">if</span> <span class="p">(</span>
-                        <span class="n">listener</span><span class="p">[</span><span class="s1">&#39;event_type&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span>
+                        <span class="n">listener</span><span class="p">[</span><span class="s1">&#39;event_type&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span>
                         <span class="n">listener</span><span class="p">[</span><span class="s1">&#39;event_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">event</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
                     <span class="p">):</span>
                         <span class="n">listener</span><span class="p">[</span><span class="s1">&#39;callback&#39;</span><span class="p">](</span><span class="n">event</span><span class="p">)</span>
@@ -598,7 +721,7 @@
 
                 <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ephemeral_listeners</span><span class="p">:</span>
                     <span class="k">if</span> <span class="p">(</span>
-                        <span class="n">listener</span><span class="p">[</span><span class="s1">&#39;event_type&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span>
+                        <span class="n">listener</span><span class="p">[</span><span class="s1">&#39;event_type&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span>
                         <span class="n">listener</span><span class="p">[</span><span class="s1">&#39;event_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">event</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
                     <span class="p">):</span>
                         <span class="n">listener</span><span class="p">[</span><span class="s1">&#39;callback&#39;</span><span class="p">](</span><span class="n">event</span><span class="p">)</span>
@@ -612,9 +735,9 @@
 <span class="sd">        Args:</span>
 <span class="sd">            user_id (str): The matrix user id of a user.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">return</span> <span class="n">User</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span></div>
 
+    <span class="c1"># TODO: move to Room class</span>
 <div class="viewcode-block" id="MatrixClient.remove_room_alias"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.remove_room_alias">[docs]</a>    <span class="k">def</span> <span class="nf">remove_room_alias</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room_alias</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Remove mapping of an alias</span>
 
@@ -626,15 +749,13 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">remove_room_alias</span><span class="p">(</span><span class="n">room_alias</span><span class="p">)</span>
-            <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">return</span> <span class="bp">True</span>
         <span class="k">except</span> <span class="n">MatrixRequestError</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span></div></div>
+            <span class="k">return</span> <span class="bp">False</span></div></div>
 </pre></div>
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -643,11 +764,11 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, matrix.org.
+        &copy; Copyright 2016, matrix.org.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -665,7 +786,8 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../',
-            VERSION:'0.0.6',
+            VERSION:'0.1.0',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
@@ -678,19 +800,13 @@
 
   
 
-  
-  
-    <script type="text/javascript" src="../../_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>
