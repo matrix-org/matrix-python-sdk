@@ -67,6 +67,8 @@ class OlmDevice(object):
         self.device_list = DeviceList(self, api, self.device_keys)
         self.olm_sessions = defaultdict(list)
         self.megolm_outbound_sessions = {}
+        self.megolm_inbound_sessions = defaultdict(lambda: defaultdict(dict))
+        self.megolm_index_record = defaultdict(dict)
 
     def upload_identity_keys(self):
         """Uploads this device's identity keys to HS.
@@ -412,6 +414,10 @@ class OlmDevice(object):
                         for user in users}
         self.device_list.get_room_device_keys(room)
         self.megolm_share_session(room.room_id, user_devices, session)
+        # Store a corresponding inbound session, so that we can decrypt our own messages
+        self.megolm_add_inbound_session(room.room_id, self.identity_keys['curve25519'],
+                                        session.id,
+                                        session.session_key)
         return session
 
     def megolm_share_session(self, room_id, user_devices, session):
@@ -537,6 +543,136 @@ class OlmDevice(object):
         encrypted_event = self.megolm_build_encrypted_event(room, event)
         return self.api.send_message_event(
             room.room_id, 'm.room.encrypted', encrypted_event)
+
+    def olm_handle_encrypted_event(self, encrypted_event):
+        """Decrypt and process an Olm m.room.encrypted event.
+
+        Once decrypted, the event is processed according to its type.
+
+        Args:
+            encrypted_event (dict): m.room.encrypted event.
+        """
+        content = encrypted_event['content']
+        if 'algorithm' not in content or content['algorithm'] != self._olm_algorithm:
+            return
+
+        try:
+            event = self.olm_decrypt_event(content, encrypted_event['sender'])
+        except RuntimeError as e:
+            logger.warning('Failed to decrypt m.room_key event sent by user %s: %s',
+                           encrypted_event['sender'], e)
+            return
+
+        if event['type'] == 'm.room_key':
+            self.handle_room_key_event(event, encrypted_event['content']['sender_key'])
+
+    def handle_room_key_event(self, event, sender_key):
+        """Handle a m.room_key event.
+
+        Args:
+            event (dict): m.room_key event.
+        """
+        content = event['content']
+        if content['algorithm'] != self._megolm_algorithm:
+            logger.info('Ignoring unsupported algorithm %s in m.room_key event.',
+                        content['algorithm'])
+            return
+        user_id = event['sender']
+        device_id = event['sender_device']
+
+        new = self.megolm_add_inbound_session(content['room_id'], sender_key,
+                                              content['session_id'],
+                                              content['session_key'])
+        if new:
+            logger.info('Created a new Megolm inbound session with device %s of '
+                        'user %s.', device_id, user_id)
+        else:
+            logger.info('Inbound Megolm session with device %s of user %s '
+                        'already exists or is invalid.', device_id, user_id)
+
+    def megolm_add_inbound_session(self, room_id, sender_key, session_id, session_key):
+        """Create a new Megolm inbound session if necessary.
+
+        Args:
+            room_id (str): The room corresponding to the session.
+            sender_key (str): The curve25519 key of the sender's device.
+            session_id (str): The id of the session.
+            session_key (str): The key of the session.
+
+        Returns:
+            ``True`` if a new session was created, ``False`` if it already existed or if
+            the parameters were invalid.
+        """
+        sessions = self.megolm_inbound_sessions[room_id][sender_key]
+        if session_id in sessions:
+            return False
+        try:
+            session = olm.InboundGroupSession(session_key)
+        except olm.OlmGroupSessionError:
+            return False
+        if session.id != session_id:
+            logger.warning('Session ID mismatch in m.room_key event. Expected %s from '
+                           'event property, got %s.', session_id, session.id)
+            return False
+        sessions[session_id] = session
+        return True
+
+    def megolm_decrypt_event(self, event):
+        """Decrypt a Megolm m.room.encrypted event.
+
+        The event is decrypted in-place, meaning its content and type properties are
+        overwritten by those of the decrypted event.
+
+        Args:
+            event (dict): The event to decrypt.
+        """
+        content = event['content']
+        device_id = content['device_id']
+        user_id = event['sender']
+        if 'algorithm' not in content:
+            # Assume that this is a redacted event
+            return
+        if content['algorithm'] != self._megolm_algorithm:
+            raise RuntimeError('Incorrect algorithm "{}" value in event sent by device '
+                               '{} of user {}.'.format(content['algorithm'], device_id,
+                                                       user_id))
+
+        sender_key = content['sender_key']
+        room_id = event['room_id']
+        session_id = content['session_id']
+        sessions = self.megolm_inbound_sessions[room_id][sender_key]
+        try:
+            session = sessions[session_id]
+        except KeyError:
+            raise RuntimeError("Unable to decrypt event sent by device {} of user {}: "
+                               "The sender's device has not sent us the keys for this "
+                               "message.".format(device_id, user_id))
+
+        try:
+            decrypted_event, message_index = session.decrypt(content['ciphertext'])
+        except olm.group_session.OlmGroupSessionError as e:
+            raise RuntimeError('Unable to decrypt event sent by device {} of user {} '
+                               'with matching megolm session: {}.'.format(device_id,
+                                                                          user_id, e))
+
+        try:
+            properties = self.megolm_index_record[session.id][message_index]
+        except KeyError:
+            self.megolm_index_record[session.id][message_index] = {
+                'origin_server_ts': event['origin_server_ts'],
+                'event_id': event['event_id']
+            }
+        else:
+            if properties['origin_server_ts'] == event['origin_server_ts'] and \
+                    properties['event_id'] == event['event_id']:
+                raise RuntimeError('Detected a replay attack from device {} of user {} '
+                                   'on decrypted event: {}.'.format(device_id, user_id,
+                                                                    decrypted_event))
+
+        decrypted_event = json.loads(decrypted_event)
+
+        event['type'] = decrypted_event['type']
+        event['content'] = decrypted_event['content']
 
     def sign_json(self, json):
         """Signs a JSON object.
