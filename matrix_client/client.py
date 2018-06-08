@@ -17,6 +17,11 @@ from .checks import check_user_id
 from .errors import MatrixRequestError, MatrixUnexpectedResponse
 from .room import Room
 from .user import User
+try:
+    from .crypto.olm_device import OlmDevice
+    ENCRYPTION_SUPPORT = True
+except ImportError:
+    ENCRYPTION_SUPPORT = False
 from threading import Thread
 from time import sleep
 from uuid import uuid4
@@ -95,7 +100,7 @@ class MatrixClient(object):
 
     def __init__(self, base_url, token=None, user_id=None,
                  valid_cert_check=True, sync_filter_limit=20,
-                 cache_level=CACHE.ALL):
+                 cache_level=CACHE.ALL, encryption=False):
         """ Create a new Matrix Client object.
 
         Args:
@@ -119,6 +124,9 @@ class MatrixClient(object):
         """
         if token is not None and user_id is None:
             raise ValueError("must supply user_id along with token")
+        if encryption and not ENCRYPTION_SUPPORT:
+            raise ValueError("Failed to enable encryption. Please make sure the olm "
+                             "library is available.")
 
         self.api = MatrixHttpApi(base_url, token)
         self.api.validate_certificate(valid_cert_check)
@@ -127,6 +135,9 @@ class MatrixClient(object):
         self.invite_listeners = []
         self.left_listeners = []
         self.ephemeral_listeners = []
+        self.device_id = None
+        self._encryption = encryption
+        self.olm_device = None
         if isinstance(cache_level, CACHE):
             self._cache_level = cache_level
         else:
@@ -273,6 +284,13 @@ class MatrixClient(object):
         self.token = response["access_token"]
         self.hs = response["home_server"]
         self.api.token = self.token
+        self.device_id = response["device_id"]
+
+        if self._encryption:
+            self.olm_device = OlmDevice(
+                self.api, self.user_id, self.device_id)
+            self.olm_device.upload_identity_keys()
+            self.olm_device.upload_one_time_keys()
 
         if sync:
             """ Limit Filter """

@@ -452,3 +452,20 @@ def test_room_guest_access():
 
     assert room.set_guest_access(True)
     assert room.guest_access
+
+
+@responses.activate
+def test_enable_encryption():
+    pytest.importorskip('olm')
+    client = MatrixClient(HOSTNAME, encryption=True)
+
+    login_path = HOSTNAME + MATRIX_V2_API_PATH + "/login"
+    responses.add(responses.POST, login_path,
+                  json=response_examples.example_success_login_response)
+
+    upload_path = HOSTNAME + MATRIX_V2_API_PATH + '/keys/upload'
+    responses.add(responses.POST, upload_path, body='{"one_time_key_counts": {}}')
+
+    client.login("@example:localhost", "password", sync=False)
+
+    assert client.olm_device
