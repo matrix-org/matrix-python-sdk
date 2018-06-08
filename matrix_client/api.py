@@ -96,7 +96,7 @@ class MatrixHttpApi(object):
             request["filter"] = filter
 
         if full_state:
-            request["full_state"] = full_state
+            request["full_state"] = json.dumps(full_state)
 
         if set_presence:
             request["set_presence"] = set_presence
