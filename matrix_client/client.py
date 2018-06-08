@@ -208,13 +208,56 @@ class MatrixClient(object):
         self._sync()
         return self.token
 
-    # TODO: combine login methods into single method controlled by kwargs
     def login_with_password_no_sync(self, username, password):
-        """ Login to the homeserver.
+        """Deprecated. Use ``login`` with ``sync=False`` instead.
+
+        Login to the homeserver.
 
         Args:
             username (str): Account username
             password (str): Account password
+
+        Returns:
+            str: Access token
+
+        Raises:
+            MatrixRequestError
+        """
+        warn("login_with_password_no_sync is deprecated. Use login with sync=False"
+             "instead.",
+             DeprecationWarning)
+        return self.login(username, password, sync=False)
+
+    def login_with_password(self, username, password, limit=10):
+        """Deprecated. Use ``login`` with ``sync=True`` instead.
+
+        Login to the homeserver.
+
+        Args:
+            username (str): Account username
+            password (str): Account password
+            limit (int): Deprecated. How many messages to return when syncing.
+                This will be replaced by a filter API in a later release.
+
+        Returns:
+            str: Access token
+
+        Raises:
+            MatrixRequestError
+        """
+        warn("login_with_password is deprecated. Use login with sync=True instead.",
+             DeprecationWarning)
+        return self.login(username, password, limit, sync=True)
+
+    def login(self, username, password, limit=10, sync=True):
+        """Login to the homeserver.
+
+        Args:
+            username (str): Account username
+            password (str): Account password
+            limit (int): Deprecated. How many messages to return when syncing.
+                This will be replaced by a filter API in a later release.
+            sync (bool): Optional. Whether to initiate a /sync request after logging in.
 
         Returns:
             str: Access token
@@ -229,29 +272,12 @@ class MatrixClient(object):
         self.token = response["access_token"]
         self.hs = response["home_server"]
         self.api.token = self.token
+
+        if sync:
+            """ Limit Filter """
+            self.sync_filter = '{ "room": { "timeline" : { "limit" : %i } } }' % limit
+            self._sync()
         return self.token
-
-    def login_with_password(self, username, password, limit=10):
-        """ Login to the homeserver.
-
-        Args:
-            username (str): Account username
-            password (str): Account password
-            limit (int): Deprecated. How many messages to return when syncing.
-                This will be replaced by a filter API in a later release.
-
-        Returns:
-            str: Access token
-
-        Raises:
-            MatrixRequestError
-        """
-        token = self.login_with_password_no_sync(username, password)
-
-        """ Limit Filter """
-        self.sync_filter = '{ "room": { "timeline" : { "limit" : %i } } }' % limit
-        self._sync()
-        return token
 
     def logout(self):
         """ Logout from the homeserver.
