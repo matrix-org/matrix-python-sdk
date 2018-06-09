@@ -496,3 +496,22 @@ def test_enable_encryption_in_room():
 
     assert room.enable_encryption()
     assert room.encrypted
+
+
+@responses.activate
+def test_detect_encryption_state():
+    client = MatrixClient(HOSTNAME, encryption=True)
+    room_id = "!UcYsUzyxTGDxLBEvLz:matrix.org"
+
+    encryption_state_path = HOSTNAME + MATRIX_V2_API_PATH + \
+        "/rooms/" + quote(room_id) + "/state/m.room.encryption"
+    responses.add(responses.GET, encryption_state_path,
+                  json={"content": {"algorithm": "m.megolm.v1.aes-sha2"}})
+    responses.add(responses.GET, encryption_state_path,
+                  json={}, status=404)
+
+    room = client._mkroom(room_id)
+    assert room.encrypted
+
+    room = client._mkroom(room_id)
+    assert not room.encrypted
