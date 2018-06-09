@@ -335,7 +335,7 @@ class MatrixHttpApi(object):
         )
 
     def send_html_message(self, room_id, text_content, msgtype="m.text",
-        imestamp=None):
+                          timestamp=None):
         """Perform PUT /rooms/$room_id/send/m.room.message
 
         Args:
