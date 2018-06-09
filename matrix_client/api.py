@@ -333,6 +333,20 @@ class MatrixHttpApi(object):
             timestamp=timestamp
         )
 
+        def send_html_message(self, room_id, text_content, msgtype="m.text", timestamp=None):
+        """Perform PUT /rooms/$room_id/send/m.room.message
+
+        Args:
+            room_id (str): The room ID to send the event in.
+            text_content (str): The m.text body to send.
+            timestamp (int): Set origin_server_ts (For application services only)
+        """
+        return self.send_message_event(
+            room_id, "m.room.message",
+            self.get_html_body(text_content, msgtype),
+            timestamp=timestamp
+        )
+
     def send_emote(self, room_id, text_content, timestamp=None):
         """Perform PUT /rooms/$room_id/send/m.room.message with m.emote msgtype
 
@@ -616,6 +630,14 @@ class MatrixHttpApi(object):
         return {
             "msgtype": msgtype,
             "body": text
+        }
+
+    def get_html_body(self, html, body=None, msgtype="m.text"):
+        return {
+            "body": body if body else re.sub('<[^<]+?>', '', html),
+            "msgtype": msgtype,
+            "format": "org.matrix.custom.html",
+            "formatted_body": html
         }
 
     def get_emote_body(self, text):
