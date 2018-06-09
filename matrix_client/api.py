@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import json
+import re
 import warnings
 from requests import Session, RequestException
 from time import time, sleep
@@ -333,8 +334,8 @@ class MatrixHttpApi(object):
             timestamp=timestamp
         )
 
-    def send_html_message(self, room_id, text_content, msgtype="m.text", 
-                              timestamp=None):
+    def send_html_message(self, room_id, text_content, msgtype="m.text",
+        imestamp=None):
         """Perform PUT /rooms/$room_id/send/m.room.message
 
         Args:
