@@ -565,6 +565,7 @@ class MatrixClient(object):
         self.rooms[room_id] = room
         return self.rooms[room_id]
 
+    # TODO better handling of the blocking I/O caused by update_one_time_key_counts
     def _sync(self, timeout_ms=30000):
         response = self.api.sync(self.sync_token, timeout_ms, filter=self.sync_filter)
         self.sync_token = response["next_batch"]
@@ -582,6 +583,10 @@ class MatrixClient(object):
                 listener(room_id, left_room)
             if room_id in self.rooms:
                 del self.rooms[room_id]
+
+        if self._encryption and 'device_one_time_keys_count' in response:
+            self.olm_device.update_one_time_key_counts(
+                response['device_one_time_keys_count'])
 
         for room_id, sync_room in response['rooms']['join'].items():
             if room_id not in self.rooms:
