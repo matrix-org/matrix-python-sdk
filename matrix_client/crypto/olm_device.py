@@ -24,15 +24,26 @@ class OlmDevice(object):
             ``0`` means only unsigned keys. The actual amount of keys is determined at
             runtime from the given proportion and the maximum number of one-time keys
             we can physically hold.
+        keys_threshold (float): Optional. Threshold below which a one-time key
+            replenishment is triggered. Must be between ``0`` and ``1``. For example,
+            ``0.1`` means that new one-time keys will be uploaded when there is less than
+            10% of the maximum number of one-time keys on the server.
     """
 
     _olm_algorithm = 'm.olm.v1.curve25519-aes-sha2'
     _megolm_algorithm = 'm.megolm.v1.aes-sha2'
     _algorithms = [_olm_algorithm, _megolm_algorithm]
 
-    def __init__(self, api, user_id, device_id, signed_keys_proportion=1):
+    def __init__(self,
+                 api,
+                 user_id,
+                 device_id,
+                 signed_keys_proportion=1,
+                 keys_threshold=0.1):
         if not 0 <= signed_keys_proportion <= 1:
             raise ValueError('signed_keys_proportion must be between 0 and 1.')
+        if not 0 <= keys_threshold <= 1:
+            raise ValueError('keys_threshold must be between 0 and 1.')
         self.api = api
         check_user_id(user_id)
         self.user_id = user_id
@@ -46,7 +57,8 @@ class OlmDevice(object):
         # and it starts discarding keys, starting by the oldest.
         target_keys_number = self.olm_account.max_one_time_keys // 2
         self.one_time_keys_manager = OneTimeKeysManager(target_keys_number,
-                                                        signed_keys_proportion)
+                                                        signed_keys_proportion,
+                                                        keys_threshold)
 
     def upload_identity_keys(self):
         """Uploads this device's identity keys to HS.
@@ -112,6 +124,17 @@ class OlmDevice(object):
             keys_uploaded['signed_curve25519'] = signed_keys_to_upload
         logger.info('Uploaded new one-time keys: %s.', keys_uploaded)
         return keys_uploaded
+
+    def update_one_time_key_counts(self, counts):
+        """Update data on one-time keys count and upload new ones if necessary.
+
+        Args:
+            counts (dict): Counts of keys currently on the HS for each key type.
+        """
+        self.one_time_keys_manager.server_counts = counts
+        if self.one_time_keys_manager.should_upload():
+            logger.info('Uploading new one-time keys.')
+            self.upload_one_time_keys()
 
     def sign_json(self, json):
         """Signs a JSON object.
