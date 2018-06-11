@@ -209,7 +209,7 @@ class MatrixClient(object):
         return self.token
 
     def login_with_password_no_sync(self, username, password):
-        """Deprecated. Use ``login`` with ``sync=False`` instead.
+        """Deprecated. Use ``login`` with ``sync=False``.
 
         Login to the homeserver.
 
@@ -223,13 +223,12 @@ class MatrixClient(object):
         Raises:
             MatrixRequestError
         """
-        warn("login_with_password_no_sync is deprecated. Use login with sync=False"
-             "instead.",
+        warn("login_with_password_no_sync is deprecated. Use login with sync=False.",
              DeprecationWarning)
         return self.login(username, password, sync=False)
 
     def login_with_password(self, username, password, limit=10):
-        """Deprecated. Use ``login`` with ``sync=True`` instead.
+        """Deprecated. Use ``login`` with ``sync=True``.
 
         Login to the homeserver.
 
@@ -245,7 +244,7 @@ class MatrixClient(object):
         Raises:
             MatrixRequestError
         """
-        warn("login_with_password is deprecated. Use login with sync=True instead.",
+        warn("login_with_password is deprecated. Use login with sync=True.",
              DeprecationWarning)
         return self.login(username, password, limit, sync=True)
 
