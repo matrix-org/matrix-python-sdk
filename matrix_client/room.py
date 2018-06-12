@@ -84,8 +84,8 @@ class Room(object):
 
         members = self.get_joined_members()
         # members without me
-        members[:] = [u.get_display_name() for u in members if
-                      self.client.user_id != u.user_id]
+        members = [u.get_display_name() for u in members if
+                   self.client.user_id != u.user_id]
         first_two = members[:2]
         if len(first_two) == 1:
             return first_two[0]
