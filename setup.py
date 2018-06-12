@@ -49,7 +49,8 @@ setup(
     setup_requires=['pytest-runner',],
     tests_require=['pytest', 'responses',],
     extras_require={
-        'test': ['tox', 'pytest', 'flake8', 'responses'],
+        'test': ['pytest', 'responses'],
         'doc': ['Sphinx==1.4.6', 'sphinx-rtd-theme==0.1.9', 'sphinxcontrib-napoleon==0.5.3'],
+        'format': ['flake8'],
     }
 )
