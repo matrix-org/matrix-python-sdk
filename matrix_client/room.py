@@ -82,9 +82,8 @@ class Room(object):
         elif self.canonical_alias:
             return self.canonical_alias
 
-        members = self.get_joined_members()
-        # members without me
-        members = [u.get_display_name() for u in members if
+        # Member display names without me
+        members = [u.get_display_name() for u in self.get_joined_members() if
                    self.client.user_id != u.user_id]
         first_two = members[:2]
         if len(first_two) == 1:
@@ -97,11 +96,9 @@ class Room(object):
             return "{0} and {1} others".format(
                 first_two[0],
                 len(members) - 1)
-        elif len(first_two) == 0:
+        else:  # len(members) <= 0 or not an integer
             # TODO i18n
             return "Empty room"
-        # TODO i18n
-        return "Empty room"
 
     def send_text(self, text):
         """Send a plain text message to the room."""
