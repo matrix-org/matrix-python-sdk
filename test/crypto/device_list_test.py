@@ -193,18 +193,18 @@ class TestDeviceList:
         self.device_list.get_room_device_keys(room, blocking=False)
 
     @responses.activate
-    def test_add_users(self):
+    def test_track_users(self):
         self.device_list.tracked_user_ids.clear()
         responses.add(responses.POST, self.query_url, json=example_key_query_response)
 
         self.device_list.update_thread.event.clear()
-        self.device_list.add_users({self.alice})
+        self.device_list.track_users({self.alice})
         self.device_list.update_thread.event.wait()
         assert self.device_list.tracked_user_ids == {self.alice}
         assert len(responses.calls) == 1
 
         # Same, but we are already tracking Alice
-        self.device_list.add_users({self.alice})
+        self.device_list.track_users({self.alice})
         assert len(responses.calls) == 1
 
     def test_stop_tracking_users(self):
@@ -217,6 +217,16 @@ class TestDeviceList:
 
         assert not self.device_list.tracked_user_ids
         assert not self.device_list.outdated_user_ids
+
+    def test_pending_users(self):
+        # Say Alice is already tracked to avoid triggering dowload process
+        self.device_list.tracked_user_ids.add(self.alice)
+
+        self.device_list.track_user_no_download(self.alice)
+        assert self.alice in self.device_list.pending_outdated_user_ids
+
+        self.device_list.track_pending_users()
+        assert self.alice not in self.device_list.pending_outdated_user_ids
 
     @responses.activate
     def test_update_user_device_keys(self):

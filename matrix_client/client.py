@@ -636,6 +636,10 @@ class MatrixClient(object):
                     ):
                         listener['callback'](event)
 
+            if self._encryption and room.encrypted:
+                # Track the new users in the room
+                self.olm_device.device_list.track_pending_users()
+
             for event in sync_room['ephemeral']['events']:
                 event['room_id'] = room_id
                 room._put_ephemeral_event(event)

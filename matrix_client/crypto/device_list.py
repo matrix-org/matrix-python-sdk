@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from threading import Thread, Condition, Event
+from threading import Thread, Condition, Event, Lock
 
 from matrix_client.errors import MatrixHttpLibError, MatrixRequestError
 
@@ -25,6 +25,9 @@ class DeviceList:
         self.device_keys = device_keys
         # Stores the ids of users who need updating
         self.outdated_user_ids = _OutdatedUsersSet()
+        # Stores the ids of users to fetch the device keys of eventually
+        self.pending_outdated_user_ids = set()
+        self.pending_users_lock = Lock()
         # Stores the ids of users we are currently tracking. We can assume the device
         # keys of these users are up-to-date as long as no downloading is in progress.
         # We should track every user we share an encrypted room with.
@@ -67,7 +70,27 @@ class DeviceList:
         if blocking:
             event.wait()
 
-    def add_users(self, user_ids):
+    def track_user_no_download(self, user_id):
+        """Add user to be tracked, but do not track it instantly.
+
+        This should be used to avoid making calls to :func:`track_users` with only one
+        user repeatedly. Instead, using this should allow to passively queue the users,
+        and tracking can be triggered when there are sufficiently, using
+        :func:`track_pending_users`.
+
+        Args:
+            user_id (str): A user id.
+        """
+        with self.pending_users_lock:
+            self.pending_outdated_user_ids.add(user_id)
+
+    def track_pending_users(self):
+        """Triggers the tracking of the user added with :func:`track_user_no_download`."""
+        with self.pending_users_lock:
+            self.track_users(self.pending_outdated_user_ids)
+            self.pending_outdated_user_ids.clear()
+
+    def track_users(self, user_ids):
         """Add users to be tracked, and download their device keys.
 
         NOTE: this is non-blocking and will return before the keys are downloaded.
