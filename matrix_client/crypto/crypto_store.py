@@ -48,6 +48,11 @@ class CryptoStore(object):
                   'session_id TEXT PRIMARY KEY, curve_key TEXT, session BLOB,'
                   'FOREIGN KEY(device_id) REFERENCES accounts(device_id) '
                   'ON DELETE CASCADE)')
+        c.execute('CREATE TABLE IF NOT EXISTS megolm_inbound_sessions '
+                  '(device_id TEXT, session_id TEXT PRIMARY KEY, room_id TEXT,'
+                  'curve_key TEXT, session BLOB,'
+                  'FOREIGN KEY(device_id) REFERENCES accounts(device_id) '
+                  'ON DELETE CASCADE)')
         c.close()
         self.conn.commit()
 
@@ -154,6 +159,71 @@ class CryptoStore(object):
         c.close()
         # For consistency with other get_ methods, do not return an empty list
         return sessions or None
+
+    def save_inbound_session(self, room_id, curve_key, session):
+        """Saves a Megolm inbound session.
+
+        Args:
+            room_id (str): The room corresponding to the session.
+            curve_key (str): The curve25519 key of the device.
+            session (olm.InboundGroupSession): The session to save.
+        """
+        c = self.conn.cursor()
+        c.execute('REPLACE INTO megolm_inbound_sessions VALUES (?,?,?,?,?)',
+                  (self.device_id, session.id, room_id, curve_key,
+                   session.pickle(self.pickle_key)))
+        c.close()
+        self.conn.commit()
+
+    def load_inbound_sessions(self, sessions):
+        """Loads all saved inbound Megolm sessions.
+
+        Args:
+            sessions (defaultdict(defaultdict(dict))): An object which will get
+                populated with the sessions. The format is
+                ``{<room_id>: {<curve25519_key>: {<session_id>:
+                <olm.InboundGroupSession>}}}``.
+        """
+        c = self.conn.cursor()
+        rows = c.execute(
+            'SELECT room_id, curve_key, session FROM megolm_inbound_sessions WHERE '
+            'device_id=?', (self.device_id,)
+        )
+        for row in rows:
+            session = olm.InboundGroupSession.from_pickle(bytes(row[2]), self.pickle_key)
+            sessions[row[0]][row[1]][session.id] = session
+        c.close()
+
+    def get_inbound_session(self, room_id, curve_key, session_id, sessions=None):
+        """Gets a saved inbound Megolm session.
+
+        Args:
+            room_id (str): The room corresponding to the session.
+            curve_key (str): The curve25519 key of the device.
+            session_id (str): The id of the session.
+            sessions (dict): Optional. A map from session id to olm.InboundGroupSession
+                object, to which the session will be added.
+
+        Returns:
+            olm.InboundGroupSession object, or None if the session was not found.
+        """
+        c = self.conn.cursor()
+        c.execute(
+            'SELECT session FROM megolm_inbound_sessions WHERE device_id=? AND room_id=? '
+            'AND curve_key=? AND session_id=?',
+            (self.device_id, room_id, curve_key, session_id)
+        )
+        try:
+            session_data = c.fetchone()[0]
+            session_data = bytes(session_data)
+        except TypeError:
+            return None
+        finally:
+            c.close()
+        session = olm.InboundGroupSession.from_pickle(session_data, self.pickle_key)
+        if sessions is not None:
+            sessions[session.id] = session
+        return session
 
     def close(self):
         self.conn.close()
