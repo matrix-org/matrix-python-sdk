@@ -68,11 +68,13 @@ class OlmDevice(object):
         self.db = Store(self.device_id, **conf)
         self.olm_sessions = defaultdict(list)
         self.megolm_inbound_sessions = defaultdict(lambda: defaultdict(dict))
+        self.megolm_outbound_sessions = {}
         self.olm_account = self.db.get_olm_account()
         if self.olm_account:
             if load_all:
                 self.db.load_olm_sessions(self.olm_sessions)
                 self.db.load_inbound_sessions(self.megolm_inbound_sessions)
+                self.db.load_outbound_sessions(self.megolm_outbound_sessions)
             logger.info('Loaded Olm account from database for device %s.', device_id)
         else:
             self.olm_account = olm.Account()
@@ -89,7 +91,6 @@ class OlmDevice(object):
                                                         keys_threshold)
         self.device_keys = defaultdict(dict)
         self.device_list = DeviceList(self, api, self.device_keys)
-        self.megolm_outbound_sessions = {}
         self.megolm_index_record = defaultdict(dict)
 
     def upload_identity_keys(self):
@@ -449,6 +450,8 @@ class OlmDevice(object):
         user_devices = {user.user_id: list(self.device_keys[user.user_id])
                         for user in users}
         self.device_list.get_room_device_keys(room)
+        self.db.remove_outbound_session(room.room_id)
+        self.db.save_outbound_session(room.room_id, session)
         self.megolm_share_session(room.room_id, user_devices, session)
         # Store a corresponding inbound session, so that we can decrypt our own messages
         self.megolm_add_inbound_session(room.room_id, self.identity_keys['curve25519'],
@@ -492,6 +495,7 @@ class OlmDevice(object):
                 new_devices.add(device_id)
         self.api.send_to_device('m.room.encrypted', messages)
         session.add_devices(new_devices)
+        self.db.save_megolm_outbound_devices(room_id, new_devices)
 
     def megolm_share_session_with_new_devices(self, room, session):
         """Share a megolm session with new devices in a room.
@@ -529,7 +533,11 @@ class OlmDevice(object):
         room_id = room.room_id
 
         session = self.megolm_outbound_sessions.get(room_id)
-        if not session or session.should_rotate():
+        if not session:
+            session = self.db.get_outbound_session(room_id, self.megolm_outbound_sessions)
+            if not session:
+                session = self.megolm_start_session(room)
+        if session.should_rotate():
             session = self.megolm_start_session(room)
         else:
             self.megolm_share_session_with_new_devices(room, session)
@@ -541,6 +549,7 @@ class OlmDevice(object):
         }
 
         encrypted_payload = session.encrypt(json.dumps(payload))
+        self.db.save_outbound_session(room_id, session)
 
         encrypted_event = {
             'algorithm': self._megolm_algorithm,
@@ -561,6 +570,7 @@ class OlmDevice(object):
         """
         try:
             self.megolm_outbound_sessions.pop(room_id)
+            self.db.remove_outbound_session(room_id)
             logger.info('Removed Meglom outbound session in %s.', room_id)
         except KeyError:
             pass

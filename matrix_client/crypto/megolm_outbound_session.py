@@ -16,6 +16,10 @@ class MegolmOutboundSession(OutboundGroupSession):
         max_messages (int): Optional. The maximum number of messages that should be sent.
             A new message in considered sent each time there is a call to ``encrypt``.
             Default to 100 if not present.
+
+    Attributes:
+        creation_time (datetime.datetime): Creation time of the session.
+        message_count (int): Number of messages encrypted using the session.
     """
 
     def __init__(self, max_age=None, max_messages=None):
@@ -58,3 +62,14 @@ class MegolmOutboundSession(OutboundGroupSession):
     def encrypt(self, plaintext):
         self.message_count += 1
         return super(MegolmOutboundSession, self).encrypt(plaintext)
+
+    @classmethod
+    def from_pickle(cls, pickle, devices, max_age, max_messages, creation_time,
+                    message_count, passphrase=''):
+        session = super(MegolmOutboundSession, cls).from_pickle(pickle, passphrase)
+        session.devices = devices
+        session.max_age = max_age
+        session.max_messages = max_messages
+        session.creation_time = creation_time
+        session.message_count = message_count
+        return session
