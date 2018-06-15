@@ -164,7 +164,7 @@ class MatrixHttpApi(object):
         """
         return self._send("POST", "/logout")
 
-    def create_room(self, alias=None, is_public=False, invitees=()):
+    def create_room(self, alias=None, is_public=False, invitees=None):
         """Perform /createRoom.
 
         Args:

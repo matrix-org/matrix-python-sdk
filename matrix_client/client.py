@@ -288,7 +288,7 @@ class MatrixClient(object):
 
     # TODO: move room creation/joining to User class for future application service usage
     # NOTE: we may want to leave thin wrappers here for convenience
-    def create_room(self, alias=None, is_public=False, invitees=()):
+    def create_room(self, alias=None, is_public=False, invitees=None):
         """ Create a new room on the homeserver.
 
         Args:
