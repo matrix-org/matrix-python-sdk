@@ -107,7 +107,7 @@ class MatrixHttpApi(object):
     def validate_certificate(self, valid):
         self.validate_cert = valid
 
-    def register(self, content={}, kind='user'):
+    def register(self, content=None, kind='user'):
         """Performs /register.
 
         Args:
@@ -134,6 +134,8 @@ class MatrixHttpApi(object):
 
             kind (str): Specify kind="guest" to register as guest.
         """
+        if content is None:
+            content = {}
         return self._send(
             "POST",
             "/register",
@@ -162,7 +164,7 @@ class MatrixHttpApi(object):
         """
         return self._send("POST", "/logout")
 
-    def create_room(self, alias=None, is_public=False, invitees=()):
+    def create_room(self, alias=None, is_public=False, invitees=None):
         """Perform /createRoom.
 
         Args:
@@ -517,7 +519,7 @@ class MatrixHttpApi(object):
             "/rooms/%s/state/m.room.member/%s" % (room_id, user_id)
         )
 
-    def set_membership(self, room_id, user_id, membership, reason="", profile={},
+    def set_membership(self, room_id, user_id, membership, reason="", profile=None,
                        timestamp=None):
         """Perform PUT /rooms/$room_id/state/m.room.member/$user_id
 
@@ -528,6 +530,8 @@ class MatrixHttpApi(object):
             reason (str): The reason
             timestamp (int): Set origin_server_ts (For application services only)
         """
+        if profile is None:
+            profile = {}
         body = {
             "membership": membership,
             "reason": reason
@@ -634,8 +638,12 @@ class MatrixHttpApi(object):
                           "/user/{userId}/filter".format(userId=user_id),
                           filter_params)
 
-    def _send(self, method, path, content=None, query_params={}, headers={},
+    def _send(self, method, path, content=None, query_params=None, headers=None,
               api_path=MATRIX_V2_API_PATH):
+        if query_params is None:
+            query_params = {}
+        if headers is None:
+            headers = {}
         method = method.upper()
         if method not in ["GET", "PUT", "DELETE", "POST"]:
             raise MatrixError("Unsupported HTTP method: %s" % method)
