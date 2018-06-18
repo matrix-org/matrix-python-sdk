@@ -508,6 +508,20 @@ class OlmDevice(object):
         }
         return encrypted_event
 
+    def megolm_remove_outbound_session(self, room_id):
+        """Remove an existing Megolm outbound session in a room.
+
+        If there is no such session, nothing will happen.
+
+        Args:
+            room_id (str): The room to use.
+        """
+        try:
+            self.megolm_outbound_sessions.pop(room_id)
+            logger.info('Removed Meglom outbound session in %s.', room_id)
+        except KeyError:
+            pass
+
     def sign_json(self, json):
         """Signs a JSON object.
 
