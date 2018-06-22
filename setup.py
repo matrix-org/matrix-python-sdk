@@ -28,6 +28,7 @@ setup(
     version=exec_file(('matrix_client', '__init__.py',))['__version__'],
     description='Client-Server SDK for Matrix',
     long_description=read_file(('README.rst',)),
+    long_description_content_type="text/markdown",
     author='The Matrix.org Team',
     author_email='team@matrix.org',
     url='https://github.com/matrix-org/matrix-python-sdk',
