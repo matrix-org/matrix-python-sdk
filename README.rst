@@ -24,9 +24,9 @@ Documentation can be found at http://matrix-org.github.io/matrix-python-sdk/
 
 
 Installation
-=====
+============
 Stable release
------
+--------------
 Install with pip from pypi. This will install all necessary dependencies as well.
 
 .. code:: shell
@@ -34,7 +34,7 @@ Install with pip from pypi. This will install all necessary dependencies as well
    pip install matrix_client
 
 Development version
------
+-------------------
 Install using ``setup.py`` in root project directory. This will also install all
 needed dependencies.
 
