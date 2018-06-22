@@ -1,3 +1,6 @@
+import pytest
+pytest.importorskip("olm")  # noqa
+
 from copy import deepcopy
 
 from matrix_client.client import MatrixClient
