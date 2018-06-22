@@ -95,3 +95,5 @@ texinfo_documents = [
      author, 'MatrixPythonSDK', 'SDK for writing Matrix Clients in Python',
      'Miscellaneous'),
 ]
+
+autodoc_mock_imports = ["olm", "canonicaljson"]
