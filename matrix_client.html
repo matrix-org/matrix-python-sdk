@@ -8,11 +8,9 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>matrix_client package &mdash; Matrix Python SDK v0.2.0</title>
+  <title>matrix_client package &mdash; Matrix Python SDK v0.3.2</title>
   
 
-  
-  
   
   
 
@@ -24,20 +22,24 @@
 
   
 
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Welcome to Matrix Python SDK’s documentation!" href="index.html" /> 
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Matrix Python SDK v0.3.2" href="index.html"/>
+        <link rel="prev" title="Welcome to Matrix Python SDK’s documentation!" href="index.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav">
+<body class="wy-body-for-nav" role="document">
 
-   
   <div class="wy-grid-for-nav">
 
     
@@ -57,7 +59,7 @@
             
             
               <div class="version">
-                0.2.0
+                0.3.2
               </div>
             
           
@@ -78,10 +80,7 @@
           
             
             
-              
-            
-            
-              <ul class="current">
+                <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">matrix_client package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-matrix_client.client">matrix_client.client</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-matrix_client.api">matrix_client.api</a></li>
@@ -102,54 +101,34 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">Matrix Python SDK</a>
-        
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Matrix Python SDK</a>
       </nav>
 
 
+      
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
           
 
-
-
-
-
-
-
-
-
-
-
-
+ 
 
 
 
 <div role="navigation" aria-label="breadcrumbs navigation">
-
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="index.html">Docs</a> &raquo;</li>
-        
-      <li>matrix_client package</li>
-    
-    
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>matrix_client package</li>
       <li class="wy-breadcrumbs-aside">
         
-            
-            <a href="_sources/matrix_client.rst.txt" rel="nofollow"> View page source</a>
+          
+            <a href="_sources/matrix_client.txt" rel="nofollow"> View page source</a>
           
         
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
@@ -162,7 +141,7 @@
 <dl class="class">
 <dt id="matrix_client.client.CACHE">
 <em class="property">class </em><code class="descclassname">matrix_client.client.</code><code class="descname">CACHE</code><a class="reference internal" href="_modules/matrix_client/client.html#CACHE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.CACHE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">int</span></code></p>
 <dl class="attribute">
 <dt id="matrix_client.client.CACHE.ALL">
 <code class="descname">ALL</code><em class="property"> = 1</em><a class="headerlink" href="#matrix_client.client.CACHE.ALL" title="Permalink to this definition">¶</a></dt>
@@ -183,21 +162,21 @@
 <dl class="class">
 <dt id="matrix_client.client.MatrixClient">
 <em class="property">class </em><code class="descclassname">matrix_client.client.</code><code class="descname">MatrixClient</code><span class="sig-paren">(</span><em>base_url</em>, <em>token=None</em>, <em>user_id=None</em>, <em>valid_cert_check=True</em>, <em>sync_filter_limit=20</em>, <em>cache_level=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <p>The client API for Matrix. For the raw HTTP calls, see MatrixHttpApi.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>base_url</strong> (<em>str</em>) – The url of the HS preceding /_matrix.
+<li><strong>base_url</strong> (<em>str</em>) &#8211; The url of the HS preceding /_matrix.
 e.g. (ex: <a class="reference external" href="https://localhost:8008">https://localhost:8008</a> )</li>
-<li><strong>token</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – If you have an access token
+<li><strong>token</strong> (<em>Optional[str]</em>) &#8211; If you have an access token
 supply it here.</li>
-<li><strong>user_id</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – You must supply the user_id
+<li><strong>user_id</strong> (<em>Optional[str]</em>) &#8211; You must supply the user_id
 (as obtained when initially logging in to obtain
 the token) if supplying a token; otherwise, ignored.</li>
-<li><strong>valid_cert_check</strong> (<em>bool</em>) – Check the homeservers
+<li><strong>valid_cert_check</strong> (<em>bool</em>) &#8211; Check the homeservers
 certificate on connections?</li>
 </ul>
 </td>
@@ -212,7 +191,7 @@ certificate on connections?</li>
 </table>
 <p class="rubric">Examples</p>
 <p>Create a new user and send a message:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">client</span> <span class="o">=</span> <span class="n">MatrixClient</span><span class="p">(</span><span class="s2">&quot;https://matrix.org&quot;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">client</span> <span class="o">=</span> <span class="n">MatrixClient</span><span class="p">(</span><span class="s2">&quot;https://matrix.org&quot;</span><span class="p">)</span>
 <span class="n">token</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">register_with_password</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s2">&quot;foobar&quot;</span><span class="p">,</span>
     <span class="n">password</span><span class="o">=</span><span class="s2">&quot;monkey&quot;</span><span class="p">)</span>
 <span class="n">room</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">create_room</span><span class="p">(</span><span class="s2">&quot;myroom&quot;</span><span class="p">)</span>
@@ -220,7 +199,7 @@ certificate on connections?</li>
 </pre></div>
 </div>
 <p>Send a message with an already logged in user:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">client</span> <span class="o">=</span> <span class="n">MatrixClient</span><span class="p">(</span><span class="s2">&quot;https://matrix.org&quot;</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s2">&quot;foobar&quot;</span><span class="p">,</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">client</span> <span class="o">=</span> <span class="n">MatrixClient</span><span class="p">(</span><span class="s2">&quot;https://matrix.org&quot;</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s2">&quot;foobar&quot;</span><span class="p">,</span>
     <span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;@foobar:matrix.org&quot;</span><span class="p">)</span>
 <span class="n">client</span><span class="o">.</span><span class="n">add_listener</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>  <span class="c1"># NB: event stream callback</span>
 <span class="n">client</span><span class="o">.</span><span class="n">rooms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">add_listener</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>  <span class="c1"># NB: callbacks just for this room.</span>
@@ -230,7 +209,7 @@ certificate on connections?</li>
 </pre></div>
 </div>
 <p>Incoming event callbacks (scopes):</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">user_callback</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">incoming_event</span><span class="p">):</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">user_callback</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">incoming_event</span><span class="p">):</span>
     <span class="k">pass</span>
 
 <span class="k">def</span> <span class="nf">room_callback</span><span class="p">(</span><span class="n">room</span><span class="p">,</span> <span class="n">incoming_event</span><span class="p">):</span>
@@ -250,8 +229,8 @@ an ephemeral event.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>callback</strong> (<em>func</em><em>(</em><em>roomchunk</em><em>)</em>) – Callback called when an ephemeral event arrives.</li>
-<li><strong>event_type</strong> (<em>str</em>) – The event_type to filter for.</li>
+<li><strong>callback</strong> (<em>func(roomchunk</em>) &#8211; Callback called when an ephemeral event arrives.</li>
+<li><strong>event_type</strong> (<em>str</em>) &#8211; The event_type to filter for.</li>
 </ul>
 </td>
 </tr>
@@ -274,7 +253,7 @@ an invite.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>callback</strong> (<em>func</em><em>(</em><em>room_id</em><em>, </em><em>state</em><em>)</em>) – Callback called when an invite arrives.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>callback</strong> (<em>func(room_id, state</em>) &#8211; Callback called when an invite arrives.</td>
 </tr>
 </tbody>
 </table>
@@ -289,8 +268,8 @@ an invite.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>callback</strong> (<em>func</em><em>(</em><em>room_id</em><em>, </em><em>room</em><em>)</em>) – Callback called when the client</li>
-<li><strong>left a room.</strong> (<em>has</em>) – </li>
+<li><strong>callback</strong> (<em>func(room_id, room</em>) &#8211; Callback called when the client</li>
+<li><strong>left a room.</strong> (<em>has</em>) &#8211; </li>
 </ul>
 </td>
 </tr>
@@ -308,8 +287,8 @@ an event.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>callback</strong> (<em>func</em><em>(</em><em>roomchunk</em><em>)</em>) – Callback called when an event arrives.</li>
-<li><strong>event_type</strong> (<em>str</em>) – The event_type to filter for.</li>
+<li><strong>callback</strong> (<em>func(roomchunk</em>) &#8211; Callback called when an event arrives.</li>
+<li><strong>event_type</strong> (<em>str</em>) &#8211; The event_type to filter for.</li>
 </ul>
 </td>
 </tr>
@@ -332,7 +311,7 @@ a presence update.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>callback</strong> (<em>func</em><em>(</em><em>roomchunk</em><em>)</em>) – Callback called when a presence update arrives.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>callback</strong> (<em>func(roomchunk</em>) &#8211; Callback called when a presence update arrives.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Unique id of the listener, can be used to identify the listener.</td>
 </tr>
@@ -344,23 +323,23 @@ a presence update.</p>
 
 <dl class="method">
 <dt id="matrix_client.client.MatrixClient.create_room">
-<code class="descname">create_room</code><span class="sig-paren">(</span><em>alias=None</em>, <em>is_public=False</em>, <em>invitees=()</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.create_room"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.create_room" title="Permalink to this definition">¶</a></dt>
+<code class="descname">create_room</code><span class="sig-paren">(</span><em>alias=None</em>, <em>is_public=False</em>, <em>invitees=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.create_room"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.create_room" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new room on the homeserver.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>alias</strong> (<em>str</em>) – The canonical_alias of the room.</li>
-<li><strong>is_public</strong> (<em>bool</em>) – The public/private visibility of the room.</li>
-<li><strong>invitees</strong> (<em>str</em><em>[</em><em>]</em>) – A set of user ids to invite into the room.</li>
+<li><strong>alias</strong> (<em>str</em>) &#8211; The canonical_alias of the room.</li>
+<li><strong>is_public</strong> (<em>bool</em>) &#8211; The public/private visibility of the room.</li>
+<li><strong>invitees</strong> (<em>str[]</em>) &#8211; A set of user ids to invite into the room.</li>
 </ul>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Room</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal notranslate"><span class="pre">MatrixRequestError</span></code></p>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">MatrixRequestError</span></code></p>
 </td>
 </tr>
 </tbody>
@@ -400,7 +379,7 @@ a presence update.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>user_id</strong> (<em>str</em>) – The matrix user id of a user.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>user_id</strong> (<em>str</em>) &#8211; The matrix user id of a user.</td>
 </tr>
 </tbody>
 </table>
@@ -414,11 +393,11 @@ a presence update.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_id_or_alias</strong> (<em>str</em>) – Room ID or an alias.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_id_or_alias</strong> (<em>str</em>) &#8211; Room ID or an alias.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Room</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal notranslate"><span class="pre">MatrixRequestError</span></code></td>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">MatrixRequestError</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -435,7 +414,7 @@ by downstream code.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout_ms</strong> (<em>int</em>) – How long to poll the Home Server for before
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout_ms</strong> (<em>int</em>) &#8211; How long to poll the Home Server for before
 retrying.</td>
 </tr>
 </tbody>
@@ -451,12 +430,12 @@ retrying.</td>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>timeout_ms</strong> (<em>int</em>) – How long to poll the Home Server for before
+<li><strong>timeout_ms</strong> (<em>int</em>) &#8211; How long to poll the Home Server for before
 retrying.</li>
-<li><strong>exception_handler</strong> (<em>func</em><em>(</em><em>exception</em><em>)</em>) – Optional exception handler
+<li><strong>exception_handler</strong> (<em>func(exception</em>) &#8211; Optional exception handler
 function which can be used to handle exceptions in the caller
 thread.</li>
-<li><strong>bad_sync_timeout</strong> (<em>int</em>) – Base time to wait after an error before
+<li><strong>bad_sync_timeout</strong> (<em>int</em>) &#8211; Base time to wait after an error before
 retrying. Will be increased according to exponential backoff.</li>
 </ul>
 </td>
@@ -466,17 +445,50 @@ retrying. Will be increased according to exponential backoff.</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="matrix_client.client.MatrixClient.login_with_password">
-<code class="descname">login_with_password</code><span class="sig-paren">(</span><em>username</em>, <em>password</em>, <em>limit=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.login_with_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.login_with_password" title="Permalink to this definition">¶</a></dt>
+<dt id="matrix_client.client.MatrixClient.login">
+<code class="descname">login</code><span class="sig-paren">(</span><em>username</em>, <em>password</em>, <em>limit=10</em>, <em>sync=True</em>, <em>device_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.login"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.login" title="Permalink to this definition">¶</a></dt>
 <dd><p>Login to the homeserver.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>username</strong> (<em>str</em>) – Account username</li>
-<li><strong>password</strong> (<em>str</em>) – Account password</li>
-<li><strong>limit</strong> (<em>int</em>) – Deprecated. How many messages to return when syncing.
+<li><strong>username</strong> (<em>str</em>) &#8211; Account username</li>
+<li><strong>password</strong> (<em>str</em>) &#8211; Account password</li>
+<li><strong>limit</strong> (<em>int</em>) &#8211; Deprecated. How many messages to return when syncing.
+This will be replaced by a filter API in a later release.</li>
+<li><strong>sync</strong> (<em>bool</em>) &#8211; Optional. Whether to initiate a /sync request after logging in.</li>
+<li><strong>device_id</strong> (<em>str</em>) &#8211; Optional. ID of the client device. The server will
+auto-generate a device_id if this is not specified.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Access token</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">str</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">MatrixRequestError</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="matrix_client.client.MatrixClient.login_with_password">
+<code class="descname">login_with_password</code><span class="sig-paren">(</span><em>username</em>, <em>password</em>, <em>limit=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.login_with_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.login_with_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deprecated. Use <code class="docutils literal"><span class="pre">login</span></code> with <code class="docutils literal"><span class="pre">sync=True</span></code>.</p>
+<p>Login to the homeserver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>username</strong> (<em>str</em>) &#8211; Account username</li>
+<li><strong>password</strong> (<em>str</em>) &#8211; Account password</li>
+<li><strong>limit</strong> (<em>int</em>) &#8211; Deprecated. How many messages to return when syncing.
 This will be replaced by a filter API in a later release.</li>
 </ul>
 </td>
@@ -487,7 +499,7 @@ This will be replaced by a filter API in a later release.</li>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">str</p>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal notranslate"><span class="pre">MatrixRequestError</span></code></p>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">MatrixRequestError</span></code></p>
 </td>
 </tr>
 </tbody>
@@ -497,14 +509,15 @@ This will be replaced by a filter API in a later release.</li>
 <dl class="method">
 <dt id="matrix_client.client.MatrixClient.login_with_password_no_sync">
 <code class="descname">login_with_password_no_sync</code><span class="sig-paren">(</span><em>username</em>, <em>password</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/client.html#MatrixClient.login_with_password_no_sync"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.client.MatrixClient.login_with_password_no_sync" title="Permalink to this definition">¶</a></dt>
-<dd><p>Login to the homeserver.</p>
+<dd><p>Deprecated. Use <code class="docutils literal"><span class="pre">login</span></code> with <code class="docutils literal"><span class="pre">sync=False</span></code>.</p>
+<p>Login to the homeserver.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>username</strong> (<em>str</em>) – Account username</li>
-<li><strong>password</strong> (<em>str</em>) – Account password</li>
+<li><strong>username</strong> (<em>str</em>) &#8211; Account username</li>
+<li><strong>password</strong> (<em>str</em>) &#8211; Account password</li>
 </ul>
 </td>
 </tr>
@@ -514,7 +527,7 @@ This will be replaced by a filter API in a later release.</li>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">str</p>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal notranslate"><span class="pre">MatrixRequestError</span></code></p>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">MatrixRequestError</span></code></p>
 </td>
 </tr>
 </tbody>
@@ -538,7 +551,7 @@ Note: HS must have guest registration enabled.
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal notranslate"><span class="pre">MatrixRequestError</span></code></td>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">MatrixRequestError</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -553,8 +566,8 @@ Note: HS must have guest registration enabled.
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>username</strong> (<em>str</em>) – Account username</li>
-<li><strong>password</strong> (<em>str</em>) – Account password</li>
+<li><strong>username</strong> (<em>str</em>) &#8211; Account username</li>
+<li><strong>password</strong> (<em>str</em>) &#8211; Account password</li>
 </ul>
 </td>
 </tr>
@@ -564,7 +577,7 @@ Note: HS must have guest registration enabled.
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">str</p>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal notranslate"><span class="pre">MatrixRequestError</span></code></p>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">MatrixRequestError</span></code></p>
 </td>
 </tr>
 </tbody>
@@ -579,7 +592,7 @@ Note: HS must have guest registration enabled.
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>uuid.UUID</strong> – Unique id of the listener to remove.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>uuid.UUID</strong> &#8211; Unique id of the listener to remove.</td>
 </tr>
 </tbody>
 </table>
@@ -593,7 +606,7 @@ Note: HS must have guest registration enabled.
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>uuid.UUID</strong> – Unique id of the listener to remove.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>uuid.UUID</strong> &#8211; Unique id of the listener to remove.</td>
 </tr>
 </tbody>
 </table>
@@ -607,7 +620,7 @@ Note: HS must have guest registration enabled.
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>uuid.UUID</strong> – Unique id of the listener to remove</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>uuid.UUID</strong> &#8211; Unique id of the listener to remove</td>
 </tr>
 </tbody>
 </table>
@@ -621,7 +634,7 @@ Note: HS must have guest registration enabled.
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_alias</strong> (<em>str</em>) – The alias to be removed.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_alias</strong> (<em>str</em>) &#8211; The alias to be removed.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True if the alias is removed, False otherwise.</td>
 </tr>
@@ -656,9 +669,9 @@ Note: HS must have guest registration enabled.
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>timeout</strong> (<em>int</em>) – How long to poll the Home Server for before
+<li><strong>timeout</strong> (<em>int</em>) &#8211; How long to poll the Home Server for before
 retrying.</li>
-<li><strong>exception_handler</strong> (<em>func</em><em>(</em><em>exception</em><em>)</em>) – Optional exception handler
+<li><strong>exception_handler</strong> (<em>func(exception</em>) &#8211; Optional exception handler
 function which can be used to handle exceptions in the caller
 thread.</li>
 </ul>
@@ -683,14 +696,14 @@ thread.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>content</strong> (<em>bytes</em>) – The data of the content.</li>
-<li><strong>content_type</strong> (<em>str</em>) – The mimetype of the content.</li>
+<li><strong>content</strong> (<em>bytes</em>) &#8211; The data of the content.</li>
+<li><strong>content_type</strong> (<em>str</em>) &#8211; The mimetype of the content.</li>
 </ul>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
-<li><code class="xref py py-exc docutils literal notranslate"><span class="pre">MatrixUnexpectedResponse</span></code> – If the homeserver gave a strange response</li>
-<li><code class="xref py py-exc docutils literal notranslate"><span class="pre">MatrixRequestError</span></code> – If the upload failed for some reason.</li>
+<li><code class="xref py py-exc docutils literal"><span class="pre">MatrixUnexpectedResponse</span></code> &#8211; If the homeserver gave a strange response</li>
+<li><code class="xref py py-exc docutils literal"><span class="pre">MatrixRequestError</span></code> &#8211; If the upload failed for some reason.</li>
 </ul>
 </td>
 </tr>
@@ -706,7 +719,7 @@ thread.</li>
 <dl class="class">
 <dt id="matrix_client.api.MatrixHttpApi">
 <em class="property">class </em><code class="descclassname">matrix_client.api.</code><code class="descname">MatrixHttpApi</code><span class="sig-paren">(</span><em>base_url</em>, <em>token=None</em>, <em>identity=None</em>, <em>default_429_wait_ms=5000</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/api.html#MatrixHttpApi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.api.MatrixHttpApi" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <p>Contains all raw Matrix HTTP Client-Server API calls.</p>
 <p>For room and sync handling, consider using MatrixClient.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -714,12 +727,12 @@ thread.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>base_url</strong> (<em>str</em>) – The home server URL e.g. ‘<a class="reference external" href="http://localhost:8008">http://localhost:8008</a>’</li>
-<li><strong>token</strong> (<em>str</em>) – Optional. The client’s access token.</li>
-<li><strong>identity</strong> (<em>str</em>) – Optional. The mxid to act as (For application services only).</li>
-<li><strong>default_429_wait_ms</strong> (<em>int</em>) – Optional. Time in millseconds to wait before retrying
+<li><strong>base_url</strong> (<em>str</em>) &#8211; The home server URL e.g. &#8216;<a class="reference external" href="http://localhost:8008">http://localhost:8008</a>&#8216;</li>
+<li><strong>token</strong> (<em>str</em>) &#8211; Optional. The client&#8217;s access token.</li>
+<li><strong>identity</strong> (<em>str</em>) &#8211; Optional. The mxid to act as (For application services only).</li>
+<li><strong>default_429_wait_ms</strong> (<em>int</em>) &#8211; Optional. Time in millseconds to wait before retrying
 a request when server returns a HTTP 429
-response without a ‘retry_after_ms’ key.</li>
+response without a &#8216;retry_after_ms&#8217; key.</li>
 </ul>
 </td>
 </tr>
@@ -727,7 +740,7 @@ response without a ‘retry_after_ms’ key.</li>
 </table>
 <p class="rubric">Examples</p>
 <p>Create a client and send a message:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">matrix</span> <span class="o">=</span> <span class="n">MatrixHttpApi</span><span class="p">(</span><span class="s2">&quot;https://matrix.org&quot;</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s2">&quot;foobar&quot;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">matrix</span> <span class="o">=</span> <span class="n">MatrixHttpApi</span><span class="p">(</span><span class="s2">&quot;https://matrix.org&quot;</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s2">&quot;foobar&quot;</span><span class="p">)</span>
 <span class="n">response</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">sync</span><span class="p">()</span>
 <span class="n">response</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">send_message</span><span class="p">(</span><span class="s2">&quot;!roomid:matrix.org&quot;</span><span class="p">,</span> <span class="s2">&quot;Hello!&quot;</span><span class="p">)</span>
 </pre></div>
@@ -746,9 +759,9 @@ response without a ‘retry_after_ms’ key.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>room_id</strong> (<em>str</em>) – The room ID</li>
-<li><strong>user_id</strong> (<em>str</em>) – The user ID of the banee(sic)</li>
-<li><strong>reason</strong> (<em>str</em>) – The reason for this ban</li>
+<li><strong>room_id</strong> (<em>str</em>) &#8211; The room ID</li>
+<li><strong>user_id</strong> (<em>str</em>) &#8211; The user ID of the banee(sic)</li>
+<li><strong>reason</strong> (<em>str</em>) &#8211; The reason for this ban</li>
 </ul>
 </td>
 </tr>
@@ -765,9 +778,9 @@ response without a ‘retry_after_ms’ key.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>key_request</strong> (<em>dict</em>) – The keys to be claimed. Format should be
+<li><strong>key_request</strong> (<em>dict</em>) &#8211; The keys to be claimed. Format should be
 &lt;user_id&gt;: { &lt;device_id&gt;: &lt;algorithm&gt; }.</li>
-<li><strong>timeout</strong> (<em>int</em>) – Optional. The time (in milliseconds) to wait when
+<li><strong>timeout</strong> (<em>int</em>) &#8211; Optional. The time (in milliseconds) to wait when
 downloading keys from remote servers.</li>
 </ul>
 </td>
@@ -783,16 +796,16 @@ downloading keys from remote servers.</li>
 
 <dl class="method">
 <dt id="matrix_client.api.MatrixHttpApi.create_room">
-<code class="descname">create_room</code><span class="sig-paren">(</span><em>alias=None</em>, <em>is_public=False</em>, <em>invitees=()</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/api.html#MatrixHttpApi.create_room"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.api.MatrixHttpApi.create_room" title="Permalink to this definition">¶</a></dt>
+<code class="descname">create_room</code><span class="sig-paren">(</span><em>alias=None</em>, <em>is_public=False</em>, <em>invitees=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/api.html#MatrixHttpApi.create_room"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.api.MatrixHttpApi.create_room" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform /createRoom.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>alias</strong> (<em>str</em>) – Optional. The room alias name to set for this room.</li>
-<li><strong>is_public</strong> (<em>bool</em>) – Optional. The public/private visibility.</li>
-<li><strong>invitees</strong> (<em>list&lt;str&gt;</em>) – Optional. The list of user IDs to invite.</li>
+<li><strong>alias</strong> (<em>str</em>) &#8211; Optional. The room alias name to set for this room.</li>
+<li><strong>is_public</strong> (<em>bool</em>) &#8211; Optional. The public/private visibility.</li>
+<li><strong>invitees</strong> (<em>list&lt;str&gt;</em>) &#8211; Optional. The list of user IDs to invite.</li>
 </ul>
 </td>
 </tr>
@@ -810,8 +823,8 @@ downloading keys from remote servers.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>auth_body</strong> (<em>dict</em>) – Authentication params.</li>
-<li><strong>device_id</strong> (<em>str</em>) – The device ID of the device to delete.</li>
+<li><strong>auth_body</strong> (<em>dict</em>) &#8211; Authentication params.</li>
+<li><strong>device_id</strong> (<em>str</em>) &#8211; The device ID of the device to delete.</li>
 </ul>
 </td>
 </tr>
@@ -829,8 +842,8 @@ downloading keys from remote servers.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>auth_body</strong> (<em>dict</em>) – Authentication params.</li>
-<li><strong>devices</strong> (<em>list</em>) – List of device ID”s to delete.</li>
+<li><strong>auth_body</strong> (<em>dict</em>) &#8211; Authentication params.</li>
+<li><strong>devices</strong> (<em>list</em>) &#8211; List of device ID&#8221;s to delete.</li>
 </ul>
 </td>
 </tr>
@@ -848,8 +861,8 @@ Performs /events</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>from_token</strong> (<em>str</em>) – The ‘from’ query parameter.</li>
-<li><strong>timeout</strong> (<em>int</em>) – Optional. The ‘timeout’ query parameter.</li>
+<li><strong>from_token</strong> (<em>str</em>) &#8211; The &#8216;from&#8217; query parameter.</li>
+<li><strong>timeout</strong> (<em>int</em>) &#8211; Optional. The &#8216;timeout&#8217; query parameter.</li>
 </ul>
 </td>
 </tr>
@@ -865,7 +878,7 @@ Performs /events</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_id</strong> (<em>str</em>) – The room ID</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_id</strong> (<em>str</em>) &#8211; The room ID</td>
 </tr>
 </tbody>
 </table>
@@ -917,8 +930,8 @@ Performs /events</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>room_id</strong> (<em>str</em>) – The room ID</li>
-<li><strong>user_id</strong> (<em>str</em>) – The user ID</li>
+<li><strong>room_id</strong> (<em>str</em>) &#8211; The room ID</li>
+<li><strong>user_id</strong> (<em>str</em>) &#8211; The user ID</li>
 </ul>
 </td>
 </tr>
@@ -934,7 +947,7 @@ Performs /events</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_id</strong> (<em>str</em>) – The room ID</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_id</strong> (<em>str</em>) &#8211; The room ID</td>
 </tr>
 </tbody>
 </table>
@@ -948,9 +961,9 @@ Performs /events</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_alias</strong> (<em>str</em>) – The room alias name.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_alias</strong> (<em>str</em>) &#8211; The room alias name.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Wanted room’s id.</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Wanted room&#8217;s id.</td>
 </tr>
 </tbody>
 </table>
@@ -964,7 +977,7 @@ Performs /events</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_id</strong> (<em>str</em>) – The room to get the member events for.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_id</strong> (<em>str</em>) &#8211; The room to get the member events for.</td>
 </tr>
 </tbody>
 </table>
@@ -979,11 +992,11 @@ Performs /events</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>room_id</strong> (<em>str</em>) – The room’s id.</li>
-<li><strong>token</strong> (<em>str</em>) – The token to start returning events from.</li>
-<li><strong>direction</strong> (<em>str</em>) – The direction to return events from. One of: [“b”, “f”].</li>
-<li><strong>limit</strong> (<em>int</em>) – The maximum number of events to return.</li>
-<li><strong>to</strong> (<em>str</em>) – The token to stop returning events at.</li>
+<li><strong>room_id</strong> (<em>str</em>) &#8211; The room&#8217;s id.</li>
+<li><strong>token</strong> (<em>str</em>) &#8211; The token to start returning events from.</li>
+<li><strong>direction</strong> (<em>str</em>) &#8211; The direction to return events from. One of: [&#8220;b&#8221;, &#8220;f&#8221;].</li>
+<li><strong>limit</strong> (<em>int</em>) &#8211; The maximum number of events to return.</li>
+<li><strong>to</strong> (<em>str</em>) &#8211; The token to stop returning events at.</li>
 </ul>
 </td>
 </tr>
@@ -1007,7 +1020,7 @@ Performs /events</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_id</strong> (<em>str</em>) – The room ID</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_id</strong> (<em>str</em>) &#8211; The room ID</td>
 </tr>
 </tbody>
 </table>
@@ -1043,7 +1056,7 @@ Performs /events</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>limit</strong> (<em>int</em>) – The limit= param to provide.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>limit</strong> (<em>int</em>) &#8211; The limit= param to provide.</td>
 </tr>
 </tbody>
 </table>
@@ -1058,8 +1071,8 @@ Performs /events</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>room_id</strong> (<em>str</em>) – The room ID</li>
-<li><strong>user_id</strong> (<em>str</em>) – The user ID of the invitee</li>
+<li><strong>room_id</strong> (<em>str</em>) &#8211; The room ID</li>
+<li><strong>user_id</strong> (<em>str</em>) &#8211; The user ID of the invitee</li>
 </ul>
 </td>
 </tr>
@@ -1075,7 +1088,7 @@ Performs /events</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_id_or_alias</strong> (<em>str</em>) – The room ID or room alias to join.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_id_or_alias</strong> (<em>str</em>) &#8211; The room ID or room alias to join.</td>
 </tr>
 </tbody>
 </table>
@@ -1090,9 +1103,9 @@ Performs /events</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>from_token</strong> (<em>str</em>) – The desired start point of the list. Should be the
+<li><strong>from_token</strong> (<em>str</em>) &#8211; The desired start point of the list. Should be the
 next_batch field from a response to an earlier call to /sync.</li>
-<li><strong>to_token</strong> (<em>str</em>) – The desired end point of the list. Should be the next_batch
+<li><strong>to_token</strong> (<em>str</em>) &#8211; The desired end point of the list. Should be the next_batch
 field from a recent call to /sync - typically the most recent such call.</li>
 </ul>
 </td>
@@ -1104,7 +1117,7 @@ field from a recent call to /sync - typically the most recent such call.</li>
 <dl class="method">
 <dt id="matrix_client.api.MatrixHttpApi.kick_user">
 <code class="descname">kick_user</code><span class="sig-paren">(</span><em>room_id</em>, <em>user_id</em>, <em>reason=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/api.html#MatrixHttpApi.kick_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.api.MatrixHttpApi.kick_user" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calls set_membership with membership=”leave” for the user_id provided</p>
+<dd><p>Calls set_membership with membership=&#8221;leave&#8221; for the user_id provided</p>
 </dd></dl>
 
 <dl class="method">
@@ -1115,7 +1128,7 @@ field from a recent call to /sync - typically the most recent such call.</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_id</strong> (<em>str</em>) – The room ID</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_id</strong> (<em>str</em>) &#8211; The room ID</td>
 </tr>
 </tbody>
 </table>
@@ -1130,8 +1143,8 @@ field from a recent call to /sync - typically the most recent such call.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>login_type</strong> (<em>str</em>) – The value for the ‘type’ key.</li>
-<li><strong>**kwargs</strong> – Additional key/values to add to the JSON submitted.</li>
+<li><strong>login_type</strong> (<em>str</em>) &#8211; The value for the &#8216;type&#8217; key.</li>
+<li><strong>**kwargs</strong> &#8211; Additional key/values to add to the JSON submitted.</li>
 </ul>
 </td>
 </tr>
@@ -1159,14 +1172,14 @@ field from a recent call to /sync - typically the most recent such call.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>user_devices</strong> (<em>dict</em>) – The devices whose keys to download. Should be
+<li><strong>user_devices</strong> (<em>dict</em>) &#8211; The devices whose keys to download. Should be
 formatted as &lt;user_id&gt;: [&lt;device_ids&gt;]. No device_ids indicates
 all devices for the corresponding user.</li>
-<li><strong>timeout</strong> (<em>int</em>) – Optional. The time (in milliseconds) to wait when
+<li><strong>timeout</strong> (<em>int</em>) &#8211; Optional. The time (in milliseconds) to wait when
 downloading keys from remote servers.</li>
-<li><strong>token</strong> (<em>str</em>) – Optional. If the client is fetching keys as a result of
+<li><strong>token</strong> (<em>str</em>) &#8211; Optional. If the client is fetching keys as a result of
 a device update received in a sync request, this should be the
-‘since’ token of that sync request, or any later sync token.</li>
+&#8216;since&#8217; token of that sync request, or any later sync token.</li>
 </ul>
 </td>
 </tr>
@@ -1183,11 +1196,11 @@ a device update received in a sync request, this should be the
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>room_id</strong> (<em>str</em>) – The room ID to redact the message event in.</li>
-<li><strong>event_id</strong> (<em>str</em>) – The event id to redact.</li>
-<li><strong>reason</strong> (<em>str</em>) – Optional. The reason the message was redacted.</li>
-<li><strong>txn_id</strong> (<em>int</em>) – Optional. The transaction ID to use.</li>
-<li><strong>timestamp</strong> (<em>int</em>) – Optional. Set origin_server_ts (For application services only)</li>
+<li><strong>room_id</strong> (<em>str</em>) &#8211; The room ID to redact the message event in.</li>
+<li><strong>event_id</strong> (<em>str</em>) &#8211; The event id to redact.</li>
+<li><strong>reason</strong> (<em>str</em>) &#8211; Optional. The reason the message was redacted.</li>
+<li><strong>txn_id</strong> (<em>int</em>) &#8211; Optional. The transaction ID to use.</li>
+<li><strong>timestamp</strong> (<em>int</em>) &#8211; Optional. Set origin_server_ts (For application services only)</li>
 </ul>
 </td>
 </tr>
@@ -1197,14 +1210,14 @@ a device update received in a sync request, this should be the
 
 <dl class="method">
 <dt id="matrix_client.api.MatrixHttpApi.register">
-<code class="descname">register</code><span class="sig-paren">(</span><em>content={}</em>, <em>kind='user'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/api.html#MatrixHttpApi.register"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.api.MatrixHttpApi.register" title="Permalink to this definition">¶</a></dt>
+<code class="descname">register</code><span class="sig-paren">(</span><em>content=None</em>, <em>kind='user'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/api.html#MatrixHttpApi.register"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.api.MatrixHttpApi.register" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs /register.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>content</strong> (<em>dict</em>) – <p>The request payload.</p>
+<li><strong>content</strong> (<em>dict</em>) &#8211; <p>The request payload.</p>
 <div class="line-block">
 <div class="line">Should be specified for all non-guest registrations.</div>
 </div>
@@ -1236,12 +1249,12 @@ a device update received in a sync request, this should be the
 <div class="line-block">
 <div class="line">type (string): Required. The login type that the client is</div>
 <div class="line-block">
-<div class="line">attempting to complete. “m.login.dummy” is the only</div>
+<div class="line">attempting to complete. &#8220;m.login.dummy&#8221; is the only</div>
 <div class="line">non-interactive type.</div>
 </div>
 </div>
 </li>
-<li><strong>kind</strong> (<em>str</em>) – Specify kind=”guest” to register as guest.</li>
+<li><strong>kind</strong> (<em>str</em>) &#8211; Specify kind=&#8221;guest&#8221; to register as guest.</li>
 </ul>
 </td>
 </tr>
@@ -1257,9 +1270,9 @@ a device update received in a sync request, this should be the
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_alias</strong> (<em>str</em>) – The alias to be removed.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_alias</strong> (<em>str</em>) &#8211; The alias to be removed.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal notranslate"><span class="pre">MatrixRequestError</span></code></td>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">MatrixRequestError</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -1284,9 +1297,9 @@ a device update received in a sync request, this should be the
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>room_id</strong> (<em>str</em>) – The room ID to send the event in.</li>
-<li><strong>text_content</strong> (<em>str</em>) – The m.emote body to send.</li>
-<li><strong>timestamp</strong> (<em>int</em>) – Set origin_server_ts (For application services only)</li>
+<li><strong>room_id</strong> (<em>str</em>) &#8211; The room ID to send the event in.</li>
+<li><strong>text_content</strong> (<em>str</em>) &#8211; The m.emote body to send.</li>
+<li><strong>timestamp</strong> (<em>int</em>) &#8211; Set origin_server_ts (For application services only)</li>
 </ul>
 </td>
 </tr>
@@ -1303,12 +1316,12 @@ a device update received in a sync request, this should be the
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>room_id</strong> (<em>str</em>) – The room ID to send the event in.</li>
-<li><strong>geo_uri</strong> (<em>str</em>) – The geo uri representing the location.</li>
-<li><strong>name</strong> (<em>str</em>) – Description for the location.</li>
-<li><strong>thumb_url</strong> (<em>str</em>) – URL to the thumbnail of the location.</li>
-<li><strong>thumb_info</strong> (<em>dict</em>) – Metadata about the thumbnail, type ImageInfo.</li>
-<li><strong>timestamp</strong> (<em>int</em>) – Set origin_server_ts (For application services only)</li>
+<li><strong>room_id</strong> (<em>str</em>) &#8211; The room ID to send the event in.</li>
+<li><strong>geo_uri</strong> (<em>str</em>) &#8211; The geo uri representing the location.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; Description for the location.</li>
+<li><strong>thumb_url</strong> (<em>str</em>) &#8211; URL to the thumbnail of the location.</li>
+<li><strong>thumb_info</strong> (<em>dict</em>) &#8211; Metadata about the thumbnail, type ImageInfo.</li>
+<li><strong>timestamp</strong> (<em>int</em>) &#8211; Set origin_server_ts (For application services only)</li>
 </ul>
 </td>
 </tr>
@@ -1325,9 +1338,9 @@ a device update received in a sync request, this should be the
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>room_id</strong> (<em>str</em>) – The room ID to send the event in.</li>
-<li><strong>text_content</strong> (<em>str</em>) – The m.text body to send.</li>
-<li><strong>timestamp</strong> (<em>int</em>) – Set origin_server_ts (For application services only)</li>
+<li><strong>room_id</strong> (<em>str</em>) &#8211; The room ID to send the event in.</li>
+<li><strong>text_content</strong> (<em>str</em>) &#8211; The m.text body to send.</li>
+<li><strong>timestamp</strong> (<em>int</em>) &#8211; Set origin_server_ts (For application services only)</li>
 </ul>
 </td>
 </tr>
@@ -1344,11 +1357,11 @@ a device update received in a sync request, this should be the
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>room_id</strong> (<em>str</em>) – The room ID to send the message event in.</li>
-<li><strong>event_type</strong> (<em>str</em>) – The event type to send.</li>
-<li><strong>content</strong> (<em>dict</em>) – The JSON content to send.</li>
-<li><strong>txn_id</strong> (<em>int</em>) – Optional. The transaction ID to use.</li>
-<li><strong>timestamp</strong> (<em>int</em>) – Set origin_server_ts (For application services only)</li>
+<li><strong>room_id</strong> (<em>str</em>) &#8211; The room ID to send the message event in.</li>
+<li><strong>event_type</strong> (<em>str</em>) &#8211; The event type to send.</li>
+<li><strong>content</strong> (<em>dict</em>) &#8211; The JSON content to send.</li>
+<li><strong>txn_id</strong> (<em>int</em>) &#8211; Optional. The transaction ID to use.</li>
+<li><strong>timestamp</strong> (<em>int</em>) &#8211; Set origin_server_ts (For application services only)</li>
 </ul>
 </td>
 </tr>
@@ -1365,9 +1378,9 @@ a device update received in a sync request, this should be the
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>room_id</strong> (<em>str</em>) – The room ID to send the event in.</li>
-<li><strong>text_content</strong> (<em>str</em>) – The m.notice body to send.</li>
-<li><strong>timestamp</strong> (<em>int</em>) – Set origin_server_ts (For application services only)</li>
+<li><strong>room_id</strong> (<em>str</em>) &#8211; The room ID to send the event in.</li>
+<li><strong>text_content</strong> (<em>str</em>) &#8211; The m.notice body to send.</li>
+<li><strong>timestamp</strong> (<em>int</em>) &#8211; Set origin_server_ts (For application services only)</li>
 </ul>
 </td>
 </tr>
@@ -1384,11 +1397,11 @@ a device update received in a sync request, this should be the
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>room_id</strong> (<em>str</em>) – The room ID to send the state event in.</li>
-<li><strong>event_type</strong> (<em>str</em>) – The state event type to send.</li>
-<li><strong>content</strong> (<em>dict</em>) – The JSON content to send.</li>
-<li><strong>state_key</strong> (<em>str</em>) – Optional. The state key for the event.</li>
-<li><strong>timestamp</strong> (<em>int</em>) – Set origin_server_ts (For application services only)</li>
+<li><strong>room_id</strong> (<em>str</em>) &#8211; The room ID to send the state event in.</li>
+<li><strong>event_type</strong> (<em>str</em>) &#8211; The state event type to send.</li>
+<li><strong>content</strong> (<em>dict</em>) &#8211; The JSON content to send.</li>
+<li><strong>state_key</strong> (<em>str</em>) &#8211; Optional. The state key for the event.</li>
+<li><strong>timestamp</strong> (<em>int</em>) &#8211; Set origin_server_ts (For application services only)</li>
 </ul>
 </td>
 </tr>
@@ -1405,11 +1418,11 @@ a device update received in a sync request, this should be the
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>event_type</strong> (<em>str</em>) – The type of event to send.</li>
-<li><strong>messages</strong> (<em>dict</em>) – The messages to send. Format should be
+<li><strong>event_type</strong> (<em>str</em>) &#8211; The type of event to send.</li>
+<li><strong>messages</strong> (<em>dict</em>) &#8211; The messages to send. Format should be
 &lt;user_id&gt;: {&lt;device_id&gt;: &lt;event_content&gt;}.
-The device ID may also be ‘*’, meaning all known devices for the user.</li>
-<li><strong>txn_id</strong> (<em>str</em>) – Optional. The transaction ID for this event, will be generated
+The device ID may also be &#8216;*&#8217;, meaning all known devices for the user.</li>
+<li><strong>txn_id</strong> (<em>str</em>) &#8211; Optional. The transaction ID for this event, will be generated
 automatically otherwise.</li>
 </ul>
 </td>
@@ -1442,9 +1455,9 @@ automatically otherwise.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>room_id</strong> (<em>str</em>) – The room to set the rules for.</li>
-<li><strong>guest_access</strong> (<em>str</em>) – Wether guests can join. One of: [“can_join”,
-“forbidden”]</li>
+<li><strong>room_id</strong> (<em>str</em>) &#8211; The room to set the rules for.</li>
+<li><strong>guest_access</strong> (<em>str</em>) &#8211; Wether guests can join. One of: [&#8220;can_join&#8221;,
+&#8220;forbidden&#8221;]</li>
 </ul>
 </td>
 </tr>
@@ -1461,9 +1474,9 @@ automatically otherwise.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>room_id</strong> (<em>str</em>) – The room to set the rules for.</li>
-<li><strong>join_rule</strong> (<em>str</em>) – The chosen rule. One of: [“public”, “knock”,
-“invite”, “private”]</li>
+<li><strong>room_id</strong> (<em>str</em>) &#8211; The room to set the rules for.</li>
+<li><strong>join_rule</strong> (<em>str</em>) &#8211; The chosen rule. One of: [&#8220;public&#8221;, &#8220;knock&#8221;,
+&#8220;invite&#8221;, &#8220;private&#8221;]</li>
 </ul>
 </td>
 </tr>
@@ -1473,18 +1486,18 @@ automatically otherwise.</li>
 
 <dl class="method">
 <dt id="matrix_client.api.MatrixHttpApi.set_membership">
-<code class="descname">set_membership</code><span class="sig-paren">(</span><em>room_id</em>, <em>user_id</em>, <em>membership</em>, <em>reason=''</em>, <em>profile={}</em>, <em>timestamp=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/api.html#MatrixHttpApi.set_membership"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.api.MatrixHttpApi.set_membership" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_membership</code><span class="sig-paren">(</span><em>room_id</em>, <em>user_id</em>, <em>membership</em>, <em>reason=''</em>, <em>profile=None</em>, <em>timestamp=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/api.html#MatrixHttpApi.set_membership"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.api.MatrixHttpApi.set_membership" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform PUT /rooms/$room_id/state/m.room.member/$user_id</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>room_id</strong> (<em>str</em>) – The room ID</li>
-<li><strong>user_id</strong> (<em>str</em>) – The user ID</li>
-<li><strong>membership</strong> (<em>str</em>) – New membership value</li>
-<li><strong>reason</strong> (<em>str</em>) – The reason</li>
-<li><strong>timestamp</strong> (<em>int</em>) – Set origin_server_ts (For application services only)</li>
+<li><strong>room_id</strong> (<em>str</em>) &#8211; The room ID</li>
+<li><strong>user_id</strong> (<em>str</em>) &#8211; The user ID</li>
+<li><strong>membership</strong> (<em>str</em>) &#8211; New membership value</li>
+<li><strong>reason</strong> (<em>str</em>) &#8211; The reason</li>
+<li><strong>timestamp</strong> (<em>int</em>) &#8211; Set origin_server_ts (For application services only)</li>
 </ul>
 </td>
 </tr>
@@ -1503,15 +1516,15 @@ in the content arg are reset to default values.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>room_id</strong> (<em>str</em>) – The room ID</li>
-<li><strong>content</strong> (<em>dict</em>) – The JSON content to send. See example content below.</li>
+<li><strong>room_id</strong> (<em>str</em>) &#8211; The room ID</li>
+<li><strong>content</strong> (<em>dict</em>) &#8211; The JSON content to send. See example content below.</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
 <p>Example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">api</span> <span class="o">=</span> <span class="n">MatrixHttpApi</span><span class="p">(</span><span class="s2">&quot;http://example.com&quot;</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s2">&quot;foobar&quot;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">api</span> <span class="o">=</span> <span class="n">MatrixHttpApi</span><span class="p">(</span><span class="s2">&quot;http://example.com&quot;</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s2">&quot;foobar&quot;</span><span class="p">)</span>
 <span class="n">api</span><span class="o">.</span><span class="n">set_power_levels</span><span class="p">(</span><span class="s2">&quot;!exampleroom:example.com&quot;</span><span class="p">,</span>
     <span class="p">{</span>
         <span class="s2">&quot;ban&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span> <span class="c1"># defaults to 50 if unspecified</span>
@@ -1548,8 +1561,8 @@ in the content arg are reset to default values.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>room_id</strong> (<em>str</em>) – The room id.</li>
-<li><strong>room_alias</strong> (<em>str</em>) – The room wanted alias name.</li>
+<li><strong>room_id</strong> (<em>str</em>) &#8211; The room id.</li>
+<li><strong>room_alias</strong> (<em>str</em>) &#8211; The room wanted alias name.</li>
 </ul>
 </td>
 </tr>
@@ -1590,12 +1603,12 @@ in the content arg are reset to default values.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>since</strong> (<em>str</em>) – Optional. A token which specifies where to continue a sync from.</li>
-<li><strong>timeout_ms</strong> (<em>int</em>) – Optional. The time in milliseconds to wait.</li>
-<li><strong>filter</strong> (<em>int|str</em>) – Either a Filter ID or a JSON string.</li>
-<li><strong>full_state</strong> (<em>bool</em>) – Return the full state for every room the user has joined
+<li><strong>since</strong> (<em>str</em>) &#8211; Optional. A token which specifies where to continue a sync from.</li>
+<li><strong>timeout_ms</strong> (<em>int</em>) &#8211; Optional. The time in milliseconds to wait.</li>
+<li><strong>filter</strong> (<em>int|str</em>) &#8211; Either a Filter ID or a JSON string.</li>
+<li><strong>full_state</strong> (<em>bool</em>) &#8211; Return the full state for every room the user has joined
 Defaults to false.</li>
-<li><strong>set_presence</strong> (<em>str</em>) – Should the client be marked as “online” or” offline”</li>
+<li><strong>set_presence</strong> (<em>str</em>) &#8211; Should the client be marked as &#8220;online&#8221; or&#8221; offline&#8221;</li>
 </ul>
 </td>
 </tr>
@@ -1612,8 +1625,8 @@ Defaults to false.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>room_id</strong> (<em>str</em>) – The room ID</li>
-<li><strong>user_id</strong> (<em>str</em>) – The user ID of the banee(sic)</li>
+<li><strong>room_id</strong> (<em>str</em>) &#8211; The room ID</li>
+<li><strong>user_id</strong> (<em>str</em>) &#8211; The user ID of the banee(sic)</li>
 </ul>
 </td>
 </tr>
@@ -1630,8 +1643,8 @@ Defaults to false.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>device_id</strong> (<em>str</em>) – The device ID of the device to update.</li>
-<li><strong>display_name</strong> (<em>str</em>) – New display name for the device.</li>
+<li><strong>device_id</strong> (<em>str</em>) &#8211; The device ID of the device to update.</li>
+<li><strong>display_name</strong> (<em>str</em>) &#8211; New display name for the device.</li>
 </ul>
 </td>
 </tr>
@@ -1649,7 +1662,7 @@ Defaults to false.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>device_keys</strong> (<em>dict</em>) – <p>Optional. Identity keys for the device. The required
+<li><strong>device_keys</strong> (<em>dict</em>) &#8211; <p>Optional. Identity keys for the device. The required
 keys are:</p>
 <div class="line-block">
 <div class="line">user_id (str): The ID of the user the device belongs to. Must match
@@ -1664,7 +1677,7 @@ device.</div>
 formatted as &lt;user_id&gt;: {&lt;algorithm:device_id&gt;: &lt;key&gt;}</div>
 </div>
 </li>
-<li><strong>one_time_keys</strong> (<em>dict</em>) – Optional. One-time public keys. Should be
+<li><strong>one_time_keys</strong> (<em>dict</em>) &#8211; Optional. One-time public keys. Should be
 formatted as &lt;algorithm:key_id&gt;: &lt;key&gt;, the key format being
 determined by the algorithm.</li>
 </ul>
@@ -1687,7 +1700,7 @@ determined by the algorithm.</li>
 <dl class="class">
 <dt id="matrix_client.user.User">
 <em class="property">class </em><code class="descclassname">matrix_client.user.</code><code class="descname">User</code><span class="sig-paren">(</span><em>api</em>, <em>user_id</em>, <em>displayname=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/user.html#User"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.user.User" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <p>The User class can be used to call user specific functions.</p>
 <dl class="method">
 <dt id="matrix_client.user.User.get_avatar_url">
@@ -1726,7 +1739,7 @@ determined by the algorithm.</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>avatar_url</strong> (<em>str</em>) – mxc url from previously uploaded</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>avatar_url</strong> (<em>str</em>) &#8211; mxc url from previously uploaded</td>
 </tr>
 </tbody>
 </table>
@@ -1740,7 +1753,7 @@ determined by the algorithm.</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>display_name</strong> (<em>str</em>) – Display Name</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>display_name</strong> (<em>str</em>) &#8211; Display Name</td>
 </tr>
 </tbody>
 </table>
@@ -1754,7 +1767,7 @@ determined by the algorithm.</li>
 <dl class="class">
 <dt id="matrix_client.room.Room">
 <em class="property">class </em><code class="descclassname">matrix_client.room.</code><code class="descname">Room</code><span class="sig-paren">(</span><em>client</em>, <em>room_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <p>Call room-specific functions after joining a room from the client.</p>
 <dl class="method">
 <dt id="matrix_client.room.Room.add_ephemeral_listener">
@@ -1765,8 +1778,8 @@ determined by the algorithm.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>callback</strong> (<em>func</em><em>(</em><em>room</em><em>, </em><em>event</em><em>)</em>) – Callback called when an ephemeral event arrives.</li>
-<li><strong>event_type</strong> (<em>str</em>) – The event_type to filter for.</li>
+<li><strong>callback</strong> (<em>func(room, event</em>) &#8211; Callback called when an ephemeral event arrives.</li>
+<li><strong>event_type</strong> (<em>str</em>) &#8211; The event_type to filter for.</li>
 </ul>
 </td>
 </tr>
@@ -1789,8 +1802,8 @@ determined by the algorithm.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>callback</strong> (<em>func</em><em>(</em><em>room</em><em>, </em><em>event</em><em>)</em>) – Callback called when an event arrives.</li>
-<li><strong>event_type</strong> (<em>str</em>) – The event_type to filter for.</li>
+<li><strong>callback</strong> (<em>func(room, event</em>) &#8211; Callback called when an event arrives.</li>
+<li><strong>event_type</strong> (<em>str</em>) &#8211; The event_type to filter for.</li>
 </ul>
 </td>
 </tr>
@@ -1819,8 +1832,8 @@ determined by the algorithm.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>callback</strong> (<em>func</em><em>(</em><em>roomchunk</em><em>)</em>) – Callback called when an event arrives.</li>
-<li><strong>event_type</strong> (<em>str</em>) – The event_type to filter for.</li>
+<li><strong>callback</strong> (<em>func(roomchunk</em>) &#8211; Callback called when an event arrives.</li>
+<li><strong>event_type</strong> (<em>str</em>) &#8211; The event_type to filter for.</li>
 </ul>
 </td>
 </tr>
@@ -1842,9 +1855,9 @@ determined by the algorithm.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>reverse</strong> (<em>bool</em>) – When false messages will be backfilled in their original
+<li><strong>reverse</strong> (<em>bool</em>) &#8211; When false messages will be backfilled in their original
 order (old to new), otherwise the order will be reversed (new to old).</li>
-<li><strong>limit</strong> (<em>int</em>) – Number of messages to go back.</li>
+<li><strong>limit</strong> (<em>int</em>) &#8211; Number of messages to go back.</li>
 </ul>
 </td>
 </tr>
@@ -1861,8 +1874,8 @@ order (old to new), otherwise the order will be reversed (new to old).</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>user_id</strong> (<em>str</em>) – The matrix user id of a user.</li>
-<li><strong>reason</strong> (<em>str</em>) – A reason for banning the user.</li>
+<li><strong>user_id</strong> (<em>str</em>) &#8211; The matrix user id of a user.</li>
+<li><strong>reason</strong> (<em>str</em>) &#8211; A reason for banning the user.</li>
 </ul>
 </td>
 </tr>
@@ -1929,8 +1942,8 @@ order (old to new), otherwise the order will be reversed (new to old).</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>user_id</strong> (<em>str</em>) – The matrix user id of a user.</li>
-<li><strong>reason</strong> (<em>str</em>) – A reason for kicking the user.</li>
+<li><strong>user_id</strong> (<em>str</em>) &#8211; The matrix user id of a user.</li>
+<li><strong>reason</strong> (<em>str</em>) &#8211; A reason for kicking the user.</li>
 </ul>
 </td>
 </tr>
@@ -1969,12 +1982,12 @@ order (old to new), otherwise the order will be reversed (new to old).</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>events</strong> (<em>dict</em>) – Power levels required for sending specific event types,
-in the form {“m.room.whatever0”: 60, “m.room.whatever2”: None}.
+<li><strong>events</strong> (<em>dict</em>) &#8211; Power levels required for sending specific event types,
+in the form {&#8220;m.room.whatever0&#8221;: 60, &#8220;m.room.whatever2&#8221;: None}.
 Overrides events_default and state_default for the specified
 events. A level of None causes the target event to revert to the
 default level as specified by events_default or state_default.</li>
-<li><strong>**kwargs</strong> – <p>Key/value pairs specifying the power levels required for
+<li><strong>**kwargs</strong> &#8211; <p>Key/value pairs specifying the power levels required for
 various actions:</p>
 <ul>
 <li>events_default(int): Default level for sending message events</li>
@@ -2004,11 +2017,11 @@ various actions:</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>users</strong> (<em>dict</em>) – Power levels to assign to specific users, in the form
-{“&#64;name0:host0”: 10, “&#64;name1:host1”: 100, “&#64;name3:host3”, None}
+<li><strong>users</strong> (<em>dict</em>) &#8211; Power levels to assign to specific users, in the form
+{&#8220;&#64;name0:host0&#8221;: 10, &#8220;&#64;name1:host1&#8221;: 100, &#8220;&#64;name3:host3&#8221;, None}
 A level of None causes the user to revert to the default level
 as specified by users_default.</li>
-<li><strong>users_default</strong> (<em>int</em>) – Default power level for users in the room</li>
+<li><strong>users_default</strong> (<em>int</em>) &#8211; Default power level for users in the room</li>
 </ul>
 </td>
 </tr>
@@ -2059,9 +2072,9 @@ for audioinfo</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>url</strong> (<em>str</em>) – The mxc url of the audio.</li>
-<li><strong>name</strong> (<em>str</em>) – The filename of the audio.</li>
-<li><strong>(</strong><strong>)</strong> (<em>audioinfo</em>) – Extra information about the audio.</li>
+<li><strong>url</strong> (<em>str</em>) &#8211; The mxc url of the audio.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; The filename of the audio.</li>
+<li><strong>()</strong> (<em>audioinfo</em>) &#8211; Extra information about the audio.</li>
 </ul>
 </td>
 </tr>
@@ -2086,9 +2099,9 @@ fileinfo.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>url</strong> (<em>str</em>) – The mxc url of the file.</li>
-<li><strong>name</strong> (<em>str</em>) – The filename of the image.</li>
-<li><strong>(</strong><strong>)</strong> (<em>fileinfo</em>) – Extra information about the file</li>
+<li><strong>url</strong> (<em>str</em>) &#8211; The mxc url of the file.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; The filename of the image.</li>
+<li><strong>()</strong> (<em>fileinfo</em>) &#8211; Extra information about the file</li>
 </ul>
 </td>
 </tr>
@@ -2105,8 +2118,8 @@ fileinfo.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>html</strong> (<em>str</em>) – The html formatted message to be sent.</li>
-<li><strong>body</strong> (<em>str</em>) – The unformatted body of the message to be sent.</li>
+<li><strong>html</strong> (<em>str</em>) &#8211; The html formatted message to be sent.</li>
+<li><strong>body</strong> (<em>str</em>) &#8211; The unformatted body of the message to be sent.</li>
 </ul>
 </td>
 </tr>
@@ -2125,9 +2138,9 @@ for imageinfo</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>url</strong> (<em>str</em>) – The mxc url of the image.</li>
-<li><strong>name</strong> (<em>str</em>) – The filename of the image.</li>
-<li><strong>(</strong><strong>)</strong> (<em>imageinfo</em>) – Extra information about the image.</li>
+<li><strong>url</strong> (<em>str</em>) &#8211; The mxc url of the image.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; The filename of the image.</li>
+<li><strong>()</strong> (<em>imageinfo</em>) &#8211; Extra information about the image.</li>
 </ul>
 </td>
 </tr>
@@ -2146,10 +2159,10 @@ for thumb_info</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>geo_uri</strong> (<em>str</em>) – The geo uri representing the location.</li>
-<li><strong>name</strong> (<em>str</em>) – Description for the location.</li>
-<li><strong>thumb_url</strong> (<em>str</em>) – URL to the thumbnail of the location.</li>
-<li><strong>(</strong><strong>)</strong> (<em>thumb_info</em>) – Metadata about the thumbnail, type ImageInfo.</li>
+<li><strong>geo_uri</strong> (<em>str</em>) &#8211; The geo uri representing the location.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; Description for the location.</li>
+<li><strong>thumb_url</strong> (<em>str</em>) &#8211; URL to the thumbnail of the location.</li>
+<li><strong>()</strong> (<em>thumb_info</em>) &#8211; Metadata about the thumbnail, type ImageInfo.</li>
 </ul>
 </td>
 </tr>
@@ -2172,9 +2185,9 @@ for thumb_info</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>event_type</strong> (<em>str</em>) – The type of event that you are sending.</li>
-<li><strong>(</strong><strong>)</strong> (<em>content</em>) – An object with the content of the message.</li>
-<li><strong>state_key</strong> (<em>str</em><em>, </em><em>optional</em>) – A unique key to identify the state.</li>
+<li><strong>event_type</strong> (<em>str</em>) &#8211; The type of event that you are sending.</li>
+<li><strong>()</strong> (<em>content</em>) &#8211; An object with the content of the message.</li>
+<li><strong>state_key</strong> (<em>str, optional</em>) &#8211; A unique key to identify the state.</li>
 </ul>
 </td>
 </tr>
@@ -2199,9 +2212,9 @@ for videoinfo</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>url</strong> (<em>str</em>) – The mxc url of the video.</li>
-<li><strong>name</strong> (<em>str</em>) – The filename of the video.</li>
-<li><strong>(</strong><strong>)</strong> (<em>videoinfo</em>) – Extra information about the video.</li>
+<li><strong>url</strong> (<em>str</em>) &#8211; The mxc url of the video.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; The filename of the video.</li>
+<li><strong>()</strong> (<em>videoinfo</em>) &#8211; Extra information about the video.</li>
 </ul>
 </td>
 </tr>
@@ -2228,7 +2241,7 @@ for videoinfo</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>invite_only</strong> (<em>bool</em>) – If True, users will have to be invited to join
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>invite_only</strong> (<em>bool</em>) &#8211; If True, users will have to be invited to join
 the room. If False, anyone who knows the room link can join.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True if successful, False if not</td>
@@ -2264,7 +2277,7 @@ the room. If False, anyone who knows the room link can join.</td>
 <code class="descname">set_user_profile</code><span class="sig-paren">(</span><em>displayname=None</em>, <em>avatar_url=None</em>, <em>reason='Changing room profile information'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/room.html#Room.set_user_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.room.Room.set_user_profile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set user profile within a room.</p>
 <p>This sets displayname and avatar_url for the logged in user only in a
-specific room. It does not change the user’s global user profile.</p>
+specific room. It does not change the user&#8217;s global user profile.</p>
 </dd></dl>
 
 <dl class="method">
@@ -2332,28 +2345,28 @@ specific room. It does not change the user’s global user profile.</p>
 <dl class="exception">
 <dt id="matrix_client.errors.MatrixError">
 <em class="property">exception </em><code class="descclassname">matrix_client.errors.</code><code class="descname">MatrixError</code><a class="reference internal" href="_modules/matrix_client/errors.html#MatrixError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.errors.MatrixError" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">exceptions.Exception</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">Exception</span></code></p>
 <p>A generic Matrix error. Specific errors will subclass this.</p>
 </dd></dl>
 
 <dl class="exception">
 <dt id="matrix_client.errors.MatrixHttpLibError">
 <em class="property">exception </em><code class="descclassname">matrix_client.errors.</code><code class="descname">MatrixHttpLibError</code><span class="sig-paren">(</span><em>original_exception</em>, <em>method</em>, <em>endpoint</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/errors.html#MatrixHttpLibError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.errors.MatrixHttpLibError" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#matrix_client.errors.MatrixError" title="matrix_client.errors.MatrixError"><code class="xref py py-class docutils literal notranslate"><span class="pre">matrix_client.errors.MatrixError</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#matrix_client.errors.MatrixError" title="matrix_client.errors.MatrixError"><code class="xref py py-class docutils literal"><span class="pre">matrix_client.errors.MatrixError</span></code></a></p>
 <p>The library used for http requests raised an exception.</p>
 </dd></dl>
 
 <dl class="exception">
 <dt id="matrix_client.errors.MatrixRequestError">
 <em class="property">exception </em><code class="descclassname">matrix_client.errors.</code><code class="descname">MatrixRequestError</code><span class="sig-paren">(</span><em>code=0</em>, <em>content=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/errors.html#MatrixRequestError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.errors.MatrixRequestError" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#matrix_client.errors.MatrixError" title="matrix_client.errors.MatrixError"><code class="xref py py-class docutils literal notranslate"><span class="pre">matrix_client.errors.MatrixError</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#matrix_client.errors.MatrixError" title="matrix_client.errors.MatrixError"><code class="xref py py-class docutils literal"><span class="pre">matrix_client.errors.MatrixError</span></code></a></p>
 <p>The home server returned an error response.</p>
 </dd></dl>
 
 <dl class="exception">
 <dt id="matrix_client.errors.MatrixUnexpectedResponse">
 <em class="property">exception </em><code class="descclassname">matrix_client.errors.</code><code class="descname">MatrixUnexpectedResponse</code><span class="sig-paren">(</span><em>content=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/matrix_client/errors.html#MatrixUnexpectedResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#matrix_client.errors.MatrixUnexpectedResponse" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#matrix_client.errors.MatrixError" title="matrix_client.errors.MatrixError"><code class="xref py py-class docutils literal notranslate"><span class="pre">matrix_client.errors.MatrixError</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#matrix_client.errors.MatrixError" title="matrix_client.errors.MatrixError"><code class="xref py py-class docutils literal"><span class="pre">matrix_client.errors.MatrixError</span></code></a></p>
 <p>The home server gave an unexpected response.</p>
 </dd></dl>
 
@@ -2362,14 +2375,13 @@ specific room. It does not change the user’s global user profile.</p>
 
 
            </div>
-           
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
       
-        <a href="index.html" class="btn btn-neutral" title="Welcome to Matrix Python SDK’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="index.html" class="btn btn-neutral" title="Welcome to Matrix Python SDK’s documentation!" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -2382,7 +2394,7 @@ specific room. It does not change the user’s global user profile.</p>
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -2400,12 +2412,10 @@ specific room. It does not change the user’s global user profile.</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.1.0',
-            LANGUAGE:'None',
+            VERSION:'0.3.2',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
+            HAS_SOURCE:  true
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>
@@ -2414,13 +2424,19 @@ specific room. It does not change the user’s global user profile.</p>
 
   
 
-  <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
 
+  
+  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
+          SphinxRtdTheme.StickyNav.enable();
       });
-  </script> 
+  </script>
+   
 
 </body>
 </html>

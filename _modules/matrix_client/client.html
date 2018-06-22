@@ -8,11 +8,9 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>matrix_client.client &mdash; Matrix Python SDK v0.2.0</title>
+  <title>matrix_client.client &mdash; Matrix Python SDK v0.3.2</title>
   
 
-  
-  
   
   
 
@@ -24,19 +22,24 @@
 
   
 
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" /> 
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Matrix Python SDK v0.3.2" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
 
   
   <script src="../../_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav">
+<body class="wy-body-for-nav" role="document">
 
-   
   <div class="wy-grid-for-nav">
 
     
@@ -56,7 +59,7 @@
             
             
               <div class="version">
-                0.2.0
+                0.3.2
               </div>
             
           
@@ -77,10 +80,7 @@
           
             
             
-              
-            
-            
-              <ul>
+                <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../matrix_client.html">matrix_client package</a></li>
 </ul>
 
@@ -93,52 +93,34 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">Matrix Python SDK</a>
-        
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">Matrix Python SDK</a>
       </nav>
 
 
+      
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
           
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
 <div role="navigation" aria-label="breadcrumbs navigation">
-
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
-        
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
           <li><a href="../index.html">Module code</a> &raquo;</li>
-        
-      <li>matrix_client.client</li>
-    
-    
+      
+    <li>matrix_client.client</li>
       <li class="wy-breadcrumbs-aside">
         
+          
+        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
@@ -355,9 +337,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_sync</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span>
 
-    <span class="c1"># TODO: combine login methods into single method controlled by kwargs</span>
 <div class="viewcode-block" id="MatrixClient.login_with_password_no_sync"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.login_with_password_no_sync">[docs]</a>    <span class="k">def</span> <span class="nf">login_with_password_no_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Login to the homeserver.</span>
+        <span class="sd">&quot;&quot;&quot;Deprecated. Use ``login`` with ``sync=False``.</span>
+
+<span class="sd">        Login to the homeserver.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            username (str): Account username</span>
@@ -369,17 +352,14 @@
 <span class="sd">        Raises:</span>
 <span class="sd">            MatrixRequestError</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">login</span><span class="p">(</span>
-            <span class="s2">&quot;m.login.password&quot;</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="n">password</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;user_id&quot;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">token</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;access_token&quot;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">hs</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;home_server&quot;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span></div>
+        <span class="n">warn</span><span class="p">(</span><span class="s2">&quot;login_with_password_no_sync is deprecated. Use login with sync=False.&quot;</span><span class="p">,</span>
+             <span class="ne">DeprecationWarning</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">sync</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="MatrixClient.login_with_password"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.login_with_password">[docs]</a>    <span class="k">def</span> <span class="nf">login_with_password</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Login to the homeserver.</span>
+        <span class="sd">&quot;&quot;&quot;Deprecated. Use ``login`` with ``sync=True``.</span>
+
+<span class="sd">        Login to the homeserver.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            username (str): Account username</span>
@@ -393,12 +373,41 @@
 <span class="sd">        Raises:</span>
 <span class="sd">            MatrixRequestError</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">login_with_password_no_sync</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
+        <span class="n">warn</span><span class="p">(</span><span class="s2">&quot;login_with_password is deprecated. Use login with sync=True.&quot;</span><span class="p">,</span>
+             <span class="ne">DeprecationWarning</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">sync</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span></div>
 
-        <span class="sd">&quot;&quot;&quot; Limit Filter &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sync_filter</span> <span class="o">=</span> <span class="s1">&#39;{ &quot;room&quot;: { &quot;timeline&quot; : { &quot;limit&quot; : </span><span class="si">%i</span><span class="s1"> } } }&#39;</span> <span class="o">%</span> <span class="n">limit</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sync</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">token</span></div>
+<div class="viewcode-block" id="MatrixClient.login"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.login">[docs]</a>    <span class="k">def</span> <span class="nf">login</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">sync</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">device_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Login to the homeserver.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            username (str): Account username</span>
+<span class="sd">            password (str): Account password</span>
+<span class="sd">            limit (int): Deprecated. How many messages to return when syncing.</span>
+<span class="sd">                This will be replaced by a filter API in a later release.</span>
+<span class="sd">            sync (bool): Optional. Whether to initiate a /sync request after logging in.</span>
+<span class="sd">            device_id (str): Optional. ID of the client device. The server will</span>
+<span class="sd">                auto-generate a device_id if this is not specified.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: Access token</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            MatrixRequestError</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">login</span><span class="p">(</span>
+            <span class="s2">&quot;m.login.password&quot;</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="n">password</span><span class="p">,</span> <span class="n">device_id</span><span class="o">=</span><span class="n">device_id</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;user_id&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">token</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;access_token&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hs</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;home_server&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span>
+
+        <span class="k">if</span> <span class="n">sync</span><span class="p">:</span>
+            <span class="sd">&quot;&quot;&quot; Limit Filter &quot;&quot;&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sync_filter</span> <span class="o">=</span> <span class="s1">&#39;{ &quot;room&quot;: { &quot;timeline&quot; : { &quot;limit&quot; : </span><span class="si">%i</span><span class="s1"> } } }&#39;</span> <span class="o">%</span> <span class="n">limit</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sync</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span></div>
 
 <div class="viewcode-block" id="MatrixClient.logout"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.logout">[docs]</a>    <span class="k">def</span> <span class="nf">logout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Logout from the homeserver.</span>
@@ -408,7 +417,7 @@
 
     <span class="c1"># TODO: move room creation/joining to User class for future application service usage</span>
     <span class="c1"># NOTE: we may want to leave thin wrappers here for convenience</span>
-<div class="viewcode-block" id="MatrixClient.create_room"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.create_room">[docs]</a>    <span class="k">def</span> <span class="nf">create_room</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">is_public</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">invitees</span><span class="o">=</span><span class="p">()):</span>
+<div class="viewcode-block" id="MatrixClient.create_room"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.client.MatrixClient.create_room">[docs]</a>    <span class="k">def</span> <span class="nf">create_room</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">is_public</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">invitees</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Create a new room on the homeserver.</span>
 
 <span class="sd">        Args:</span>
@@ -755,7 +764,6 @@
 </pre></div>
 
            </div>
-           
           </div>
           <footer>
   
@@ -768,7 +776,7 @@
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -786,12 +794,10 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../',
-            VERSION:'0.1.0',
-            LANGUAGE:'None',
+            VERSION:'0.3.2',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
+            HAS_SOURCE:  true
         };
     </script>
       <script type="text/javascript" src="../../_static/jquery.js"></script>
@@ -800,13 +806,19 @@
 
   
 
-  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
 
+  
+  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
+          SphinxRtdTheme.StickyNav.enable();
       });
-  </script> 
+  </script>
+   
 
 </body>
 </html>

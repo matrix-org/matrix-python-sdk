@@ -8,11 +8,9 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>matrix_client.api &mdash; Matrix Python SDK v0.2.0</title>
+  <title>matrix_client.api &mdash; Matrix Python SDK v0.3.2</title>
   
 
-  
-  
   
   
 
@@ -24,19 +22,24 @@
 
   
 
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" /> 
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Matrix Python SDK v0.3.2" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
 
   
   <script src="../../_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav">
+<body class="wy-body-for-nav" role="document">
 
-   
   <div class="wy-grid-for-nav">
 
     
@@ -56,7 +59,7 @@
             
             
               <div class="version">
-                0.2.0
+                0.3.2
               </div>
             
           
@@ -77,10 +80,7 @@
           
             
             
-              
-            
-            
-              <ul>
+                <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../matrix_client.html">matrix_client package</a></li>
 </ul>
 
@@ -93,52 +93,34 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">Matrix Python SDK</a>
-        
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">Matrix Python SDK</a>
       </nav>
 
 
+      
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
           
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
 <div role="navigation" aria-label="breadcrumbs navigation">
-
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
-        
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
           <li><a href="../index.html">Module code</a> &raquo;</li>
-        
-      <li>matrix_client.api</li>
-    
-    
+      
+    <li>matrix_client.api</li>
       <li class="wy-breadcrumbs-aside">
         
+          
+        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
@@ -243,7 +225,7 @@
             <span class="n">request</span><span class="p">[</span><span class="s2">&quot;filter&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">filter</span>
 
         <span class="k">if</span> <span class="n">full_state</span><span class="p">:</span>
-            <span class="n">request</span><span class="p">[</span><span class="s2">&quot;full_state&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">full_state</span>
+            <span class="n">request</span><span class="p">[</span><span class="s2">&quot;full_state&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">full_state</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">set_presence</span><span class="p">:</span>
             <span class="n">request</span><span class="p">[</span><span class="s2">&quot;set_presence&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">set_presence</span>
@@ -254,7 +236,7 @@
 <div class="viewcode-block" id="MatrixHttpApi.validate_certificate"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.validate_certificate">[docs]</a>    <span class="k">def</span> <span class="nf">validate_certificate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">valid</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_cert</span> <span class="o">=</span> <span class="n">valid</span></div>
 
-<div class="viewcode-block" id="MatrixHttpApi.register"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.register">[docs]</a>    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="p">{},</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;user&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="MatrixHttpApi.register"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.register">[docs]</a>    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;user&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Performs /register.</span>
 
 <span class="sd">        Args:</span>
@@ -281,6 +263,8 @@
 
 <span class="sd">            kind (str): Specify kind=&quot;guest&quot; to register as guest.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">content</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span>
             <span class="s2">&quot;POST&quot;</span><span class="p">,</span>
             <span class="s2">&quot;/register&quot;</span><span class="p">,</span>
@@ -299,7 +283,8 @@
             <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">login_type</span>
         <span class="p">}</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-            <span class="n">content</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                <span class="n">content</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="s2">&quot;/login&quot;</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span></div>
 
@@ -308,7 +293,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="s2">&quot;/logout&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="MatrixHttpApi.create_room"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.create_room">[docs]</a>    <span class="k">def</span> <span class="nf">create_room</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">is_public</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">invitees</span><span class="o">=</span><span class="p">()):</span>
+<div class="viewcode-block" id="MatrixHttpApi.create_room"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.create_room">[docs]</a>    <span class="k">def</span> <span class="nf">create_room</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">is_public</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">invitees</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Perform /createRoom.</span>
 
 <span class="sd">        Args:</span>
@@ -663,7 +648,7 @@
             <span class="s2">&quot;/rooms/</span><span class="si">%s</span><span class="s2">/state/m.room.member/</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">room_id</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="MatrixHttpApi.set_membership"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.set_membership">[docs]</a>    <span class="k">def</span> <span class="nf">set_membership</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room_id</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">membership</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="p">{},</span>
+<div class="viewcode-block" id="MatrixHttpApi.set_membership"><a class="viewcode-back" href="../../matrix_client.html#matrix_client.api.MatrixHttpApi.set_membership">[docs]</a>    <span class="k">def</span> <span class="nf">set_membership</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room_id</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">membership</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                        <span class="n">timestamp</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Perform PUT /rooms/$room_id/state/m.room.member/$user_id</span>
 
@@ -674,6 +659,8 @@
 <span class="sd">            reason (str): The reason</span>
 <span class="sd">            timestamp (int): Set origin_server_ts (For application services only)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">profile</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">profile</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">body</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;membership&quot;</span><span class="p">:</span> <span class="n">membership</span><span class="p">,</span>
             <span class="s2">&quot;reason&quot;</span><span class="p">:</span> <span class="n">reason</span>
@@ -780,8 +767,12 @@
                           <span class="s2">&quot;/user/{userId}/filter&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">userId</span><span class="o">=</span><span class="n">user_id</span><span class="p">),</span>
                           <span class="n">filter_params</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">_send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">query_params</span><span class="o">=</span><span class="p">{},</span> <span class="n">headers</span><span class="o">=</span><span class="p">{},</span>
+    <span class="k">def</span> <span class="nf">_send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">query_params</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
               <span class="n">api_path</span><span class="o">=</span><span class="n">MATRIX_V2_API_PATH</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">query_params</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">query_params</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">headers</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">headers</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">method</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;PUT&quot;</span><span class="p">,</span> <span class="s2">&quot;DELETE&quot;</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">]:</span>
             <span class="k">raise</span> <span class="n">MatrixError</span><span class="p">(</span><span class="s2">&quot;Unsupported HTTP method: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">method</span><span class="p">)</span>
@@ -1083,7 +1074,6 @@
 </pre></div>
 
            </div>
-           
           </div>
           <footer>
   
@@ -1096,7 +1086,7 @@
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -1114,12 +1104,10 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../',
-            VERSION:'0.1.0',
-            LANGUAGE:'None',
+            VERSION:'0.3.2',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
+            HAS_SOURCE:  true
         };
     </script>
       <script type="text/javascript" src="../../_static/jquery.js"></script>
@@ -1128,13 +1116,19 @@
 
   
 
-  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
 
+  
+  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
+          SphinxRtdTheme.StickyNav.enable();
       });
-  </script> 
+  </script>
+   
 
 </body>
 </html>
