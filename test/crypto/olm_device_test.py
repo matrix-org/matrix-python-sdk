@@ -171,3 +171,36 @@ class TestOlmDevice:
 
         self.device.upload_one_time_keys(force_update=True)
         assert len(responses.calls) == 3
+
+    @responses.activate
+    @pytest.mark.parametrize('count,should_upload', [(0, True), (25, False), (4, True)])
+    def test_update_one_time_key_counts(self, count, should_upload):
+        upload_url = HOSTNAME + MATRIX_V2_API_PATH + '/keys/upload'
+        responses.add(responses.POST, upload_url, json={'one_time_key_counts': {}})
+        self.device.one_time_keys_manager.target_counts['signed_curve25519'] = 50
+        self.device.one_time_keys_manager.server_counts.clear()
+
+        count_dict = {}
+        if count:
+            count_dict['signed_curve25519'] = count
+
+        self.device.update_one_time_key_counts(count_dict)
+
+        if should_upload:
+            if count:
+                req_otk = json.loads(responses.calls[0].request.body)['one_time_keys']
+                assert len(responses.calls) == 1
+            else:
+                req_otk = json.loads(responses.calls[1].request.body)['one_time_keys']
+                assert len(responses.calls) == 2
+            assert len(req_otk) == 50 - count
+        else:
+            assert not len(responses.calls)
+
+    @pytest.mark.parametrize('threshold', [-1, 2])
+    def test_invalid_keys_threshold(self, threshold):
+        with pytest.raises(ValueError):
+            OlmDevice(self.cli.api,
+                      self.user_id,
+                      self.device_id,
+                      keys_threshold=threshold)

@@ -515,3 +515,26 @@ def test_detect_encryption_state():
 
     room = client._mkroom(room_id)
     assert not room.encrypted
+
+
+@responses.activate
+def test_one_time_keys_sync():
+    client = MatrixClient(HOSTNAME, encryption=True)
+    sync_url = HOSTNAME + MATRIX_V2_API_PATH + "/sync"
+    sync_response = deepcopy(response_examples.example_sync)
+    payload = {'dummy': 1}
+    sync_response["device_one_time_keys_count"] = payload
+    sync_response['rooms']['join'] = {}
+
+    class DummyDevice:
+
+        def update_one_time_key_counts(self, payload):
+            self.payload = payload
+
+    device = DummyDevice()
+    client.olm_device = device
+
+    responses.add(responses.GET, sync_url, json=sync_response)
+
+    client._sync()
+    assert device.payload == payload
