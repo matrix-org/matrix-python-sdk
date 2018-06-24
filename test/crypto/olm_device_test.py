@@ -17,6 +17,7 @@ HOSTNAME = 'http://example.com'
 class TestOlmDevice:
     cli = MatrixClient(HOSTNAME)
     user_id = '@user:matrix.org'
+    room_id = '!test:example.com'
     device_id = 'QBUAZIFURK'
     device = OlmDevice(cli.api, user_id, device_id)
     signing_key = device.olm_account.identity_keys['ed25519']

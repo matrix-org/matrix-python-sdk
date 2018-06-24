@@ -184,3 +184,34 @@ example_preview_url = {
     "og:image:width": 48,
     "og:title": "Matrix Blog Post"
 }
+
+example_key_query_response = {
+    "failures": {},
+    "device_keys": {
+        "@alice:example.com": {
+            "JLAFKJWSCS": {
+                "user_id": "@alice:example.com",
+                "device_id": "JLAFKJWSCS",
+                "algorithms": [
+                    "m.olm.curve25519-aes-sha256",
+                    "m.megolm.v1.aes-sha"
+                ],
+                "keys": {
+                    "curve25519:JLAFKJWSCS": ("3C5BFWi2Y8MaVvjM8M22DBmh24PmgR0nPvJOIAr"
+                                              "zgyI"),
+                    "ed25519:JLAFKJWSCS": "VzJIYXQ85u19z2ZpEeLLVu8hUKTCE0VXYUn4IY4iFcA"
+                },
+                "signatures": {
+                    "@alice:example.com": {
+                        "ed25519:JLAFKJWSCS":
+                        ("wux6Dhjtk7GYPMW54hnx0doVH0NvuUAFBleL5OW99jhbjIutufglAgrYAcu8"
+                         "ueacgNyeSumvtzVIPZXgbB2BCg")
+                    }
+                },
+                "unsigned": {
+                    "device_display_name": "Alice'smobilephone"
+                }
+            }
+        }
+    }
+}
