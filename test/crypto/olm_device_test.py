@@ -1,15 +1,18 @@
 import pytest
-pytest.importorskip("olm")  # noqa
+olm = pytest.importorskip("olm")  # noqa
 
 import json
+import logging
 from copy import deepcopy
 
 import responses
 
+from matrix_client.crypto import olm_device
 from matrix_client.api import MATRIX_V2_API_PATH
 from matrix_client.client import MatrixClient
 from matrix_client.crypto.olm_device import OlmDevice
-from test.response_examples import example_key_upload_response
+from test.response_examples import (example_key_upload_response,
+                                    example_claim_keys_response)
 
 HOSTNAME = 'http://example.com'
 
@@ -21,6 +24,13 @@ class TestOlmDevice:
     device_id = 'QBUAZIFURK'
     device = OlmDevice(cli.api, user_id, device_id)
     signing_key = device.olm_account.identity_keys['ed25519']
+    alice = '@alice:example.com'
+    alice_device_id = 'JLAFKJWSCS'
+    alice_curve_key = 'mmFRSHuJVq3aTudx3KB3w5ZvSFQhgEcy8d+m+vkEfUQ'
+    alice_identity_keys = {
+        'curve25519': alice_curve_key,
+        'ed25519': '4VjV3OhFUxWFAcO5YOaQVmTIn29JdRmtNh9iAxoyhkc'
+    }
 
     def test_sign_json(self):
         example_payload = {
@@ -205,3 +215,184 @@ class TestOlmDevice:
                       self.user_id,
                       self.device_id,
                       keys_threshold=threshold)
+
+    @responses.activate
+    def test_olm_start_sessions(self):
+        claim_url = HOSTNAME + MATRIX_V2_API_PATH + '/keys/claim'
+        responses.add(responses.POST, claim_url, json=example_claim_keys_response)
+        self.device.olm_sessions.clear()
+        self.device.device_keys.clear()
+
+        user_devices = {self.alice: {self.alice_device_id}}
+
+        # We don't have alice's keys
+        self.device.olm_start_sessions(user_devices)
+        assert not self.device.olm_sessions[self.alice_curve_key]
+
+        # Cover logging part
+        olm_device.logger.setLevel(logging.WARNING)
+        # Now should be good
+        self.device.device_keys[self.alice][self.alice_device_id] = \
+            self.alice_identity_keys
+        self.device.olm_start_sessions(user_devices)
+        assert self.device.olm_sessions[self.alice_curve_key]
+
+        # With failures and wrong signature
+        self.device.olm_sessions.clear()
+        payload = deepcopy(example_claim_keys_response)
+        payload['failures'] = {'dummy': 1}
+        key = payload['one_time_keys'][self.alice][self.alice_device_id]
+        key['signed_curve25519:AAAAAQ']['test'] = 1
+        responses.replace(responses.POST, claim_url, json=payload)
+
+        self.device.olm_start_sessions(user_devices)
+        assert not self.device.olm_sessions[self.alice_curve_key]
+
+        # Missing requested user and devices
+        user_devices[self.alice].add('test')
+        user_devices['test'] = 'test'
+
+        self.device.olm_start_sessions(user_devices)
+
+    @responses.activate
+    def test_olm_build_encrypted_event(self):
+        self.device.device_keys.clear()
+        self.device.olm_sessions.clear()
+        event_content = {'dummy': 'example'}
+
+        # We don't have Alice's keys
+        with pytest.raises(RuntimeError):
+            self.device.olm_build_encrypted_event(
+                'm.text', event_content, self.alice, self.alice_device_id)
+
+        # We don't have a session with Alice
+        self.device.device_keys[self.alice][self.alice_device_id] = \
+            self.alice_identity_keys
+        with pytest.raises(RuntimeError):
+            self.device.olm_build_encrypted_event(
+                'm.text', event_content, self.alice, self.alice_device_id)
+
+        claim_url = HOSTNAME + MATRIX_V2_API_PATH + '/keys/claim'
+        responses.add(responses.POST, claim_url, json=example_claim_keys_response)
+        user_devices = {self.alice: {self.alice_device_id}}
+        self.device.olm_start_sessions(user_devices)
+        assert self.device.olm_build_encrypted_event(
+            'm.text', event_content, self.alice, self.alice_device_id)
+
+    def test_olm_decrypt(self):
+        self.device.olm_sessions.clear()
+        # Since this method doesn't care about high-level event formatting, we will
+        # generate things at low level
+        our_account = self.device.olm_account
+        # Alice needs to start a session with us
+        alice = olm.Account()
+        sender_key = alice.identity_keys['curve25519']
+        our_account.generate_one_time_keys(1)
+        otk = next(iter(our_account.one_time_keys['curve25519'].values()))
+        self.device.olm_account.mark_keys_as_published()
+        session = olm.OutboundSession(alice, our_account.identity_keys['curve25519'], otk)
+
+        plaintext = {"test": "test"}
+        message = session.encrypt(json.dumps(plaintext))
+        assert self.device._olm_decrypt(message, sender_key) == plaintext
+
+        # New pre-key message, but the session exists this time
+        message = session.encrypt(json.dumps(plaintext))
+        assert self.device._olm_decrypt(message, sender_key) == plaintext
+
+        # Try to decrypt the same message twice
+        with pytest.raises(RuntimeError):
+            self.device._olm_decrypt(message, sender_key)
+
+        # Answer Alice in order to have a type 1 message
+        message = self.device.olm_sessions[sender_key][0].encrypt(json.dumps(plaintext))
+        session.decrypt(message)
+        message = session.encrypt(json.dumps(plaintext))
+        assert self.device._olm_decrypt(message, sender_key) == plaintext
+
+        # Try to decrypt the same message type 1 twice
+        with pytest.raises(RuntimeError):
+            self.device._olm_decrypt(message, sender_key)
+
+        # Try to decrypt a message from a session that reused a one-time key
+        otk_reused_session = olm.OutboundSession(
+            alice, our_account.identity_keys['curve25519'], otk)
+        message = otk_reused_session.encrypt(json.dumps(plaintext))
+        with pytest.raises(RuntimeError):
+            self.device._olm_decrypt(message, sender_key)
+
+        # Try to decrypt an invalid type 0 message
+        our_account.generate_one_time_keys(1)
+        otk = next(iter(our_account.one_time_keys['curve25519'].values()))
+        wrong_session = olm.OutboundSession(alice, sender_key, otk)
+        message = wrong_session.encrypt(json.dumps(plaintext))
+        with pytest.raises(RuntimeError):
+            self.device._olm_decrypt(message, sender_key)
+
+        # Try to decrypt a type 1 message for which we have no sessions
+        message = session.encrypt(json.dumps(plaintext))
+        self.device.olm_sessions.clear()
+        with pytest.raises(RuntimeError):
+            self.device._olm_decrypt(message, sender_key)
+
+    def test_olm_decrypt_event(self):
+        self.device.device_keys.clear()
+        self.device.olm_sessions.clear()
+        alice_device = OlmDevice(self.device.api, self.alice, self.alice_device_id)
+        alice_device.device_keys[self.user_id][self.device_id] = self.device.identity_keys
+        self.device.device_keys[self.alice][self.alice_device_id] = \
+            alice_device.identity_keys
+
+        # Artificially start an Olm session from Alice
+        self.device.olm_account.generate_one_time_keys(1)
+        otk = next(iter(self.device.olm_account.one_time_keys['curve25519'].values()))
+        self.device.olm_account.mark_keys_as_published()
+        sender_key = self.device.identity_keys['curve25519']
+        session = olm.OutboundSession(alice_device.olm_account, sender_key, otk)
+        alice_device.olm_sessions[sender_key] = [session]
+
+        encrypted_event = alice_device.olm_build_encrypted_event(
+            'example_type', {'content': 'test'}, self.user_id, self.device_id)
+
+        # Now we can test
+        self.device.olm_decrypt_event(encrypted_event, self.alice)
+
+        # Type 1 Olm payload
+        alice_device.olm_decrypt_event(
+            self.device.olm_build_encrypted_event(
+                'example_type', {'content': 'test'}, self.alice, self.alice_device_id
+            ),
+            self.user_id)
+        encrypted_event = alice_device.olm_build_encrypted_event(
+            'example_type', {'content': 'test'}, self.user_id, self.device_id)
+        self.device.olm_decrypt_event(encrypted_event, self.alice)
+
+        encrypted_event = alice_device.olm_build_encrypted_event(
+            'example_type', {'content': 'test'}, self.user_id, self.device_id)
+        with pytest.raises(RuntimeError):
+            self.device.olm_decrypt_event(encrypted_event, 'wrong')
+
+        wrong_event = deepcopy(encrypted_event)
+        wrong_event['algorithm'] = 'wrong'
+        with pytest.raises(RuntimeError):
+            self.device.olm_decrypt_event(wrong_event, self.alice)
+
+        wrong_event = deepcopy(encrypted_event)
+        wrong_event['ciphertext'] = {}
+        with pytest.raises(RuntimeError):
+            self.device.olm_decrypt_event(wrong_event, self.alice)
+
+        encrypted_event = alice_device.olm_build_encrypted_event(
+            'example_type', {'content': 'test'}, self.user_id, self.device_id)
+        self.device.user_id = 'wrong'
+        with pytest.raises(RuntimeError):
+            self.device.olm_decrypt_event(encrypted_event, self.alice)
+        self.device.user_id = self.user_id
+
+        encrypted_event = alice_device.olm_build_encrypted_event(
+            'example_type', {'content': 'test'}, self.user_id, self.device_id)
+        backup = self.device.identity_keys['ed25519']
+        self.device.identity_keys['ed25519'] = 'wrong'
+        with pytest.raises(RuntimeError):
+            self.device.olm_decrypt_event(encrypted_event, self.alice)
+        self.device.identity_keys['ed25519'] = backup

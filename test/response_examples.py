@@ -215,3 +215,24 @@ example_key_query_response = {
         }
     }
 }
+
+example_claim_keys_response = {
+    "failures": {},
+    "one_time_keys": {
+        "@alice:example.com": {
+            "JLAFKJWSCS": {
+                'signed_curve25519:AAAAAQ': {
+                    'key': '9UOzQjF2j2Xf8mBIiMgruuCkuWtD0ea9kvx63mO92Ws',
+                    'signatures': {
+                        '@alice:example.com': {
+                            'ed25519:JLAFKJWSCS': (
+                                '6O+VYxN7mVcr/j66YdHASRrpW4ydC/0FcYmEWVAGIFzU4+yjzxxinhQD'
+                                'l7InhhdGuXeQlk4/w/CyU76TY6wdBA'
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
