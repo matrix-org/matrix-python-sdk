@@ -4,13 +4,19 @@ olm = pytest.importorskip("olm")  # noqa
 import json
 import logging
 from copy import deepcopy
+try:
+    from urllib import quote
+except ImportError:
+    from urllib.parse import quote
 
 import responses
 
 from matrix_client.crypto import olm_device
 from matrix_client.api import MATRIX_V2_API_PATH
 from matrix_client.client import MatrixClient
+from matrix_client.user import User
 from matrix_client.crypto.olm_device import OlmDevice
+from matrix_client.crypto.megolm_outbound_session import MegolmOutboundSession
 from test.response_examples import (example_key_upload_response,
                                     example_claim_keys_response)
 
@@ -31,6 +37,12 @@ class TestOlmDevice:
         'curve25519': alice_curve_key,
         'ed25519': '4VjV3OhFUxWFAcO5YOaQVmTIn29JdRmtNh9iAxoyhkc'
     }
+    alice_olm_session = olm.OutboundSession(
+        device.olm_account, alice_curve_key, alice_curve_key)
+    room = cli._mkroom(room_id)
+    room._members[alice] = User(cli.api, alice)
+    # allow to_device api call to work well with responses
+    device.api._make_txn_id = lambda: 1
 
     def test_sign_json(self):
         example_payload = {
@@ -402,17 +414,122 @@ class TestOlmDevice:
         claim_url = HOSTNAME + MATRIX_V2_API_PATH + '/keys/claim'
         responses.add(responses.POST, claim_url, json=example_claim_keys_response)
         self.device.olm_sessions.clear()
-        alice_device_id = 'JLAFKJWSCS'
-        alice_curve_key = 'mmFRSHuJVq3aTudx3KB3w5ZvSFQhgEcy8d+m+vkEfUQ'
-        self.device.device_keys[self.alice][alice_device_id] = {
-            'curve25519': alice_curve_key,
-            'ed25519': '4VjV3OhFUxWFAcO5YOaQVmTIn29JdRmtNh9iAxoyhkc'
-        }
-        user_devices = {self.alice: [alice_device_id]}
+        self.device.device_keys[self.alice][self.alice_device_id] = \
+            self.alice_identity_keys
+        user_devices = {self.alice: [self.alice_device_id]}
 
         self.device.olm_ensure_sessions(user_devices)
-        assert self.device.olm_sessions[alice_curve_key]
+        assert self.device.olm_sessions[self.alice_curve_key]
         assert len(responses.calls) == 1
 
         self.device.olm_ensure_sessions(user_devices)
         assert len(responses.calls) == 1
+
+    @responses.activate
+    def test_megolm_share_session(self):
+        claim_url = HOSTNAME + MATRIX_V2_API_PATH + '/keys/claim'
+        responses.add(responses.POST, claim_url, json=example_claim_keys_response)
+        to_device_url = HOSTNAME + MATRIX_V2_API_PATH + '/sendToDevice/m.room.encrypted/1'
+        responses.add(responses.PUT, to_device_url, json={})
+        self.device.olm_sessions.clear()
+        self.device.device_keys[self.alice][self.alice_device_id] = \
+            self.alice_identity_keys
+        self.device.device_keys['dummy']['dummy'] = {'curve25519': 'a', 'ed25519': 'a'}
+        user_devices = {self.alice: [self.alice_device_id], 'dummy': ['dummy']}
+        session = MegolmOutboundSession()
+
+        # Sharing with Alice should succeed, but dummy will fail
+        self.device.megolm_share_session(self.room_id, user_devices, session)
+        assert session.devices == {self.alice_device_id, 'dummy'}
+
+        req = json.loads(responses.calls[1].request.body)['messages']
+        assert self.alice in req
+        assert 'dummy' not in req
+
+    @responses.activate
+    def test_megolm_start_session(self):
+        to_device_url = HOSTNAME + MATRIX_V2_API_PATH + '/sendToDevice/m.room.encrypted/1'
+        responses.add(responses.PUT, to_device_url, json={})
+        self.device.device_keys[self.alice][self.alice_device_id] = \
+            self.alice_identity_keys
+        self.device.device_list.tracked_user_ids.add(self.alice)
+        self.device.olm_sessions[self.alice_curve_key] = [self.alice_olm_session]
+
+        self.device.megolm_start_session(self.room)
+        session = self.device.megolm_outbound_sessions[self.room_id]
+        assert self.alice_device_id in session.devices
+
+    @responses.activate
+    def test_megolm_share_session_with_new_devices(self):
+        to_device_url = HOSTNAME + MATRIX_V2_API_PATH + '/sendToDevice/m.room.encrypted/1'
+        responses.add(responses.PUT, to_device_url, json={})
+        self.device.device_keys[self.alice][self.alice_device_id] = \
+            self.alice_identity_keys
+        self.device.olm_sessions[self.alice_curve_key] = [self.alice_olm_session]
+        session = MegolmOutboundSession()
+        self.device.megolm_outbound_sessions[self.room_id] = session
+
+        self.device.megolm_share_session_with_new_devices(self.room, session)
+        assert self.alice_device_id in session.devices
+        assert len(responses.calls) == 1
+
+        self.device.megolm_share_session_with_new_devices(self.room, session)
+        assert len(responses.calls) == 1
+
+    @responses.activate
+    def test_megolm_build_encrypted_event(self):
+        to_device_url = HOSTNAME + MATRIX_V2_API_PATH + '/sendToDevice/m.room.encrypted/1'
+        responses.add(responses.PUT, to_device_url, json={})
+        self.device.megolm_outbound_sessions.clear()
+        self.device.device_keys[self.alice][self.alice_device_id] = \
+            self.alice_identity_keys
+        self.device.device_list.tracked_user_ids.add(self.alice)
+        self.device.olm_sessions[self.alice_curve_key] = [self.alice_olm_session]
+        event = {'type': 'm.room.message', 'content': {'body': 'test'}}
+
+        self.room.rotation_period_msgs = 1
+        self.device.megolm_build_encrypted_event(self.room, event)
+
+        self.device.megolm_build_encrypted_event(self.room, event)
+
+        session = self.device.megolm_outbound_sessions[self.room_id]
+        session.encrypt('test')
+        self.device.megolm_build_encrypted_event(self.room, event)
+        assert self.device.megolm_outbound_sessions[self.room_id].id != session.id
+
+    def test_megolm_remove_outbound_session(self):
+        session = MegolmOutboundSession()
+        self.device.megolm_outbound_sessions[self.room_id] = session
+        self.device.megolm_remove_outbound_session(self.room_id)
+        self.device.megolm_remove_outbound_session(self.room_id)
+
+    @responses.activate
+    def test_send_encrypted_message(self):
+        message_url = HOSTNAME + MATRIX_V2_API_PATH + \
+            '/rooms/{}/send/m.room.encrypted/1'.format(quote(self.room.room_id))
+        responses.add(responses.PUT, message_url, json={})
+        self.device.device_keys[self.alice][self.alice_device_id] = \
+            self.alice_identity_keys
+        self.device.olm_sessions[self.alice_curve_key] = [self.alice_olm_session]
+        session = MegolmOutboundSession()
+        session.add_device(self.alice_device_id)
+        self.device.megolm_outbound_sessions[self.room_id] = session
+
+        self.device.send_encrypted_message(self.room, {'test': 'test'})
+
+
+def test_megolm_outbound_session():
+    session = MegolmOutboundSession(max_messages=1)
+
+    assert not session.devices
+
+    session.add_device('test')
+    assert 'test' in session.devices
+
+    session.add_devices({'test2', 'test3'})
+    assert 'test2' in session.devices and 'test3' in session.devices
+
+    assert not session.should_rotate()
+
+    session.encrypt('message')
+    assert session.should_rotate()
