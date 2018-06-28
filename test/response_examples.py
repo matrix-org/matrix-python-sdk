@@ -236,3 +236,20 @@ example_claim_keys_response = {
         }
     }
 }
+
+example_room_key_event = {
+    "sender": "@alice:example.com",
+    "sender_device": "JLAFKJWSCS",
+    "content": {
+        "algorithm": "m.megolm.v1.aes-sha2",
+        "room_id": "!test:example.com",
+        "session_id": "AVCXMm6LZ+J/vyCcomXmE48mbD1IyKbUBUd3UOW0wHE",
+        "session_key": (
+            "AgAAAAAJS98WXiCc90wJ23H1ucZ+XFCv8pN8C5p/XojdA6l7PWlFwAV1fQXe7afrQMRL9BxeeF8M"
+            "uNnpvGX0hGOWcW0e2LU3EzQ0j8+jhxrPkQHUOJ8387CjRSA9UTBDmw3y8xquy3cXvuGE5DSpFUU7"
+            "J7Xh+Dli8XRaRDCbmPmMtSdPMwFQlzJui2fif78gnKJl5hOPJmw9SMim1AVHd1DltMBx4vB/3Kse"
+            "G413GWJkw9T+G6y51bsNEKsSU23lnJz32u5XwgNY9qdFKxGA6WL1wZZS6/iGW4gfTU/Jk89aGSA8"
+            "Aw")
+    },
+    "type": "m.room_key"
+}

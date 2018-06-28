@@ -19,7 +19,8 @@ from matrix_client.user import User
 from matrix_client.crypto.olm_device import OlmDevice
 from matrix_client.crypto.megolm_outbound_session import MegolmOutboundSession
 from test.response_examples import (example_key_upload_response,
-                                    example_claim_keys_response)
+                                    example_claim_keys_response,
+                                    example_room_key_event)
 
 HOSTNAME = 'http://example.com'
 
@@ -460,6 +461,23 @@ class TestOlmDevice:
         session = self.device.megolm_outbound_sessions[self.room_id]
         assert self.alice_device_id in session.devices
 
+        # Check that we can decrypt our own messages
+        plaintext = {
+            'type': 'test',
+            'content': {'test': 'test'},
+        }
+        encrypted_event = self.device.megolm_build_encrypted_event(self.room, plaintext)
+        event = {
+            'sender': self.alice,
+            'room_id': self.room_id,
+            'content': encrypted_event,
+            'type': 'm.room.encrypted',
+            'origin_server_ts': 1,
+            'event_id': 1
+        }
+        self.device.megolm_decrypt_event(event)
+        assert event['content'] == plaintext['content']
+
     @responses.activate
     def test_megolm_share_session_with_new_devices(self):
         to_device_url = HOSTNAME + MATRIX_V2_API_PATH + '/sendToDevice/m.room.encrypted/1'
@@ -517,6 +535,141 @@ class TestOlmDevice:
         self.device.megolm_outbound_sessions[self.room_id] = session
 
         self.device.send_encrypted_message(self.room, {'test': 'test'})
+
+    def test_megolm_add_inbound_session(self):
+        session = MegolmOutboundSession()
+        self.device.megolm_inbound_sessions.clear()
+
+        assert not self.device.megolm_add_inbound_session(
+            self.room_id, self.alice_curve_key, session.id, 'wrong')
+        assert self.device.megolm_add_inbound_session(
+            self.room_id, self.alice_curve_key, session.id, session.session_key)
+        assert session.id in \
+            self.device.megolm_inbound_sessions[self.room_id][self.alice_curve_key]
+        assert not self.device.megolm_add_inbound_session(
+            self.room_id, self.alice_curve_key, session.id, session.session_key)
+        assert not self.device.megolm_add_inbound_session(
+            self.room_id, self.alice_curve_key, 'wrong', session.session_key)
+
+    def test_handle_room_key_event(self):
+        self.device.megolm_inbound_sessions.clear()
+
+        self.device.handle_room_key_event(example_room_key_event, self.alice_curve_key)
+        assert self.room_id in self.device.megolm_inbound_sessions
+
+        self.device.handle_room_key_event(example_room_key_event, self.alice_curve_key)
+
+        event = deepcopy(example_room_key_event)
+        event['content']['algorithm'] = 'wrong'
+        self.device.handle_room_key_event(event, self.alice_curve_key)
+
+        event = deepcopy(example_room_key_event)
+        event['content']['session_id'] = 'wrong'
+        self.device.handle_room_key_event(event, self.alice_curve_key)
+
+    def test_olm_handle_encrypted_event(self):
+        self.device.olm_sessions.clear()
+        alice_device = OlmDevice(self.device.api, self.alice, self.alice_device_id)
+        alice_device.device_keys[self.user_id][self.device_id] = self.device.identity_keys
+        self.device.device_keys[self.alice][self.alice_device_id] = \
+            alice_device.identity_keys
+
+        # Artificially start an Olm session from Alice
+        self.device.olm_account.generate_one_time_keys(1)
+        otk = next(iter(self.device.olm_account.one_time_keys['curve25519'].values()))
+        self.device.olm_account.mark_keys_as_published()
+        sender_key = self.device.identity_keys['curve25519']
+        session = olm.OutboundSession(alice_device.olm_account, sender_key, otk)
+        alice_device.olm_sessions[sender_key] = [session]
+
+        content = example_room_key_event['content']
+        encrypted_event = alice_device.olm_build_encrypted_event(
+            'm.room_key', content, self.user_id, self.device_id)
+        event = {
+            'type': 'm.room.encrypted',
+            'content': encrypted_event,
+            'sender': self.alice
+        }
+
+        self.device.olm_handle_encrypted_event(event)
+
+        # Decrypting the same event twice will trigger an error
+        self.device.olm_handle_encrypted_event(event)
+
+        encrypted_event = alice_device.olm_build_encrypted_event(
+            'm.other', content, self.user_id, self.device_id)
+        event = {
+            'type': 'm.room.encrypted',
+            'content': encrypted_event,
+            'sender': self.alice
+        }
+        self.device.olm_handle_encrypted_event(event)
+
+        # Simulate redacted event
+        event['content'].pop('algorithm')
+        self.device.olm_handle_encrypted_event(event)
+
+    def test_megolm_decrypt_event(self):
+        out_session = MegolmOutboundSession()
+
+        plaintext = {
+            'content': {"test": "test"},
+            'type': 'm.text',
+        }
+        ciphertext = out_session.encrypt(json.dumps(plaintext))
+
+        content = {
+            'ciphertext': ciphertext,
+            'session_id': out_session.id,
+            'sender_key': self.alice_curve_key,
+            'algorithm': 'm.megolm.v1.aes-sha2',
+            'device_id': self.alice_device_id,
+        }
+
+        event = {
+            'sender': self.alice,
+            'room_id': self.room_id,
+            'content': content,
+            'type': 'm.room.encrypted',
+            'origin_server_ts': 1,
+            'event_id': 1
+        }
+
+        with pytest.raises(RuntimeError):
+            self.device.megolm_decrypt_event(event)
+
+        in_session = olm.InboundGroupSession(out_session.session_key)
+        sessions = self.device.megolm_inbound_sessions[self.room_id]
+        sessions[self.alice_curve_key][in_session.id] = in_session
+
+        # Unknown message index
+        with pytest.raises(RuntimeError):
+            self.device.megolm_decrypt_event(event)
+
+        ciphertext = out_session.encrypt(json.dumps(plaintext))
+        event['content']['ciphertext'] = ciphertext
+        self.device.megolm_decrypt_event(event)
+        assert event['content'] == plaintext['content']
+
+        # No replay attack
+        event['content'] = content
+        self.device.megolm_decrypt_event(event)
+        assert event['content'] == plaintext['content']
+
+        # Replay attack
+        event['content'] = content
+        event['event_id'] = 2
+        with pytest.raises(RuntimeError):
+            self.device.megolm_decrypt_event(event)
+
+        event['content']['algorithm'] = 'wrong'
+        with pytest.raises(RuntimeError):
+            self.device.megolm_decrypt_event(event)
+
+        event['content'].pop('algorithm')
+        event['type'] = 'encrypted'
+        self.device.megolm_decrypt_event(event)
+        assert event['type'] == 'encrypted'
 
 
 def test_megolm_outbound_session():

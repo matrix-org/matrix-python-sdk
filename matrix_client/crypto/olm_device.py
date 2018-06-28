@@ -663,8 +663,8 @@ class OlmDevice(object):
                 'event_id': event['event_id']
             }
         else:
-            if properties['origin_server_ts'] == event['origin_server_ts'] and \
-                    properties['event_id'] == event['event_id']:
+            if properties['origin_server_ts'] != event['origin_server_ts'] or \
+                    properties['event_id'] != event['event_id']:
                 raise RuntimeError('Detected a replay attack from device {} of user {} '
                                    'on decrypted event: {}.'.format(device_id, user_id,
                                                                     decrypted_event))
