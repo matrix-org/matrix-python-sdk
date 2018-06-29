@@ -56,3 +56,8 @@ matrix_client.crypto
     :members:
     :undoc-members:
     :show-inheritance:
+
+.. automodule:: matrix_client.crypto.device_list
+    :members:
+    :undoc-members:
+    :show-inheritance:
