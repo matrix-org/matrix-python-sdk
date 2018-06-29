@@ -1,16 +1,19 @@
 import pytest
 import responses
 import json
+import matrix_client.client
 from copy import deepcopy
 from matrix_client.client import MatrixClient, Room, User, CACHE
 from matrix_client.api import MATRIX_V2_API_PATH
 from . import response_examples
+from .crypto.dummy_olm_device import OlmDevice
 try:
     from urllib import quote
 except ImportError:
     from urllib.parse import quote
 
 HOSTNAME = "http://example.com"
+matrix_client.client.OlmDevice = OlmDevice
 
 
 def test_create_client():

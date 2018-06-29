@@ -16,7 +16,7 @@ from matrix_client.crypto import olm_device
 from matrix_client.api import MATRIX_V2_API_PATH
 from matrix_client.client import MatrixClient
 from matrix_client.user import User
-from matrix_client.crypto.olm_device import OlmDevice
+from test.crypto.dummy_olm_device import OlmDevice
 from matrix_client.crypto.megolm_outbound_session import MegolmOutboundSession
 from test.response_examples import (example_key_upload_response,
                                     example_claim_keys_response,
