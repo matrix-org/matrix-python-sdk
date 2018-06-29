@@ -59,6 +59,11 @@ class MatrixClient(object):
             the token) if supplying a token; otherwise, ignored.
         valid_cert_check (bool): Check the homeservers
             certificate on connections?
+        encryption (bool): Optional. Whether or not to enable end-to-end encryption
+            support.
+        encryption_conf (dict): Optional. Configuration parameters for encryption.
+            Refer to :func:`~matrix_client.crypto.olm_device.OlmDevice` for supported
+            options, since it will be passed to this class.
 
     Returns:
         `MatrixClient`
@@ -100,7 +105,7 @@ class MatrixClient(object):
 
     def __init__(self, base_url, token=None, user_id=None,
                  valid_cert_check=True, sync_filter_limit=20,
-                 cache_level=CACHE.ALL, encryption=False):
+                 cache_level=CACHE.ALL, encryption=False, encryption_conf=None):
         """ Create a new Matrix Client object.
 
         Args:
@@ -137,6 +142,7 @@ class MatrixClient(object):
         self.ephemeral_listeners = []
         self.device_id = None
         self._encryption = encryption
+        self.encryption_conf = encryption_conf or {}
         self.olm_device = None
         if isinstance(cache_level, CACHE):
             self._cache_level = cache_level
@@ -288,7 +294,7 @@ class MatrixClient(object):
 
         if self._encryption:
             self.olm_device = OlmDevice(
-                self.api, self.user_id, self.device_id)
+                self.api, self.user_id, self.device_id, **self.encryption_conf)
             self.olm_device.upload_identity_keys()
             self.olm_device.upload_one_time_keys()
 
