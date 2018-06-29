@@ -401,7 +401,8 @@ class OlmDevice(object):
         Returns:
             The newly created session.
         """
-        session = MegolmOutboundSession()
+        session = MegolmOutboundSession(max_age=room.rotation_period_ms,
+                                        max_messages=room.rotation_period_msgs)
         self.megolm_outbound_sessions[room.room_id] = session
         logger.info('Starting a new Meglom outbound session %s in %s.',
                     session.id, room.room_id)

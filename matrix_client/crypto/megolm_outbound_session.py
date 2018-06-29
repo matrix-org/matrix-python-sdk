@@ -12,15 +12,19 @@ class MegolmOutboundSession(OutboundGroupSession):
 
     Args:
         max_age (datetime.timedelta): Optional. The maximum time the session should
-            exist.
+            exist. Default to one week if not present.
         max_messages (int): Optional. The maximum number of messages that should be sent.
             A new message in considered sent each time there is a call to ``encrypt``.
+            Default to 100 if not present.
     """
 
-    def __init__(self, max_age=timedelta(days=7), max_messages=100):
+    def __init__(self, max_age=None, max_messages=None):
         self.devices = set()
-        self.max_age = max_age
-        self.max_messages = max_messages
+        if max_age:
+            self.max_age = timedelta(milliseconds=max_age)
+        else:
+            self.max_age = timedelta(days=7)
+        self.max_messages = max_messages or 100
         self.creation_time = datetime.now()
         self.message_count = 0
         super(MegolmOutboundSession, self).__init__()

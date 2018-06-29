@@ -155,13 +155,30 @@ def test_state_event():
     # test encryption
     room.encrypted = False
     ev["type"] = "m.room.encryption"
-    ev["content"] = {"algorithm": "m.megolm.v1.aes-sha2"}
+    ev["content"] = {
+        "algorithm": "m.megolm.v1.aes-sha2",
+        "rotation_period_msgs": 50,
+        "rotation_period_ms": 100000,
+    }
     room._process_state_event(ev)
     assert room.encrypted
+    assert room.rotation_period_ms == 100000
+    assert room.rotation_period_msgs == 50
     # encrypted flag must not be cleared on configuration change
     ev["content"] = {"algorithm": None}
     room._process_state_event(ev)
     assert room.encrypted
+    assert room.rotation_period_ms == 100000
+    assert room.rotation_period_msgs == 50
+    # nor should the session parameters be changed
+    ev["content"] = {
+        "algorithm": "m.megolm.v1.aes-sha2",
+        "rotation_period_msgs": 5,
+        "rotation_period_ms": 10000,
+    }
+    room._process_state_event(ev)
+    assert room.rotation_period_ms == 100000
+    assert room.rotation_period_msgs == 50
 
 
 def test_get_user():

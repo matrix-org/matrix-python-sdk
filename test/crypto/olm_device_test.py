@@ -4,6 +4,7 @@ olm = pytest.importorskip("olm")  # noqa
 import json
 import logging
 from copy import deepcopy
+from datetime import timedelta, datetime
 try:
     from urllib import quote
 except ImportError:
@@ -519,7 +520,13 @@ class TestOlmDevice:
 
 
 def test_megolm_outbound_session():
-    session = MegolmOutboundSession(max_messages=1)
+    session = MegolmOutboundSession()
+    assert session.max_messages == 100
+    assert session.max_age == timedelta(days=7)
+
+    session = MegolmOutboundSession(max_messages=1, max_age=100000)
+    assert session.max_messages == 1
+    assert session.max_age == timedelta(milliseconds=100000)
 
     assert not session.devices
 
@@ -532,4 +539,9 @@ def test_megolm_outbound_session():
     assert not session.should_rotate()
 
     session.encrypt('message')
+    assert session.should_rotate()
+
+    session.max_messages = 2
+    assert not session.should_rotate()
+    session.creation_time = datetime.now() - timedelta(milliseconds=100000)
     assert session.should_rotate()

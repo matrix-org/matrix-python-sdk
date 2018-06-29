@@ -50,6 +50,8 @@ class Room(object):
             # user_id: displayname
         }
         self.encrypted = False
+        self.rotation_period_msgs = None
+        self.rotation_period_ms = None
 
     def set_user_profile(self,
                          displayname=None,
@@ -692,6 +694,10 @@ class Room(object):
             elif etype == "m.room.encryption":
                 if econtent.get("algorithm") == "m.megolm.v1.aes-sha2":
                     self.encrypted = True
+                    if not self.rotation_period_ms:
+                        self.rotation_period_ms = econtent.get("rotation_period_ms")
+                    if not self.rotation_period_msgs:
+                        self.rotation_period_msgs = econtent.get("rotation_period_msgs")
             elif etype == "m.room.member" and clevel == clevel.ALL:
                 # tracking room members can be large e.g. #matrix:matrix.org
                 user_id = state_event["state_key"]
