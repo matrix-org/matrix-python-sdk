@@ -7,6 +7,8 @@ from tempfile import mkdtemp
 
 from matrix_client.crypto.crypto_store import CryptoStore
 from matrix_client.crypto.olm_device import OlmDevice
+from matrix_client.crypto.megolm_outbound_session import MegolmOutboundSession
+from matrix_client.room import Room
 
 
 class TestCryptoStore(object):
@@ -15,6 +17,7 @@ class TestCryptoStore(object):
     device_id = 'AUIETSRN'
     user_id = '@user:matrix.org'
     room_id = '!test:example.com'
+    room = Room(None, room_id)
     db_name = 'test.db'
     db_path = mkdtemp()
     store_conf = {
@@ -156,14 +159,65 @@ class TestCryptoStore(object):
         self.store.remove_olm_account()
         assert not self.store.get_inbound_session(self.room_id, curve_key, session.id)
 
+    @pytest.mark.usefixtures('account')
+    def test_megolm_outbound_persistence(self, device):
+        session = MegolmOutboundSession(max_messages=2, max_age=100000)
+        session.message_count = 1
+        session.add_device(self.device_id)
+        sessions = {}
+
+        self.store.load_outbound_sessions(sessions)
+        assert not sessions
+        assert not self.store.get_outbound_session(self.room_id)
+
+        self.store.save_outbound_session(self.room_id, session)
+        self.store.save_megolm_outbound_devices(self.room_id, {self.device_id})
+        self.store.load_outbound_sessions(sessions)
+        assert sessions[self.room_id].id == session.id
+        assert sessions[self.room_id].devices == session.devices
+        assert sessions[self.room_id].creation_time == session.creation_time
+        assert sessions[self.room_id].max_messages == session.max_messages
+        assert sessions[self.room_id].message_count == session.message_count
+        assert sessions[self.room_id].max_age == session.max_age
+
+        saved_session = self.store.get_outbound_session(self.room_id)
+        assert saved_session.id == session.id
+        assert saved_session.devices == session.devices
+        assert saved_session.creation_time == session.creation_time
+        assert saved_session.max_messages == session.max_messages
+        assert saved_session.message_count == session.message_count
+        assert saved_session.max_age == session.max_age
+
+        sessions.clear()
+        saved_session = self.store.get_outbound_session(self.room_id, sessions)
+        assert sessions[self.room_id].id == session.id
+
+        self.store.remove_outbound_session(self.room_id)
+        assert not self.store.get_outbound_session(self.room_id)
+
+        self.store.save_outbound_session(self.room_id, session)
+        saved_session = self.store.get_outbound_session(self.room_id)
+        # Verify the saved devices have been erased with the session
+        assert not saved_session.devices
+
+        with pytest.raises(AttributeError):
+            device.megolm_build_encrypted_event(self.room, {})
+        assert device.megolm_outbound_sessions[self.room_id].id == session.id
+
+        self.store.remove_olm_account()
+        assert not self.store.get_outbound_session(self.room_id)
+
     def test_load_all(self, account, curve_key):
         curve_key = account.identity_keys['curve25519']
         session = olm.OutboundSession(account, curve_key, curve_key)
-        out_session = olm.OutboundGroupSession()
+        out_session = MegolmOutboundSession()
+        out_session.add_device(self.device_id)
         in_session = olm.InboundGroupSession(out_session.session_key)
 
         self.store.save_inbound_session(self.room_id, curve_key, in_session)
         self.store.save_olm_session(curve_key, session)
+        self.store.save_outbound_session(self.room_id, out_session)
+        self.store.save_megolm_outbound_devices(self.room_id, {self.device_id})
 
         device = OlmDevice(
             None, self.user_id, self.device_id, store_conf=self.store_conf, load_all=True)
@@ -172,3 +226,6 @@ class TestCryptoStore(object):
         saved_in_session = \
             device.megolm_inbound_sessions[self.room_id][curve_key][in_session.id]
         assert saved_in_session.id == in_session.id
+        saved_out_session = device.megolm_outbound_sessions[self.room_id]
+        assert saved_out_session.id == out_session.id
+        assert saved_out_session.devices == out_session.devices
