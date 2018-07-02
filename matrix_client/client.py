@@ -59,6 +59,8 @@ class MatrixClient(object):
             the token) if supplying a token; otherwise, ignored.
         valid_cert_check (bool): Check the homeservers
             certificate on connections?
+        cache_level (CACHE): One of CACHE.NONE, CACHE.SOME, or
+            CACHE.ALL (defined in module namespace).
         encryption (bool): Optional. Whether or not to enable end-to-end encryption
             support.
         encryption_conf (dict): Optional. Configuration parameters for encryption.
@@ -106,27 +108,6 @@ class MatrixClient(object):
     def __init__(self, base_url, token=None, user_id=None,
                  valid_cert_check=True, sync_filter_limit=20,
                  cache_level=CACHE.ALL, encryption=False, encryption_conf=None):
-        """ Create a new Matrix Client object.
-
-        Args:
-            base_url (str): The url of the HS preceding /_matrix.
-                e.g. (ex: https://localhost:8008 )
-            token (str): Optional. If you have an access token
-                supply it here.
-            user_id (str): Optional. You must supply the user_id
-                (as obtained when initially logging in to obtain
-                the token) if supplying a token; otherwise, ignored.
-            valid_cert_check (bool): Check the homeservers
-                certificate on connections?
-            cache_level (CACHE): One of CACHE.NONE, CACHE.SOME, or
-                CACHE.ALL (defined in module namespace).
-
-        Returns:
-            MatrixClient
-
-        Raises:
-            MatrixRequestError, ValueError
-        """
         if token is not None and user_id is None:
             raise ValueError("must supply user_id along with token")
         if encryption and not ENCRYPTION_SUPPORT:
