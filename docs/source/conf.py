@@ -96,4 +96,4 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
-autodoc_mock_imports = ["olm", "canonicaljson"]
+autodoc_mock_imports = ["olm", "canonicaljson", "appdirs"]

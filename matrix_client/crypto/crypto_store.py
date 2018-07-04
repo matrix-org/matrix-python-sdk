@@ -222,8 +222,7 @@ class CryptoStore(object):
         """
         c = self.conn.cursor()
         rows = c.execute(
-            'SELECT room_id, curve_key, session FROM megolm_inbound_sessions WHERE '
-            'device_id=?', (self.device_id,)
+            'SELECT * FROM megolm_inbound_sessions WHERE device_id=?', (self.device_id,)
         )
         for row in rows:
             session = olm.InboundGroupSession.from_pickle(bytes(row[2]), self.pickle_key)
@@ -291,10 +290,7 @@ class CryptoStore(object):
         """
         c = self.conn.cursor()
         rows = c.execute(
-            'SELECT room_id, session, max_age_s, max_messages, creation_time,'
-            'message_count FROM megolm_outbound_sessions WHERE device_id=?',
-            (self.device_id,)
-        )
+            'SELECT * FROM megolm_outbound_sessions WHERE device_id=?', (self.device_id,))
         for row in rows.fetchall():
             device_ids = c.execute(
                 'SELECT user_device_id FROM megolm_outbound_devices WHERE device_id=? '
@@ -325,8 +321,7 @@ class CryptoStore(object):
         """
         c = self.conn.cursor()
         c.execute(
-            'SELECT session, max_age_s, max_messages, creation_time, message_count '
-            'FROM megolm_outbound_sessions WHERE device_id=? AND room_id=?',
+            'SELECT * FROM megolm_outbound_sessions WHERE device_id=? AND room_id=?',
             (self.device_id, room_id)
         )
         try:
@@ -402,9 +397,7 @@ class CryptoStore(object):
         """
         c = self.conn.cursor()
         rows = c.execute(
-            'SELECT user_id, user_device_id, ed_key, curve_key FROM device_keys '
-            'WHERE device_id=?', (self.device_id,)
-        )
+            'SELECT * FROM device_keys WHERE device_id=?', (self.device_id,))
         for row in rows:
             device_keys[row[0]][row[1]] = {
                 'ed25519': row[2],
@@ -428,15 +421,14 @@ class CryptoStore(object):
         for user_id in user_devices:
             if not user_devices[user_id]:
                 c.execute(
-                    'SELECT user_id, user_device_id, ed_key, curve_key FROM device_keys '
-                    'WHERE device_id=? AND user_id=?', (self.device_id, user_id)
+                    'SELECT * FROM device_keys WHERE device_id=? AND user_id=?',
+                    (self.device_id, user_id)
                 )
                 rows.extend(c.fetchall())
             else:
                 for device_id in user_devices[user_id]:
                     c.execute(
-                        'SELECT user_id, user_device_id, ed_key, curve_key FROM '
-                        'device_keys WHERE device_id=? AND user_id=? AND '
+                        'SELECT * FROM device_keys WHERE device_id=? AND user_id=? AND '
                         'user_device_id=?', (self.device_id, user_id, device_id)
                     )
                     rows.extend(c.fetchall())
