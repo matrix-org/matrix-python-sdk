@@ -1,7 +1,9 @@
 import logging
 import os
 import sqlite3
+from collections import defaultdict
 from datetime import timedelta
+from threading import current_thread
 
 import olm
 from appdirs import user_data_dir
@@ -37,10 +39,15 @@ class CryptoStore(object):
             os.makedirs(data_dir)
         except OSError:
             pass
-        self.conn = sqlite3.connect(os.path.join(data_dir, db_name),
-                                    detect_types=sqlite3.PARSE_DECLTYPES)
+        self.db_filepath = os.path.join(data_dir, db_name)
+
+        # Map from a thread id to a connection object
+        self._conn = defaultdict(self.instanciate_connection)
         self.pickle_key = pickle_key
         self.create_tables_if_needed()
+
+    def instanciate_connection(self):
+        return sqlite3.connect(self.db_filepath, detect_types=sqlite3.PARSE_DECLTYPES)
 
     def create_tables_if_needed(self):
         """Ensures all the tables exist."""
@@ -69,6 +76,19 @@ class CryptoStore(object):
                   'FOREIGN KEY(room_id) REFERENCES megolm_outbound_sessions(room_id) '
                   'ON DELETE CASCADE,'
                   'FOREIGN KEY(device_id) REFERENCES accounts(device_id))')
+        c.execute('CREATE TABLE IF NOT EXISTS device_keys '
+                  '(device_id TEXT, user_id TEXT, user_device_id TEXT PRIMARY KEY,'
+                  'ed_key TEXT, curve_key TEXT,'
+                  'FOREIGN KEY(device_id) REFERENCES accounts(device_id) '
+                  'ON DELETE CASCADE)')
+        c.execute('CREATE TABLE IF NOT EXISTS tracked_users '
+                  '(device_id TEXT, user_id TEXT, UNIQUE(device_id, user_id),'
+                  'FOREIGN KEY(device_id) REFERENCES accounts(device_id) '
+                  'ON DELETE CASCADE)')
+        c.execute('CREATE TABLE IF NOT EXISTS sync_tokens '
+                  '(device_id TEXT PRIMARY KEY, token TEXT,'
+                  'FOREIGN KEY(device_id) REFERENCES accounts(device_id) '
+                  'ON DELETE CASCADE)')
         c.close()
         self.conn.commit()
 
@@ -355,5 +375,148 @@ class CryptoStore(object):
         c.close()
         self.conn.commit()
 
+    def save_device_keys(self, device_keys):
+        """Saves device keys.
+
+        Args:
+            device_keys (defaultdict(dict)): The format is ``{<user_id>: {<device_id>:
+                {'curve25519': <curve25519_key>, 'ed25519': <ed25519_key>}``.
+        """
+        c = self.conn.cursor()
+        rows = []
+        for user_id, devices_dict in device_keys.items():
+            for device_id, keys_dict in devices_dict.items():
+                rows.append((self.device_id, user_id, device_id, keys_dict['ed25519'],
+                             keys_dict['curve25519']))
+        c.executemany('REPLACE INTO device_keys VALUES (?,?,?,?,?)', rows)
+        c.close()
+        self.conn.commit()
+
+    def load_device_keys(self, device_keys):
+        """Loads all saved device keys.
+
+        Args:
+            device_keys (defaultdict(dict)): An object which will get populated with
+                the keys. The format is ``{<user_id>: {<device_id>:
+                {'curve25519': <curve25519_key>, 'ed25519': <ed25519_key>}``.
+        """
+        c = self.conn.cursor()
+        rows = c.execute(
+            'SELECT user_id, user_device_id, ed_key, curve_key FROM device_keys '
+            'WHERE device_id=?', (self.device_id,)
+        )
+        for row in rows:
+            device_keys[row[0]][row[1]] = {
+                'ed25519': row[2],
+                'curve25519': row[3]
+            }
+        c.close()
+
+    def get_device_keys(self, user_devices, device_keys=None):
+        """Gets the devices keys of the specified devices.
+
+        Args:
+            user_devices (dict): A map from user ids to a list of device ids.
+            device_keys (defaultdict(dict)): Optional. Will be updated with
+                the retrieved keys.
+
+        Returns:
+            A defaultdict(dict) containing the keys.
+        """
+        c = self.conn.cursor()
+        rows = []
+        for user_id in user_devices:
+            if not user_devices[user_id]:
+                c.execute(
+                    'SELECT user_id, user_device_id, ed_key, curve_key FROM device_keys '
+                    'WHERE device_id=? AND user_id=?', (self.device_id, user_id)
+                )
+                rows.extend(c.fetchall())
+            else:
+                for device_id in user_devices[user_id]:
+                    c.execute(
+                        'SELECT user_id, user_device_id, ed_key, curve_key FROM '
+                        'device_keys WHERE device_id=? AND user_id=? AND '
+                        'user_device_id=?', (self.device_id, user_id, device_id)
+                    )
+                    rows.extend(c.fetchall())
+        c.close()
+        result = defaultdict(dict)
+        for row in rows:
+            result[row[0]][row[1]] = {
+                'ed25519': row[2],
+                'curve25519': row[3]
+            }
+        if device_keys is not None and result:
+            device_keys.update(result)
+        return result
+
+    def save_tracked_users(self, user_ids):
+        """Saves tracked users.
+
+        Args:
+            user_ids (iterable): The user ids to save.
+        """
+        c = self.conn.cursor()
+        rows = [(self.device_id, user_id) for user_id in user_ids]
+        c.executemany('INSERT OR IGNORE INTO tracked_users VALUES (?,?)', rows)
+        c.close()
+        self.conn.commit()
+
+    def remove_tracked_users(self, user_ids):
+        """Removes tracked users.
+
+        Args:
+            user_ids (iterable): The user ids to remove.
+        """
+        c = self.conn.cursor()
+        rows = [(user_id,) for user_id in user_ids]
+        c.executemany('DELETE FROM tracked_users WHERE user_id=?', rows)
+        c.close()
+        self.conn.commit()
+
+    def load_tracked_users(self, tracked_users):
+        """Loads all tracked users.
+
+        Args:
+            tracked_users (set): Will be populated with user ids.
+        """
+        c = self.conn.cursor()
+        rows = c.execute(
+            'SELECT user_id FROM tracked_users WHERE device_id=?', (self.device_id,))
+        tracked_users.update(t[0] for t in rows)
+        c.close()
+        return tracked_users
+
+    def save_sync_token(self, sync_token):
+        """Saves a sync token.
+
+        Args:
+            sync_token (str): The token to save.
+        """
+        c = self.conn.cursor()
+        c.execute('REPLACE INTO sync_tokens VALUES (?,?)', (self.device_id, sync_token))
+        c.close()
+        self.conn.commit()
+
+    def get_sync_token(self):
+        """Gets the saved sync token.
+
+        Returns:
+            A string corresponding to the token, or None if there wasn't any.
+        """
+        c = self.conn.cursor()
+        c.execute('SELECT token FROM sync_tokens WHERE device_id=?', (self.device_id,))
+        try:
+            return c.fetchone()[0]
+        except TypeError:
+            return None
+        finally:
+            c.close()
+
     def close(self):
         self.conn.close()
+
+    @property
+    def conn(self):
+        return self._conn[current_thread().ident]

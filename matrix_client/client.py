@@ -133,6 +133,7 @@ class MatrixClient(object):
         self._encryption = encryption
         self.encryption_conf = encryption_conf or {}
         self.olm_device = None
+        self.first_sync = True
         if isinstance(cache_level, CACHE):
             self._cache_level = cache_level
         else:
@@ -591,6 +592,10 @@ class MatrixClient(object):
                     response['device_lists']['left'])
 
         self.sync_token = response["next_batch"]
+
+        if self._encryption and self.first_sync:
+            self.first_sync = False
+            self.olm_device.device_list.update_after_restart(self.sync_token)
 
         for presence_update in response['presence']['events']:
             for callback in self.presence_listeners.values():

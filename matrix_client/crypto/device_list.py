@@ -19,7 +19,7 @@ class DeviceList:
         device_keys (defaultdict(dict)): A map from user to device to keys.
     """
 
-    def __init__(self, olm_device, api, device_keys):
+    def __init__(self, olm_device, api, device_keys, db):
         self.olm_device = olm_device
         self.api = api
         self.device_keys = device_keys
@@ -35,9 +35,11 @@ class DeviceList:
         # Allows to wake up the thread when there are new users to update, and to
         # synchronise shared data.
         self.thread_condition = Condition()
+        self.db = db
+        self.db.load_tracked_users(self.tracked_user_ids)
         self.update_thread = _UpdateDeviceList(
             self.thread_condition, self.outdated_user_ids, self._download_device_keys,
-            self.tracked_user_ids
+            self.tracked_user_ids, db
         )
         self.update_thread.start()
 
@@ -53,7 +55,11 @@ class DeviceList:
                 downloaded before returning.
         """
         logger.info('Fetching all missing keys in room %s.', room.room_id)
-        user_ids = {u.user_id for u in room.get_joined_members()} - self.tracked_user_ids
+        members = {m.user_id for m in room.get_joined_members()}
+        missing_members = {m: [] for m in members if not self.device_keys[m]}
+        if missing_members:
+            self.db.get_device_keys(missing_members, self.device_keys)
+        user_ids = members - self.tracked_user_ids
         if not user_ids:
             logger.info('Already had all the keys in room %s.', room.room_id)
             if blocking:
@@ -102,6 +108,19 @@ class DeviceList:
         if user_ids:
             self._add_outdated_users(user_ids)
 
+    def update_after_restart(self, to_token):
+        from_token = self.db.get_sync_token()
+        if not from_token:
+            # First launch. Persist this token in case we would not have the occasion to
+            # save one this session.
+            self.db.save_sync_token(to_token)
+            return
+        resp = self.api.key_changes(from_token, to_token)
+        if resp.get('left'):
+            self.stop_tracking_users(resp['left'])
+        if resp.get('changed'):
+            self.update_user_device_keys(resp['changed'])
+
     def stop_tracking_users(self, user_ids):
         """Stop tracking users.
 
@@ -113,6 +132,7 @@ class DeviceList:
         with self.thread_condition:
             self.tracked_user_ids.difference_update(user_ids)
             self.outdated_user_ids.difference_update(user_ids)
+            self.db.remove_tracked_users(user_ids)
         logger.info('Stopped tracking users: %s.', user_ids)
 
     def update_user_device_keys(self, user_ids, since_token=None):
@@ -239,7 +259,7 @@ class _OutdatedUsersSet(set):
 
 class _UpdateDeviceList(Thread):
 
-    def __init__(self, cond, user_ids, download_method, tracked_user_ids):
+    def __init__(self, cond, user_ids, download_method, tracked_user_ids, db):
         # We wait on this condition when there is nothing to do. Outside code should use
         # it to notify us when they add data to be processed in outdated_user_ids so that
         # we can wake up and process it.
@@ -247,6 +267,10 @@ class _UpdateDeviceList(Thread):
         self.outdated_user_ids = user_ids
         self.download = download_method
         self.tracked_user_ids = tracked_user_ids
+        # Cleared when we start a download, and set when we have finished it. This can be
+        # used by outside code in order to know if we are in the middle of a download, and
+        # allows to wait for it to complete by waiting on this event.
+        self.db = db
         # Cleared when we start a download, and set when we have finished it. This can be
         # used by outside code in order to know if we are in the middle of a download, and
         # allows to wait for it to complete by waiting on this event.
@@ -270,18 +294,28 @@ class _UpdateDeviceList(Thread):
                 to_download = self.outdated_user_ids.copy()
                 self.outdated_user_ids.clear()
                 self.event.clear()
-                self.tracked_user_ids.update(to_download)
+                new_user_ids = to_download.difference(self.tracked_user_ids)
+                if new_user_ids:
+                    self.tracked_user_ids.update(new_user_ids)
             payload = {user_id: [] for user_id in to_download}
             logger.info('Downloading device keys for users: %s.', to_download)
             try:
-                self.download(payload, self.outdated_user_ids.sync_token)
+                changed = self.download(payload, self.outdated_user_ids.sync_token)
                 self.event.set()
                 to_download.mark_as_processed()
+                if changed:
+                    self.db.save_device_keys(changed)
+                if new_user_ids:
+                    self.db.save_tracked_users(new_user_ids)
+                if self.outdated_user_ids.sync_token:
+                    # FIXME this should be next_batch instead of since
+                    self.db.save_sync_token(self.outdated_user_ids.sync_token)
             except (MatrixHttpLibError, MatrixRequestError) as e:
                 logger.warning('Network error when fetching device keys (will retry): %s',
                                e)
                 with self.cond:
                     self.outdated_user_ids.update(to_download)
+                    self.tracked_user_ids.difference_update(new_user_ids)
 
     def join(self, timeout=None):
         # If we are joined, this means that the main program is terminating.
