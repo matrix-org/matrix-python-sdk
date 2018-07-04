@@ -571,6 +571,7 @@ def test_detect_encryption_state():
 @responses.activate
 def test_one_time_keys_sync():
     client = MatrixClient(HOSTNAME, encryption=True)
+    client.first_sync = False
     sync_url = HOSTNAME + MATRIX_V2_API_PATH + "/sync"
     sync_response = deepcopy(response_examples.example_sync)
     payload = {'dummy': 1}

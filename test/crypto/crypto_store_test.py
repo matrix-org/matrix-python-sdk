@@ -9,6 +9,7 @@ from matrix_client.crypto.crypto_store import CryptoStore
 from matrix_client.crypto.olm_device import OlmDevice
 from matrix_client.crypto.megolm_outbound_session import MegolmOutboundSession
 from matrix_client.room import Room
+from matrix_client.user import User
 
 
 class TestCryptoStore(object):
@@ -18,6 +19,8 @@ class TestCryptoStore(object):
     user_id = '@user:matrix.org'
     room_id = '!test:example.com'
     room = Room(None, room_id)
+    user = User(None, user_id, '')
+    room._members[user_id] = user
     db_name = 'test.db'
     db_path = mkdtemp()
     store_conf = {
@@ -200,12 +203,86 @@ class TestCryptoStore(object):
         # Verify the saved devices have been erased with the session
         assert not saved_session.devices
 
-        with pytest.raises(AttributeError):
+        with pytest.raises(KeyError):
             device.megolm_build_encrypted_event(self.room, {})
         assert device.megolm_outbound_sessions[self.room_id].id == session.id
 
         self.store.remove_olm_account()
         assert not self.store.get_outbound_session(self.room_id)
+
+    @pytest.mark.usefixtures('account')
+    def test_device_keys_persistence(self, device):
+        user_devices = {self.user_id: [self.device_id]}
+        keys = {
+            'curve25519': 'curve',
+            'ed25519': 'ed'
+        }
+        device_keys = defaultdict(dict)
+
+        self.store.load_device_keys(device_keys)
+        assert not device_keys
+        assert not self.store.get_device_keys(user_devices, device_keys)
+        assert not device_keys
+
+        device_keys_to_save = {self.user_id: {self.device_id: keys}}
+        self.store.save_device_keys(device_keys_to_save)
+        self.store.load_device_keys(device_keys)
+        assert device_keys == device_keys_to_save
+
+        device_keys.clear()
+        assert self.store.get_device_keys(user_devices) == device_keys_to_save
+        assert self.store.get_device_keys(user_devices, device_keys)
+        assert device_keys == device_keys_to_save
+
+        # Test [] wildcard
+        assert self.store.get_device_keys({self.user_id: []}) == device_keys_to_save
+
+        device.device_list.tracked_user_ids = {self.user_id}
+        device.device_list.get_room_device_keys(self.room)
+        assert device.device_keys == device_keys_to_save
+
+        # Test multiples []
+        device_keys.clear()
+        user_id = 'test'
+        device_id = 'test'
+        device_keys_to_save[user_id] = {device_id: keys}
+        self.store.save_device_keys(device_keys_to_save)
+        user_devices[user_id] = []
+        user_devices[self.user_id] = []
+        assert self.store.get_device_keys(user_devices) == device_keys_to_save
+
+        self.store.remove_olm_account()
+        assert not self.store.get_device_keys(user_devices)
+
+    @pytest.mark.usefixtures('account')
+    def test_tracked_users_persistence(self):
+        tracked_user_ids = set()
+        tracked_user_ids_to_save = {self.user_id}
+
+        self.store.load_tracked_users(tracked_user_ids)
+        assert not tracked_user_ids
+
+        self.store.save_tracked_users(tracked_user_ids_to_save)
+        self.store.load_tracked_users(tracked_user_ids)
+        assert tracked_user_ids == tracked_user_ids_to_save
+
+        self.store.remove_tracked_users({self.user_id})
+        tracked_user_ids.clear()
+        self.store.load_tracked_users(tracked_user_ids)
+        assert not tracked_user_ids
+
+    @pytest.mark.usefixtures('account')
+    def test_sync_token_persistence(self):
+        sync_token = 'test'
+
+        assert not self.store.get_sync_token()
+
+        self.store.save_sync_token(sync_token)
+        assert self.store.get_sync_token() == sync_token
+
+        sync_token = 'new'
+        self.store.save_sync_token(sync_token)
+        assert self.store.get_sync_token() == sync_token
 
     def test_load_all(self, account, curve_key):
         curve_key = account.identity_keys['curve25519']
@@ -213,11 +290,17 @@ class TestCryptoStore(object):
         out_session = MegolmOutboundSession()
         out_session.add_device(self.device_id)
         in_session = olm.InboundGroupSession(out_session.session_key)
+        keys = {
+            'curve25519': 'curve',
+            'ed25519': 'ed'
+        }
+        device_keys_to_save = {self.user_id: {self.device_id: keys}}
 
         self.store.save_inbound_session(self.room_id, curve_key, in_session)
         self.store.save_olm_session(curve_key, session)
         self.store.save_outbound_session(self.room_id, out_session)
         self.store.save_megolm_outbound_devices(self.room_id, {self.device_id})
+        self.store.save_device_keys(device_keys_to_save)
 
         device = OlmDevice(
             None, self.user_id, self.device_id, store_conf=self.store_conf, load_all=True)
@@ -229,3 +312,4 @@ class TestCryptoStore(object):
         saved_out_session = device.megolm_outbound_sessions[self.room_id]
         assert saved_out_session.id == out_session.id
         assert saved_out_session.devices == out_session.devices
+        assert device.device_keys == device_keys_to_save
