@@ -71,3 +71,8 @@ matrix_client.crypto
     :members:
     :undoc-members:
     :show-inheritance:
+
+.. automodule:: matrix_client.crypto.encrypt_attachments
+    :members:
+    :undoc-members:
+    :show-inheritance:
