@@ -96,4 +96,5 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
-autodoc_mock_imports = ["olm", "canonicaljson", "appdirs"]
+autodoc_mock_imports = ["olm", "canonicaljson", "appdirs", "unpaddedbase64", "Crypto",
+                        "Crypto.Cipher", "Crypto.Hash", "Crypto.Util"]
