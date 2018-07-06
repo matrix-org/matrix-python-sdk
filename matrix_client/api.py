@@ -329,7 +329,7 @@ class MatrixHttpApi(object):
     # content_type can be a image,audio or video
     # extra information should be supplied, see
     # https://matrix.org/docs/spec/r0.0.1/client_server.html
-    def send_content(self, room_id, item_url, item_name, msg_type,
+    def send_content(self, room_id, item_url, item_name, msg_type, filename=None,
                      extra_information=None, timestamp=None):
         if extra_information is None:
             extra_information = {}
@@ -340,6 +340,8 @@ class MatrixHttpApi(object):
             "body": item_name,
             "info": extra_information
         }
+        if msg_type == "m.file":
+            content_pack["filename"] = filename or item_name
         return self.send_message_event(room_id, "m.room.message", content_pack,
                                        timestamp=timestamp)
 
