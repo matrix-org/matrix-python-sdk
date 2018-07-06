@@ -159,7 +159,7 @@ class Room(object):
         else:
             return self.client.api.send_emote(self.room_id, text)
 
-    def send_file(self, url, name, **fileinfo):
+    def send_file(self, url, name, encryption_info=None, **fileinfo):
         """Send a pre-uploaded file to the room.
 
         See http://matrix.org/docs/spec/r0.2.0/client_server.html#m-file for
@@ -173,7 +173,8 @@ class Room(object):
 
         return self.client.api.send_content(
             self.room_id, url, name, "m.file",
-            extra_information=fileinfo
+            extra_information=fileinfo,
+            encryption_info=encryption_info
         )
 
     def send_notice(self, text):

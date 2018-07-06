@@ -330,18 +330,22 @@ class MatrixHttpApi(object):
     # extra information should be supplied, see
     # https://matrix.org/docs/spec/r0.0.1/client_server.html
     def send_content(self, room_id, item_url, item_name, msg_type, filename=None,
-                     extra_information=None, timestamp=None):
+                     extra_information=None, timestamp=None, encryption_info=None):
         if extra_information is None:
             extra_information = {}
 
         content_pack = {
-            "url": item_url,
             "msgtype": msg_type,
             "body": item_name,
             "info": extra_information
         }
         if msg_type == "m.file":
             content_pack["filename"] = filename or item_name
+        if encryption_info:
+            encryption_info['url'] = item_url
+            content_pack['file'] = encryption_info
+        else:
+            content_pack['url'] = item_url
         return self.send_message_event(room_id, "m.room.message", content_pack,
                                        timestamp=timestamp)
 
