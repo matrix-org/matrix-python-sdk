@@ -164,13 +164,23 @@ class MatrixHttpApi(object):
         """
         return self._send("POST", "/logout")
 
-    def create_room(self, alias=None, is_public=False, invitees=None):
+    def create_room(
+                self,
+                alias=None,
+                name=None,
+                is_public=False,
+                invitees=None,
+                federate=None
+            ):
         """Perform /createRoom.
 
         Args:
             alias (str): Optional. The room alias name to set for this room.
+            name (str): Optional. Name for new room.
             is_public (bool): Optional. The public/private visibility.
             invitees (list<str>): Optional. The list of user IDs to invite.
+            federate (bool): Optional. Сan a room be federated.
+                Default to True.
         """
         content = {
             "visibility": "public" if is_public else "private"
@@ -179,6 +189,10 @@ class MatrixHttpApi(object):
             content["room_alias_name"] = alias
         if invitees:
             content["invite"] = invitees
+        if name:
+            content["name"] = name
+        if federate is not None:
+            content["creation_content"] = {'m.federate': federate}
         return self._send("POST", "/createRoom", content)
 
     def join_room(self, room_id_or_alias):
