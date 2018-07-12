@@ -1,5 +1,6 @@
 import responses
 import pytest
+import json
 from matrix_client import client, api
 from matrix_client.errors import MatrixRequestError, MatrixError, MatrixHttpLibError
 
@@ -300,3 +301,93 @@ class TestMainApi:
         mapi = api.MatrixHttpApi("http://example.com")
         with pytest.raises(MatrixHttpLibError):
             mapi._send("GET", self.test_path)
+
+
+class TestRoomApi:
+    cli = client.MatrixClient("http://example.com")
+    user_id = "@user:matrix.org"
+    room_id = "#foo:matrix.org"
+
+    @responses.activate
+    def test_create_room_visibility_public(self):
+        create_room_url = "http://example.com" \
+            "/_matrix/client/r0/createRoom"
+        responses.add(
+            responses.POST,
+            create_room_url,
+            json='{"room_id": "!sefiuhWgwghwWgh:example.com"}'
+        )
+        self.cli.api.create_room(
+            name="test",
+            alias="#test:example.com",
+            is_public=True
+        )
+        req = responses.calls[0].request
+        assert req.url == create_room_url
+        assert req.method == 'POST'
+        j = json.loads(req.body)
+        assert j["room_alias_name"] == "#test:example.com"
+        assert j["visibility"] == "public"
+        assert j["name"] == "test"
+
+    @responses.activate
+    def test_create_room_visibility_private(self):
+        create_room_url = "http://example.com" \
+            "/_matrix/client/r0/createRoom"
+        responses.add(
+            responses.POST,
+            create_room_url,
+            json='{"room_id": "!sefiuhWgwghwWgh:example.com"}'
+        )
+        self.cli.api.create_room(
+            name="test",
+            alias="#test:example.com",
+            is_public=False
+        )
+        req = responses.calls[0].request
+        assert req.url == create_room_url
+        assert req.method == 'POST'
+        j = json.loads(req.body)
+        assert j["room_alias_name"] == "#test:example.com"
+        assert j["visibility"] == "private"
+        assert j["name"] == "test"
+
+    @responses.activate
+    def test_create_room_federate_true(self):
+        create_room_url = "http://example.com" \
+            "/_matrix/client/r0/createRoom"
+        responses.add(
+            responses.POST,
+            create_room_url,
+            json='{"room_id": "!sefiuhWgwghwWgh:example.com"}'
+        )
+        self.cli.api.create_room(
+            name="test2",
+            alias="#test2:example.com",
+            federate=True
+        )
+        req = responses.calls[0].request
+        assert req.url == create_room_url
+        assert req.method == 'POST'
+        j = json.loads(req.body)
+        assert j["creation_content"]["m.federate"]
+
+    @responses.activate
+    def test_create_room_federate_false(self):
+        create_room_url = "http://example.com" \
+            "/_matrix/client/r0/createRoom"
+        responses.add(
+            responses.POST,
+            create_room_url,
+            json='{"room_id": "!sefiuhWgwghwWgh:example.com"}'
+        )
+        self.cli.api.create_room(
+            name="test",
+            alias="#test:example.com",
+            federate=False
+        )
+        req = responses.calls[0].request
+        assert req.url == create_room_url
+        assert req.method == 'POST'
+        j = json.loads(req.body)
+        assert not j["creation_content"]["m.federate"]
