@@ -46,6 +46,7 @@ class Room(object):
         self.guest_access = None
         self._prev_batch = None
         self._members = []
+        self.encrypted = False
 
     def set_user_profile(self,
                          displayname=None,
@@ -616,6 +617,22 @@ class Room(object):
         except MatrixRequestError:
             return False
 
+    def enable_encryption(self):
+        """Enables encryption in the room.
+
+        NOTE: Once enabled, encryption cannot be disabled.
+
+        Returns:
+        True if successful, False if not
+        """
+        try:
+            self.send_state_event("m.room.encryption",
+                                  {"algorithm": "m.megolm.v1.aes-sha2"})
+            self.encrypted = True
+            return True
+        except MatrixRequestError:
+            return False
+
     def _process_state_event(self, state_event):
         if "type" not in state_event:
             return  # Ignore event
@@ -637,6 +654,9 @@ class Room(object):
                 self.invite_only = econtent["join_rule"] == "invite"
             elif etype == "m.room.guest_access":
                 self.guest_access = econtent["guest_access"] == "can_join"
+            elif etype == "m.room.encryption":
+                if econtent.get("algorithm") == "m.megolm.v1.aes-sha2":
+                    self.encrypted = True
             elif etype == "m.room.member" and clevel == clevel.ALL:
                 # tracking room members can be large e.g. #matrix:matrix.org
                 if econtent["membership"] == "join":
