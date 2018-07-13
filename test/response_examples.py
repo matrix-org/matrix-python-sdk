@@ -167,3 +167,10 @@ example_key_upload_response = {
         "signed_curve25519": 20
     }
 }
+
+example_success_login_response = {
+    "user_id": "@example:localhost",
+    "access_token": "abc123",
+    "home_server": "matrix.org",
+    "device_id": "GHTYAJCE"
+}

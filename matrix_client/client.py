@@ -17,6 +17,11 @@ from .checks import check_user_id
 from .errors import MatrixRequestError, MatrixUnexpectedResponse
 from .room import Room
 from .user import User
+try:
+    from .crypto.olm_device import OlmDevice
+    ENCRYPTION_SUPPORT = True
+except ImportError:
+    ENCRYPTION_SUPPORT = False
 from threading import Thread
 from time import sleep
 from uuid import uuid4
@@ -54,6 +59,13 @@ class MatrixClient(object):
             the token) if supplying a token; otherwise, ignored.
         valid_cert_check (bool): Check the homeservers
             certificate on connections?
+        cache_level (CACHE): One of CACHE.NONE, CACHE.SOME, or
+            CACHE.ALL (defined in module namespace).
+        encryption (bool): Optional. Whether or not to enable end-to-end encryption
+            support.
+        encryption_conf (dict): Optional. Configuration parameters for encryption.
+            Refer to :func:`~matrix_client.crypto.olm_device.OlmDevice` for supported
+            options, since it will be passed to this class.
 
     Returns:
         `MatrixClient`
@@ -95,30 +107,12 @@ class MatrixClient(object):
 
     def __init__(self, base_url, token=None, user_id=None,
                  valid_cert_check=True, sync_filter_limit=20,
-                 cache_level=CACHE.ALL):
-        """ Create a new Matrix Client object.
-
-        Args:
-            base_url (str): The url of the HS preceding /_matrix.
-                e.g. (ex: https://localhost:8008 )
-            token (str): Optional. If you have an access token
-                supply it here.
-            user_id (str): Optional. You must supply the user_id
-                (as obtained when initially logging in to obtain
-                the token) if supplying a token; otherwise, ignored.
-            valid_cert_check (bool): Check the homeservers
-                certificate on connections?
-            cache_level (CACHE): One of CACHE.NONE, CACHE.SOME, or
-                CACHE.ALL (defined in module namespace).
-
-        Returns:
-            MatrixClient
-
-        Raises:
-            MatrixRequestError, ValueError
-        """
+                 cache_level=CACHE.ALL, encryption=False, encryption_conf=None):
         if token is not None and user_id is None:
             raise ValueError("must supply user_id along with token")
+        if encryption and not ENCRYPTION_SUPPORT:
+            raise ValueError("Failed to enable encryption. Please make sure the olm "
+                             "library is available.")
 
         self.api = MatrixHttpApi(base_url, token)
         self.api.validate_certificate(valid_cert_check)
@@ -127,6 +121,10 @@ class MatrixClient(object):
         self.invite_listeners = []
         self.left_listeners = []
         self.ephemeral_listeners = []
+        self.device_id = None
+        self._encryption = encryption
+        self.encryption_conf = encryption_conf or {}
+        self.olm_device = None
         if isinstance(cache_level, CACHE):
             self._cache_level = cache_level
         else:
@@ -273,6 +271,13 @@ class MatrixClient(object):
         self.token = response["access_token"]
         self.hs = response["home_server"]
         self.api.token = self.token
+        self.device_id = response["device_id"]
+
+        if self._encryption:
+            self.olm_device = OlmDevice(
+                self.api, self.user_id, self.device_id, **self.encryption_conf)
+            self.olm_device.upload_identity_keys()
+            self.olm_device.upload_one_time_keys()
 
         if sync:
             """ Limit Filter """

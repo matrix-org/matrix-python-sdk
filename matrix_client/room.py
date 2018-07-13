@@ -22,14 +22,13 @@ from .errors import MatrixRequestError
 
 
 class Room(object):
-    """Call room-specific functions after joining a room from the client."""
+    """Call room-specific functions after joining a room from the client.
+
+    NOTE: This should ideally be called from within the Client.
+    NOTE: This does not verify the room with the Home Server.
+    """
 
     def __init__(self, client, room_id):
-        """Create a blank Room object.
-
-            NOTE: This should ideally be called from within the Client.
-            NOTE: This does not verify the room with the Home Server.
-        """
         check_room_id(room_id)
 
         self.room_id = room_id
