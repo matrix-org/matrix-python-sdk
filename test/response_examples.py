@@ -160,3 +160,10 @@ example_pl_event = {
 example_event_response = {
     "event_id": "YUwRidLecu"
 }
+
+example_key_upload_response = {
+    "one_time_key_counts": {
+        "curve25519": 10,
+        "signed_curve25519": 20
+    }
+}
