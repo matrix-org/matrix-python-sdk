@@ -39,6 +39,8 @@ class MatrixHttpApi(object):
         default_429_wait_ms (int): Optional. Time in millseconds to wait before retrying
                                              a request when server returns a HTTP 429
                                              response without a 'retry_after_ms' key.
+        use_authorization_header (bool): Optional. Use Authorization header instead
+                `                        of access_token query parameter.
 
     Examples:
         Create a client and send a message::
@@ -48,7 +50,11 @@ class MatrixHttpApi(object):
             response = matrix.send_message("!roomid:matrix.org", "Hello!")
     """
 
-    def __init__(self, base_url, token=None, identity=None, default_429_wait_ms=5000):
+    def __init__(
+            self, base_url, token=None, identity=None,
+            default_429_wait_ms=5000,
+            use_authorization_header=True
+    ):
         self.base_url = base_url
         self.token = token
         self.identity = identity
@@ -56,6 +62,7 @@ class MatrixHttpApi(object):
         self.validate_cert = True
         self.session = Session()
         self.default_429_wait_ms = default_429_wait_ms
+        self.use_authorization_header = use_authorization_header
 
     def initial_sync(self, limit=1):
         """
@@ -662,7 +669,11 @@ class MatrixHttpApi(object):
         if "Content-Type" not in headers:
             headers["Content-Type"] = "application/json"
 
-        query_params["access_token"] = self.token
+        if self.use_authorization_header:
+            headers["Authorization"] = 'Bearer %s' % self.token
+        else:
+            query_params["access_token"] = self.token
+
         if self.identity:
             query_params["user_id"] = self.identity
 
