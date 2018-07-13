@@ -1,7 +1,9 @@
 import responses
 import pytest
-from matrix_client import client
-from matrix_client.errors import MatrixRequestError
+from matrix_client import client, api
+from matrix_client.errors import MatrixRequestError, MatrixError, MatrixHttpLibError
+
+MATRIX_V2_API_PATH = "/_matrix/client/r0"
 
 
 class TestTagsApi:
@@ -232,3 +234,69 @@ class TestSendToDeviceApi:
         req = responses.calls[0].request
         assert req.url == send_to_device_url
         assert req.method == 'PUT'
+
+
+class TestMainApi:
+    user_id = "@alice:matrix.org"
+    token = "Dp0YKRXwx0iWDhFj7lg3DVjwsWzGcUIgARljgyAip2JD8qd5dSaW" \
+        "cxowTKEFetPulfLijAhv8eOmUSScyGcWgZyNMRTBmoJ0RFc0HotPvTBZ" \
+        "U98yKRLtat7V43aCpFmK"
+    test_path = "/account/whoami"
+
+    @responses.activate
+    def test_send_token_header(self):
+        mapi = api.MatrixHttpApi("http://example.com", token=self.token)
+        responses.add(
+            responses.GET,
+            mapi.base_url+MATRIX_V2_API_PATH+self.test_path,
+            body='{"application/json": {"user_id": "%s"}}' % self.user_id
+        )
+        mapi._send("GET", self.test_path)
+        req = responses.calls[0].request
+        assert req.method == 'GET'
+        assert req.headers['Authorization'] == 'Bearer %s' % self.token
+
+    @responses.activate
+    def test_send_token_query(self):
+        mapi = api.MatrixHttpApi(
+            "http://example.com",
+            token=self.token,
+            use_authorization_header=False
+        )
+        responses.add(
+            responses.GET,
+            mapi.base_url+MATRIX_V2_API_PATH+self.test_path,
+            body='{"application/json": {"user_id": "%s"}}' % self.user_id
+        )
+        mapi._send("GET", self.test_path)
+        req = responses.calls[0].request
+        assert req.method == 'GET'
+        assert self.token in req.url
+
+    @responses.activate
+    def test_send_user_id(self):
+        mapi = api.MatrixHttpApi(
+            "http://example.com",
+            token=self.token,
+            identity=self.user_id
+        )
+        responses.add(
+            responses.GET,
+            mapi.base_url+MATRIX_V2_API_PATH+self.test_path,
+            body='{"application/json": {"user_id": "%s"}}' % self.user_id
+        )
+        mapi._send("GET", self.test_path)
+        req = responses.calls[0].request
+        assert "user_id" in req.url
+
+    @responses.activate
+    def test_send_unsup_method(self):
+        mapi = api.MatrixHttpApi("http://example.com")
+        with pytest.raises(MatrixError):
+            mapi._send("GOT", self.test_path)
+
+    @responses.activate
+    def test_send_request_error(self):
+        mapi = api.MatrixHttpApi("http://example.com")
+        with pytest.raises(MatrixHttpLibError):
+            mapi._send("GET", self.test_path)
