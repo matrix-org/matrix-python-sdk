@@ -506,7 +506,7 @@ def test_detect_encryption_state():
     encryption_state_path = HOSTNAME + MATRIX_V2_API_PATH + \
         "/rooms/" + quote(room_id) + "/state/m.room.encryption"
     responses.add(responses.GET, encryption_state_path,
-                  json={"content": {"algorithm": "m.megolm.v1.aes-sha2"}})
+                  json={"algorithm": "m.megolm.v1.aes-sha2"})
     responses.add(responses.GET, encryption_state_path,
                   json={}, status=404)
 

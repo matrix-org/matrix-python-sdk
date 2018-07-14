@@ -557,7 +557,7 @@ class MatrixClient(object):
         if self._encryption:
             try:
                 event = self.api.get_state_event(room_id, "m.room.encryption")
-                if event["content"]["algorithm"] == "m.megolm.v1.aes-sha2":
+                if event["algorithm"] == "m.megolm.v1.aes-sha2":
                     room.encrypted = True
             except MatrixRequestError as e:
                 if e.code != 404:
