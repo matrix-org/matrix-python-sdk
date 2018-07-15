@@ -9,6 +9,7 @@ import olm
 from appdirs import user_data_dir
 
 from matrix_client.crypto.megolm_outbound_session import MegolmOutboundSession
+from matrix_client.device import Device
 
 logger = logging.getLogger(__name__)
 
@@ -423,37 +424,36 @@ CREATE TABLE IF NOT EXISTS sync_tokens(
 
         Args:
             device_keys (defaultdict(dict)): The format is ``{<user_id>: {<device_id>:
-                {'curve25519': <curve25519_key>, 'ed25519': <ed25519_key>}``.
+                Device``.
         """
         c = self.conn.cursor()
         rows = []
         for user_id, devices_dict in device_keys.items():
-            for device_id, keys_dict in devices_dict.items():
-                rows.append((self.device_id, user_id, device_id, keys_dict['ed25519'],
-                             keys_dict['curve25519']))
+            for device_id, device in devices_dict.items():
+                rows.append((self.device_id, user_id, device_id, device.ed25519,
+                             device.curve25519))
         c.executemany('REPLACE INTO device_keys VALUES (?,?,?,?,?)', rows)
         c.close()
         self.conn.commit()
 
-    def load_device_keys(self, device_keys):
+    def load_device_keys(self, api, device_keys):
         """Loads all saved device keys.
 
         Args:
             device_keys (defaultdict(dict)): An object which will get populated with
-                the keys. The format is ``{<user_id>: {<device_id>:
-                {'curve25519': <curve25519_key>, 'ed25519': <ed25519_key>}``.
+                the keys. The format is ``{<user_id>: {<device_id>: Device}}``.
         """
         c = self.conn.cursor()
         rows = c.execute(
             'SELECT * FROM device_keys WHERE device_id=?', (self.device_id,))
         for row in rows:
-            device_keys[row['user_id']][row['user_device_id']] = {
-                'ed25519': row['ed_key'],
-                'curve25519': row['curve_key']
-            }
+            device = Device(api, row['user_device_id'],
+                            ed25519_key=row['ed_key'],
+                            curve25519_key=row['curve_key'])
+            device_keys[row['user_id']][row['user_device_id']] = device
         c.close()
 
-    def get_device_keys(self, user_devices, device_keys=None):
+    def get_device_keys(self, api, user_devices, device_keys=None):
         """Gets the devices keys of the specified devices.
 
         Args:
@@ -461,7 +461,7 @@ CREATE TABLE IF NOT EXISTS sync_tokens(
                 If no device ids are given for a user, all will be retrieved.
             device_keys (defaultdict(dict)): Optional. Will be updated with
                 the retrieved keys. The format is ``{<user_id>: {<device_id>:
-                {'curve25519': <curve25519_key>, 'ed25519': <ed25519_key>}``.
+                Device}}``.
 
         Returns:
             A ``defaultdict(dict)`` containing the keys, the format is the same as the
@@ -486,10 +486,10 @@ CREATE TABLE IF NOT EXISTS sync_tokens(
         c.close()
         result = defaultdict(dict)
         for row in rows:
-            result[row['user_id']][row['user_device_id']] = {
-                'ed25519': row['ed_key'],
-                'curve25519': row['curve_key']
-            }
+            device = Device(api, row['user_device_id'],
+                            ed25519_key=row['ed_key'],
+                            curve25519_key=row['curve_key'])
+            result[row['user_id']][row['user_device_id']] = device
         if device_keys is not None and result:
             device_keys.update(result)
         return result

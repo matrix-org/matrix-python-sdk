@@ -16,6 +16,7 @@ from matrix_client.crypto import olm_device
 from matrix_client.api import MATRIX_V2_API_PATH
 from matrix_client.client import MatrixClient
 from matrix_client.user import User
+from matrix_client.device import Device
 from test.crypto.dummy_olm_device import OlmDevice
 from matrix_client.crypto.megolm_outbound_session import MegolmOutboundSession
 from test.response_examples import (example_key_upload_response,
@@ -35,10 +36,9 @@ class TestOlmDevice:
     alice = '@alice:example.com'
     alice_device_id = 'JLAFKJWSCS'
     alice_curve_key = 'mmFRSHuJVq3aTudx3KB3w5ZvSFQhgEcy8d+m+vkEfUQ'
-    alice_identity_keys = {
-        'curve25519': alice_curve_key,
-        'ed25519': '4VjV3OhFUxWFAcO5YOaQVmTIn29JdRmtNh9iAxoyhkc'
-    }
+    alice_ed_key = '4VjV3OhFUxWFAcO5YOaQVmTIn29JdRmtNh9iAxoyhkc'
+    alice_device = Device(cli.api, alice_device_id, curve25519_key=alice_curve_key,
+                          ed25519_key=alice_ed_key)
     alice_olm_session = olm.OutboundSession(
         device.olm_account, alice_curve_key, alice_curve_key)
     room = cli._mkroom(room_id)
@@ -246,8 +246,7 @@ class TestOlmDevice:
         # Cover logging part
         olm_device.logger.setLevel(logging.WARNING)
         # Now should be good
-        self.device.device_keys[self.alice][self.alice_device_id] = \
-            self.alice_identity_keys
+        self.device.device_keys[self.alice][self.alice_device_id] = self.alice_device
         self.device.olm_start_sessions(user_devices)
         assert self.device.olm_sessions[self.alice_curve_key]
 
@@ -280,8 +279,7 @@ class TestOlmDevice:
                 'm.text', event_content, self.alice, self.alice_device_id)
 
         # We don't have a session with Alice
-        self.device.device_keys[self.alice][self.alice_device_id] = \
-            self.alice_identity_keys
+        self.device.device_keys[self.alice][self.alice_device_id] = self.alice_device
         with pytest.raises(RuntimeError):
             self.device.olm_build_encrypted_event(
                 'm.text', event_content, self.alice, self.alice_device_id)
@@ -353,15 +351,14 @@ class TestOlmDevice:
         self.device.device_keys.clear()
         self.device.olm_sessions.clear()
         alice_device = OlmDevice(self.device.api, self.alice, self.alice_device_id)
-        alice_device.device_keys[self.user_id][self.device_id] = self.device.identity_keys
-        self.device.device_keys[self.alice][self.alice_device_id] = \
-            alice_device.identity_keys
+        alice_device.device_keys[self.user_id][self.device_id] = self.device
+        self.device.device_keys[self.alice][self.alice_device_id] = alice_device
 
         # Artificially start an Olm session from Alice
         self.device.olm_account.generate_one_time_keys(1)
         otk = next(iter(self.device.olm_account.one_time_keys['curve25519'].values()))
         self.device.olm_account.mark_keys_as_published()
-        sender_key = self.device.identity_keys['curve25519']
+        sender_key = self.device.curve25519
         session = olm.OutboundSession(alice_device.olm_account, sender_key, otk)
         alice_device.olm_sessions[sender_key] = [session]
 
@@ -405,19 +402,18 @@ class TestOlmDevice:
 
         encrypted_event = alice_device.olm_build_encrypted_event(
             'example_type', {'content': 'test'}, self.user_id, self.device_id)
-        backup = self.device.identity_keys['ed25519']
-        self.device.identity_keys['ed25519'] = 'wrong'
+        backup = self.device.ed25519
+        self.device._ed25519 = 'wrong'
         with pytest.raises(RuntimeError):
             self.device.olm_decrypt_event(encrypted_event, self.alice)
-        self.device.identity_keys['ed25519'] = backup
+        self.device._ed25519 = backup
 
     @responses.activate
     def test_olm_ensure_sessions(self):
         claim_url = HOSTNAME + MATRIX_V2_API_PATH + '/keys/claim'
         responses.add(responses.POST, claim_url, json=example_claim_keys_response)
         self.device.olm_sessions.clear()
-        self.device.device_keys[self.alice][self.alice_device_id] = \
-            self.alice_identity_keys
+        self.device.device_keys[self.alice][self.alice_device_id] = self.alice_device
         user_devices = {self.alice: [self.alice_device_id]}
 
         self.device.olm_ensure_sessions(user_devices)
@@ -434,9 +430,9 @@ class TestOlmDevice:
         to_device_url = HOSTNAME + MATRIX_V2_API_PATH + '/sendToDevice/m.room.encrypted/1'
         responses.add(responses.PUT, to_device_url, json={})
         self.device.olm_sessions.clear()
-        self.device.device_keys[self.alice][self.alice_device_id] = \
-            self.alice_identity_keys
-        self.device.device_keys['dummy']['dummy'] = {'curve25519': 'a', 'ed25519': 'a'}
+        self.device.device_keys[self.alice][self.alice_device_id] = self.alice_device
+        self.device.device_keys['dummy']['dummy'] = \
+            Device(self.cli.api, 'dummy', curve25519_key='a', ed25519_key='a')
         user_devices = {self.alice: [self.alice_device_id], 'dummy': ['dummy']}
         session = MegolmOutboundSession()
 
@@ -452,8 +448,7 @@ class TestOlmDevice:
     def test_megolm_start_session(self):
         to_device_url = HOSTNAME + MATRIX_V2_API_PATH + '/sendToDevice/m.room.encrypted/1'
         responses.add(responses.PUT, to_device_url, json={})
-        self.device.device_keys[self.alice][self.alice_device_id] = \
-            self.alice_identity_keys
+        self.device.device_keys[self.alice][self.alice_device_id] = self.alice_device
         self.device.device_list.tracked_user_ids.add(self.alice)
         self.device.olm_sessions[self.alice_curve_key] = [self.alice_olm_session]
 
@@ -482,8 +477,7 @@ class TestOlmDevice:
     def test_megolm_share_session_with_new_devices(self):
         to_device_url = HOSTNAME + MATRIX_V2_API_PATH + '/sendToDevice/m.room.encrypted/1'
         responses.add(responses.PUT, to_device_url, json={})
-        self.device.device_keys[self.alice][self.alice_device_id] = \
-            self.alice_identity_keys
+        self.device.device_keys[self.alice][self.alice_device_id] = self.alice_device
         self.device.olm_sessions[self.alice_curve_key] = [self.alice_olm_session]
         session = MegolmOutboundSession()
         self.device.megolm_outbound_sessions[self.room_id] = session
@@ -500,8 +494,7 @@ class TestOlmDevice:
         to_device_url = HOSTNAME + MATRIX_V2_API_PATH + '/sendToDevice/m.room.encrypted/1'
         responses.add(responses.PUT, to_device_url, json={})
         self.device.megolm_outbound_sessions.clear()
-        self.device.device_keys[self.alice][self.alice_device_id] = \
-            self.alice_identity_keys
+        self.device.device_keys[self.alice][self.alice_device_id] = self.alice_device
         self.device.device_list.tracked_user_ids.add(self.alice)
         self.device.olm_sessions[self.alice_curve_key] = [self.alice_olm_session]
         event = {'type': 'm.room.message', 'content': {'body': 'test'}}
@@ -527,8 +520,7 @@ class TestOlmDevice:
         message_url = HOSTNAME + MATRIX_V2_API_PATH + \
             '/rooms/{}/send/m.room.encrypted/1'.format(quote(self.room.room_id))
         responses.add(responses.PUT, message_url, json={})
-        self.device.device_keys[self.alice][self.alice_device_id] = \
-            self.alice_identity_keys
+        self.device.device_keys[self.alice][self.alice_device_id] = self.alice_device
         self.device.olm_sessions[self.alice_curve_key] = [self.alice_olm_session]
         session = MegolmOutboundSession()
         session.add_device(self.alice_device_id)
@@ -570,9 +562,8 @@ class TestOlmDevice:
     def test_olm_handle_encrypted_event(self):
         self.device.olm_sessions.clear()
         alice_device = OlmDevice(self.device.api, self.alice, self.alice_device_id)
-        alice_device.device_keys[self.user_id][self.device_id] = self.device.identity_keys
-        self.device.device_keys[self.alice][self.alice_device_id] = \
-            alice_device.identity_keys
+        alice_device.device_keys[self.user_id][self.device_id] = self.device
+        self.device.device_keys[self.alice][self.alice_device_id] = alice_device
 
         # Artificially start an Olm session from Alice
         self.device.olm_account.generate_one_time_keys(1)

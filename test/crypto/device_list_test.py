@@ -9,6 +9,7 @@ import responses
 
 from matrix_client.api import MATRIX_V2_API_PATH
 from matrix_client.client import MatrixClient
+from matrix_client.device import Device
 from matrix_client.room import User
 from matrix_client.errors import MatrixRequestError
 from matrix_client.crypto.device_list import (_OutdatedUsersSet as OutdatedUsersSet,
@@ -94,24 +95,27 @@ class TestDeviceList:
         assert download_device_keys(user_devices)
         req = json.loads(responses.calls[0].request.body)
         assert req['device_keys'] == {self.alice: [], bob: [], self.user_id: []}
+        device = Device(self.cli.api, 'JLAFKJWSCS',
+                        curve25519_key='3C5BFWi2Y8MaVvjM8M22DBmh24PmgR0nPvJOIArzgyI',
+                        ed25519_key='VzJIYXQ85u19z2ZpEeLLVu8hUKTCE0VXYUn4IY4iFcA')
         expected_device_keys = {
             self.alice: {
-                'JLAFKJWSCS': {
-                    'curve25519': '3C5BFWi2Y8MaVvjM8M22DBmh24PmgR0nPvJOIArzgyI',
-                    'ed25519': 'VzJIYXQ85u19z2ZpEeLLVu8hUKTCE0VXYUn4IY4iFcA'
-                }
+                'JLAFKJWSCS': device
             }
         }
-        assert self.device.device_keys == expected_device_keys
+        assert self.device.device_keys[self.alice]['JLAFKJWSCS'].curve25519 == \
+            device.curve25519
 
         # Different curve25519, key should get updated
         assert download_device_keys(user_devices)
-        expected_device_keys[self.alice]['JLAFKJWSCS']['curve25519'] = new_id_key
-        assert self.device.device_keys == expected_device_keys
+        expected_device_keys[self.alice]['JLAFKJWSCS']._curve25519 = new_id_key
+        assert self.device.device_keys[self.alice]['JLAFKJWSCS'].curve25519 == \
+            device.curve25519
 
         # Different ed25519, key should not get updated
         assert not download_device_keys(user_devices)
-        assert self.device.device_keys == expected_device_keys
+        assert self.device.device_keys[self.alice]['JLAFKJWSCS'].ed25519 == \
+            device.ed25519
 
         self.device.device_keys.clear()
         # All the remaining responses are wrong and we should not add the key

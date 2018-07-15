@@ -129,7 +129,7 @@ class TestCryptoStore(object):
         assert device.olm_sessions[curve_key][0].id == session.id
 
         device.olm_sessions.clear()
-        device.device_keys[self.user_id][self.device_id] = {'curve25519': curve_key}
+        device.device_keys[self.user_id][self.device_id] = device
         device.olm_ensure_sessions({self.user_id: [self.device_id]})
         assert device.olm_sessions[curve_key][0].id == session.id
 
@@ -237,46 +237,49 @@ class TestCryptoStore(object):
     @pytest.mark.usefixtures('account')
     def test_device_keys_persistence(self, device):
         user_devices = {self.user_id: [self.device_id]}
-        keys = {
-            'curve25519': 'curve',
-            'ed25519': 'ed'
-        }
         device_keys = defaultdict(dict)
 
-        self.store.load_device_keys(device_keys)
+        self.store.load_device_keys(None, device_keys)
         assert not device_keys
-        assert not self.store.get_device_keys(user_devices, device_keys)
+        assert not self.store.get_device_keys(None, user_devices, device_keys)
         assert not device_keys
 
-        device_keys_to_save = {self.user_id: {self.device_id: keys}}
+        device_keys_to_save = {self.user_id: {self.device_id: device}}
         self.store.save_device_keys(device_keys_to_save)
-        self.store.load_device_keys(device_keys)
-        assert device_keys == device_keys_to_save
+        self.store.load_device_keys(None, device_keys)
+        assert device_keys[self.user_id][self.device_id].curve25519 == \
+            device.curve25519
 
         device_keys.clear()
-        assert self.store.get_device_keys(user_devices) == device_keys_to_save
-        assert self.store.get_device_keys(user_devices, device_keys)
-        assert device_keys == device_keys_to_save
+        devices = self.store.get_device_keys(None, user_devices)[self.user_id]
+        assert devices[self.device_id].curve25519 == device.curve25519
+        assert self.store.get_device_keys(None, user_devices, device_keys)
+        assert device_keys[self.user_id][self.device_id].curve25519 == \
+            device.curve25519
 
         # Test [] wildcard
-        assert self.store.get_device_keys({self.user_id: []}) == device_keys_to_save
+        devices = self.store.get_device_keys(None, {self.user_id: []})[self.user_id]
+        assert devices[self.device_id].curve25519 == device.curve25519
 
         device.device_list.tracked_user_ids = {self.user_id}
         device.device_list.get_room_device_keys(self.room)
-        assert device.device_keys == device_keys_to_save
+        assert device_keys[self.user_id][self.device_id].curve25519 == \
+            device.curve25519
 
         # Test multiples []
         device_keys.clear()
         user_id = 'test'
         device_id = 'test'
-        device_keys_to_save[user_id] = {device_id: keys}
+        device_keys_to_save[user_id] = {device_id: device}
         self.store.save_device_keys(device_keys_to_save)
         user_devices[user_id] = []
         user_devices[self.user_id] = []
-        assert self.store.get_device_keys(user_devices) == device_keys_to_save
+        device_keys = self.store.get_device_keys(None, user_devices)
+        assert device_keys[self.user_id][self.device_id].curve25519 == device.curve25519
+        assert device_keys[user_id][device_id].curve25519 == device.curve25519
 
         self.store.remove_olm_account()
-        assert not self.store.get_device_keys(user_devices)
+        assert not self.store.get_device_keys(None, user_devices)
 
     @pytest.mark.usefixtures('account')
     def test_tracked_users_persistence(self):
@@ -308,17 +311,13 @@ class TestCryptoStore(object):
         self.store.save_sync_token(sync_token)
         assert self.store.get_sync_token() == sync_token
 
-    def test_load_all(self, account, curve_key):
+    def test_load_all(self, account, curve_key, device):
         curve_key = account.identity_keys['curve25519']
         session = olm.OutboundSession(account, curve_key, curve_key)
         out_session = MegolmOutboundSession()
         out_session.add_device(self.device_id)
         in_session = olm.InboundGroupSession(out_session.session_key)
-        keys = {
-            'curve25519': 'curve',
-            'ed25519': 'ed'
-        }
-        device_keys_to_save = {self.user_id: {self.device_id: keys}}
+        device_keys_to_save = {self.user_id: {self.device_id: device}}
 
         self.store.save_inbound_session(self.room_id, curve_key, in_session)
         self.store.save_olm_session(curve_key, session)
@@ -336,4 +335,5 @@ class TestCryptoStore(object):
         saved_out_session = device.megolm_outbound_sessions[self.room_id]
         assert saved_out_session.id == out_session.id
         assert saved_out_session.devices == out_session.devices
-        assert device.device_keys == device_keys_to_save
+        assert device.device_keys[self.user_id][self.device_id].curve25519 == \
+            device.curve25519

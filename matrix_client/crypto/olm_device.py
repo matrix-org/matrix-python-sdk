@@ -83,7 +83,7 @@ class OlmDevice(Device):
                 self.db.load_olm_sessions(self.olm_sessions)
                 self.db.load_inbound_sessions(self.megolm_inbound_sessions)
                 self.db.load_outbound_sessions(self.megolm_outbound_sessions)
-                self.db.load_device_keys(self.device_keys)
+                self.db.load_device_keys(self.api, self.device_keys)
             logger.info('Loaded Olm account from database for device %s.', device_id)
         else:
             self.olm_account = olm.Account()
@@ -221,23 +221,23 @@ class OlmDevice(Device):
         for user_id in user_devices:
             for device_id, one_time_key in keys.get(user_id, {}).items():
                 try:
-                    device_keys = self.device_keys[user_id][device_id]
+                    device = self.device_keys[user_id][device_id]
                 except KeyError:
                     logger.warning('Key for device %s of user %s not found, could not '
                                    'start Olm session.', device_id, user_id)
                     continue
                 key_object = next(iter(one_time_key.values()))
                 verified = self.verify_json(key_object,
-                                            device_keys['ed25519'],
+                                            device.ed25519,
                                             user_id,
                                             device_id)
                 if verified:
                     session = olm.OutboundSession(self.olm_account,
-                                                  device_keys['curve25519'],
+                                                  device.curve25519,
                                                   key_object['key'])
-                    sessions = self.olm_sessions[device_keys['curve25519']]
+                    sessions = self.olm_sessions[device.curve25519]
                     sessions.append(session)
-                    new_sessions[device_keys['curve25519']].append(session)
+                    new_sessions[device.curve25519].append(session)
                     logger.info('Established Olm session %s with device %s of user '
                                 '%s.', device_id, session.id, user_id)
                 else:
@@ -261,12 +261,9 @@ class OlmDevice(Device):
             The Olm encrypted event, as JSON.
         """
         try:
-            keys = self.device_keys[user_id][device_id]
+            device = self.device_keys[user_id][device_id]
         except KeyError:
             raise RuntimeError('Device is unknown, could not encrypt.')
-
-        signing_key = keys['ed25519']
-        identity_key = keys['curve25519']
 
         payload = {
             'type': event_type,
@@ -278,20 +275,20 @@ class OlmDevice(Device):
             },
             'recipient': user_id,
             'recipient_keys': {
-                'ed25519': signing_key
+                'ed25519': device.ed25519
             }
         }
 
-        sessions = self.olm_sessions[identity_key]
+        sessions = self.olm_sessions[device.curve25519]
         if sessions:
             session = sorted(sessions, key=lambda s: s.id)[0]
         else:
             raise RuntimeError('No session for this device, could not encrypt.')
 
         encrypted_message = session.encrypt(json.dumps(payload))
-        self.db.save_olm_session(identity_key, session)
+        self.db.save_olm_session(device.curve25519, session)
         ciphertext_payload = {
-            identity_key: {
+            device.curve25519: {
                 'type': encrypted_message.message_type,
                 'body': encrypted_message.ciphertext
             }
@@ -433,7 +430,7 @@ class OlmDevice(Device):
         user_devices_no_session = defaultdict(list)
         for user_id in user_devices:
             for device_id in user_devices[user_id]:
-                curve_key = self.device_keys[user_id][device_id]['curve25519']
+                curve_key = self.device_keys[user_id][device_id].curve25519
                 # Check if we have a list of sessions for this device, which can be
                 # empty. Implicitely, an empty list will indicate that we already tried
                 # to establish a session with a device, but this attempt was

@@ -2,6 +2,7 @@ import logging
 from collections import defaultdict
 from threading import Thread, Condition, Event, Lock
 
+from matrix_client.device import Device
 from matrix_client.errors import MatrixHttpLibError, MatrixRequestError
 
 logger = logging.getLogger(__name__)
@@ -16,7 +17,7 @@ class DeviceList:
     Args:
         olm_device (OlmDevice): Will be used to get additional info, such as device id.
         api (MatrixHttpApi): The api object used to make requests.
-        device_keys (defaultdict(dict)): A map from user to device to keys.
+        device_keys (defaultdict(dict)): A map from user to device id to Device.
     """
 
     def __init__(self, olm_device, api, device_keys, db):
@@ -58,7 +59,7 @@ class DeviceList:
         members = {m.user_id for m in room.get_joined_members()}
         missing_members = {m: [] for m in members if not self.device_keys[m]}
         if missing_members:
-            self.db.get_device_keys(missing_members, self.device_keys)
+            self.db.get_device_keys(self.api, missing_members, self.device_keys)
         user_ids = members - self.tracked_user_ids
         if not user_ids:
             logger.info('Already had all the keys in room %s.', room.room_id)
@@ -199,18 +200,22 @@ class DeviceList:
                     logger.warning('Signature verification failed for device %s of '
                                    'user %s.', device_id, user_id)
                     continue
-                keys = self.device_keys[user_id].setdefault(device_id, {})
-                if keys:
-                    if keys['ed25519'] != signing_key:
+                devices = self.device_keys[user_id]
+                try:
+                    device = devices[device_id]
+                except KeyError:
+                    devices[device_id] = Device(self.api, device_id,
+                                                curve25519_key=curve_key,
+                                                ed25519_key=signing_key)
+                else:
+                    if device.ed25519 != signing_key:
                         logger.warning('Ed25519 key has changed for device %s of '
                                        'user %s.', device_id, user_id)
                         continue
-                    if keys['curve25519'] == curve_key:
+                    if device.curve25519 == curve_key:
                         continue
-                else:
-                    keys['ed25519'] = signing_key
-                keys['curve25519'] = curve_key
-                changed[user_id][device_id] = keys
+                    device._curve25519 = curve_key
+                changed[user_id][device_id] = devices[device_id]
 
         logger.info('Successfully downloaded keys for devices: %s.',
                     {user_id: list(changed[user_id]) for user_id in changed})
