@@ -6,6 +6,7 @@ import olm
 from canonicaljson import encode_canonical_json
 
 from matrix_client.checks import check_user_id
+from matrix_client.device import Device
 from matrix_client.crypto.one_time_keys import OneTimeKeysManager
 from matrix_client.crypto.device_list import DeviceList
 from matrix_client.crypto.megolm_outbound_session import MegolmOutboundSession
@@ -14,7 +15,7 @@ from matrix_client.crypto.crypto_store import CryptoStore
 logger = logging.getLogger(__name__)
 
 
-class OlmDevice(object):
+class OlmDevice(Device):
     """Manages the Olm cryptographic functions.
 
     Has a unique Olm account which holds identity keys.
@@ -68,7 +69,6 @@ class OlmDevice(object):
         self.api = api
         check_user_id(user_id)
         self.user_id = user_id
-        self.device_id = device_id
         conf = store_conf or {}
         self.db = Store(user_id, device_id=device_id, **conf)
         self.olm_sessions = defaultdict(list)
@@ -77,7 +77,7 @@ class OlmDevice(object):
         self.device_keys = defaultdict(dict)
         self.olm_account = self.db.get_olm_account()
         if not device_id:
-            self.device_id = self.db.device_id
+            device_id = self.db.device_id
         if self.olm_account:
             if load_all:
                 self.db.load_olm_sessions(self.olm_sessions)
@@ -89,7 +89,6 @@ class OlmDevice(object):
             self.olm_account = olm.Account()
             self.db.replace_olm_account(self.olm_account)
             logger.info('Created new Olm account for device %s.', device_id)
-        self.identity_keys = self.olm_account.identity_keys
         # Try to maintain half the number of one-time keys libolm can hold uploaded
         # on the HS. This is because some keys will be claimed by peers but not
         # used instantly, and we want them to stay in libolm, until the limit is reached
@@ -100,6 +99,11 @@ class OlmDevice(object):
                                                         keys_threshold)
         self.device_list = DeviceList(self, api, self.device_keys, self.db)
         self.megolm_index_record = defaultdict(dict)
+        keys = self.olm_account.identity_keys
+        super(OlmDevice, self).__init__(self.api,
+                                        device_id,
+                                        ed25519_key=keys['ed25519'],
+                                        curve25519_key=keys['curve25519'])
 
     def upload_identity_keys(self):
         """Uploads this device's identity keys to HS.
@@ -110,8 +114,10 @@ class OlmDevice(object):
             'user_id': self.user_id,
             'device_id': self.device_id,
             'algorithms': self._algorithms,
-            'keys': {'{}:{}'.format(alg, self.device_id): key
-                     for alg, key in self.identity_keys.items()}
+            'keys': {
+                'curve25519:{}'.format(self.device_id): self.curve25519,
+                'ed25519:{}'.format(self.device_id): self.ed25519
+            }
         }
         self.sign_json(device_keys)
         ret = self.api.upload_keys(device_keys=device_keys)
@@ -268,7 +274,7 @@ class OlmDevice(object):
             'sender': self.user_id,
             'sender_device': self.device_id,
             'keys': {
-                'ed25519': self.identity_keys['ed25519']
+                'ed25519': self.ed25519
             },
             'recipient': user_id,
             'recipient_keys': {
@@ -293,7 +299,7 @@ class OlmDevice(object):
 
         event = {
             'algorithm': self._olm_algorithm,
-            'sender_key': self.identity_keys['curve25519'],
+            'sender_key': self.curve25519,
             'ciphertext': ciphertext_payload
         }
         return event
@@ -320,7 +326,7 @@ class OlmDevice(object):
 
         ciphertext = content['ciphertext']
         try:
-            payload = ciphertext[self.identity_keys['curve25519']]
+            payload = ciphertext[self.curve25519]
         except KeyError:
             raise RuntimeError('This message was not encrypted for us.')
 
@@ -343,10 +349,10 @@ class OlmDevice(object):
                 .format(decrypted_event['recipient'], self.user_id, decrypted_event)
             )
         our_key = decrypted_event['recipient_keys']['ed25519']
-        if our_key != self.identity_keys['ed25519']:
+        if our_key != self.ed25519:
             raise RuntimeError(
                 'Found key {} instead of ours own ed25519 key {} in Olm plaintext {}.'
-                .format(our_key, self.identity_keys['ed25519'], decrypted_event)
+                .format(our_key, self.ed25519, decrypted_event)
             )
 
         return decrypted_event
@@ -462,9 +468,8 @@ class OlmDevice(object):
         self.db.save_outbound_session(room.room_id, session)
         self.megolm_share_session(room.room_id, user_devices, session)
         # Store a corresponding inbound session, so that we can decrypt our own messages
-        self.megolm_add_inbound_session(room.room_id, self.identity_keys['curve25519'],
-                                        session.id,
-                                        session.session_key)
+        self.megolm_add_inbound_session(
+            room.room_id, self.curve25519, session.id, session.session_key)
         return session
 
     def megolm_share_session(self, room_id, user_devices, session):
@@ -561,7 +566,7 @@ class OlmDevice(object):
 
         encrypted_event = {
             'algorithm': self._megolm_algorithm,
-            'sender_key': self.identity_keys['curve25519'],
+            'sender_key': self.curve25519,
             'ciphertext': encrypted_payload,
             'session_id': session.id,
             'device_id': self.device_id

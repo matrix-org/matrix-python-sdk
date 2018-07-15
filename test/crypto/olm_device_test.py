@@ -578,7 +578,7 @@ class TestOlmDevice:
         self.device.olm_account.generate_one_time_keys(1)
         otk = next(iter(self.device.olm_account.one_time_keys['curve25519'].values()))
         self.device.olm_account.mark_keys_as_published()
-        sender_key = self.device.identity_keys['curve25519']
+        sender_key = self.device.curve25519
         session = olm.OutboundSession(alice_device.olm_account, sender_key, otk)
         alice_device.olm_sessions[sender_key] = [session]
 

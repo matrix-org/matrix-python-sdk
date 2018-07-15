@@ -57,7 +57,7 @@ class TestDeviceList:
         alice_device = OlmDevice(self.cli.api, self.alice, 'JLAFKJWSCS')
         resp = deepcopy(example_key_query_response)
         resp['device_keys'][self.alice]['JLAFKJWSCS']['keys']['ed25519:JLAFKJWSCS'] = \
-            alice_device.identity_keys['ed25519']
+            alice_device.ed25519
         resp['device_keys'][self.alice]['JLAFKJWSCS'] = \
             alice_device.sign_json(resp['device_keys'][self.alice]['JLAFKJWSCS'])
         responses.add(responses.POST, self.query_url, json=resp)
