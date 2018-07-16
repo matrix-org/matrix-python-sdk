@@ -130,6 +130,17 @@ def test_state_event():
     room._process_state_event(ev)
     assert room.guest_access
 
+    # test encryption
+    room.encrypted = False
+    ev["type"] = "m.room.encryption"
+    ev["content"] = {"algorithm": "m.megolm.v1.aes-sha2"}
+    room._process_state_event(ev)
+    assert room.encrypted
+    # encrypted flag must not be cleared on configuration change
+    ev["content"] = {"algorithm": None}
+    room._process_state_event(ev)
+    assert room.encrypted
+
 
 def test_get_user():
     client = MatrixClient("http://example.com")
@@ -452,3 +463,78 @@ def test_room_guest_access():
 
     assert room.set_guest_access(True)
     assert room.guest_access
+
+
+@responses.activate
+def test_enable_encryption():
+    pytest.importorskip('olm')
+    client = MatrixClient(HOSTNAME, encryption=True)
+
+    login_path = HOSTNAME + MATRIX_V2_API_PATH + "/login"
+    responses.add(responses.POST, login_path,
+                  json=response_examples.example_success_login_response)
+
+    upload_path = HOSTNAME + MATRIX_V2_API_PATH + '/keys/upload'
+    responses.add(responses.POST, upload_path, body='{"one_time_key_counts": {}}')
+
+    client.login("@example:localhost", "password", sync=False)
+
+    assert client.olm_device
+
+
+@responses.activate
+def test_enable_encryption_in_room():
+    client = MatrixClient(HOSTNAME)
+    room_id = "!UcYsUzyxTGDxLBEvLz:matrix.org"
+    room = client._mkroom(room_id)
+    assert not room.encrypted
+    encryption_state_path = HOSTNAME + MATRIX_V2_API_PATH + \
+        "/rooms/" + quote(room_id) + "/state/m.room.encryption"
+
+    responses.add(responses.PUT, encryption_state_path,
+                  json=response_examples.example_event_response)
+
+    assert room.enable_encryption()
+    assert room.encrypted
+
+
+@responses.activate
+def test_detect_encryption_state():
+    client = MatrixClient(HOSTNAME, encryption=True)
+    room_id = "!UcYsUzyxTGDxLBEvLz:matrix.org"
+
+    encryption_state_path = HOSTNAME + MATRIX_V2_API_PATH + \
+        "/rooms/" + quote(room_id) + "/state/m.room.encryption"
+    responses.add(responses.GET, encryption_state_path,
+                  json={"algorithm": "m.megolm.v1.aes-sha2"})
+    responses.add(responses.GET, encryption_state_path,
+                  json={}, status=404)
+
+    room = client._mkroom(room_id)
+    assert room.encrypted
+
+    room = client._mkroom(room_id)
+    assert not room.encrypted
+
+
+@responses.activate
+def test_one_time_keys_sync():
+    client = MatrixClient(HOSTNAME, encryption=True)
+    sync_url = HOSTNAME + MATRIX_V2_API_PATH + "/sync"
+    sync_response = deepcopy(response_examples.example_sync)
+    payload = {'dummy': 1}
+    sync_response["device_one_time_keys_count"] = payload
+    sync_response['rooms']['join'] = {}
+
+    class DummyDevice:
+
+        def update_one_time_key_counts(self, payload):
+            self.payload = payload
+
+    device = DummyDevice()
+    client.olm_device = device
+
+    responses.add(responses.GET, sync_url, json=sync_response)
+
+    client._sync()
+    assert device.payload == payload

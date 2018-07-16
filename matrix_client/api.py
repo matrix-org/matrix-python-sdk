@@ -233,6 +233,18 @@ class MatrixHttpApi(object):
             params["ts"] = timestamp
         return self._send("PUT", path, content, query_params=params)
 
+    def get_state_event(self, room_id, event_type):
+        """Perform GET /rooms/$room_id/state/$event_type
+
+        Args:
+            room_id(str): The room ID.
+            event_type (str): The type of the event.
+
+        Raises:
+            MatrixRequestError(code=404) if the state event is not found.
+        """
+        return self._send("GET", "/rooms/{}/state/{}".format(quote(room_id), event_type))
+
     def send_message_event(self, room_id, event_type, content, txn_id=None,
                            timestamp=None):
         """Perform PUT /rooms/$room_id/send/$event_type
@@ -393,7 +405,7 @@ class MatrixHttpApi(object):
         Args:
             room_id(str): The room ID
         """
-        return self._send("GET", "/rooms/" + room_id + "/state/m.room.name")
+        return self.get_state_event(room_id, "m.room.name")
 
     def set_room_name(self, room_id, name, timestamp=None):
         """Perform PUT /rooms/$room_id/state/m.room.name
@@ -412,7 +424,7 @@ class MatrixHttpApi(object):
         Args:
             room_id (str): The room ID
         """
-        return self._send("GET", "/rooms/" + room_id + "/state/m.room.topic")
+        return self.get_state_event(room_id, "m.room.topic")
 
     def set_room_topic(self, room_id, topic, timestamp=None):
         """Perform PUT /rooms/$room_id/state/m.room.topic
@@ -432,8 +444,7 @@ class MatrixHttpApi(object):
         Args:
             room_id(str): The room ID
         """
-        return self._send("GET", "/rooms/" + quote(room_id) +
-                          "/state/m.room.power_levels")
+        return self.get_state_event(room_id, "m.room.power_levels")
 
     def set_power_levels(self, room_id, content):
         """Perform PUT /rooms/$room_id/state/m.room.power_levels
