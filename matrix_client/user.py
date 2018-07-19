@@ -33,7 +33,11 @@ class User(object):
             str: Display Name
         """
         if not self.displayname:
-            self.displayname = self.api.get_display_name(self.user_id)
+            try:
+                self.displayname = self.api.get_display_name(self.user_id)
+            except MatrixRequestError as e:
+                if e.code == 404:
+                    return None
         return self.displayname
 
     def get_friendly_name(self):
