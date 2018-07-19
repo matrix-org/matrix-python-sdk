@@ -26,6 +26,8 @@ except ImportError:
 
 MATRIX_V2_API_PATH = "/_matrix/client/r0"
 
+__version__ = __import__(__package__).__version__
+
 
 class MatrixHttpApi(object):
     """Contains all raw Matrix HTTP Client-Server API calls.
@@ -655,6 +657,10 @@ class MatrixHttpApi(object):
             query_params = {}
         if headers is None:
             headers = {}
+
+        if "User-Agent" not in headers:
+            headers["User-Agent"] = "matrix-python-sdk/%s" % __version__
+
         method = method.upper()
         if method not in ["GET", "PUT", "DELETE", "POST"]:
             raise MatrixError("Unsupported HTTP method: %s" % method)
