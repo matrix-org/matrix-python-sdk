@@ -18,6 +18,8 @@ import warnings
 from requests import Session, RequestException
 from time import time, sleep
 from .errors import MatrixError, MatrixRequestError, MatrixHttpLibError
+from urllib3.util import parse_url
+from urllib3.exceptions import LocationParseError
 
 try:
     from urllib import quote
@@ -55,7 +57,14 @@ class MatrixHttpApi(object):
             default_429_wait_ms=5000,
             use_authorization_header=True
     ):
-        self.base_url = base_url
+        try:
+            scheme, auth, host, port, path, query, fragment = parse_url(base_url)
+        except LocationParseError:
+            raise MatrixError("Invalid homeserver url %s" % base_url)
+        if not scheme:
+            raise MatrixError("No scheme in homeserver url %s" % base_url)
+        self._base_url = base_url
+
         self.token = token
         self.identity = identity
         self.txn_id = 0
@@ -691,7 +700,7 @@ class MatrixHttpApi(object):
         if self.identity:
             query_params["user_id"] = self.identity
 
-        endpoint = self.base_url + api_path + path
+        endpoint = self._base_url + api_path + path
 
         if headers["Content-Type"] == "application/json" and content is not None:
             content = json.dumps(content)
@@ -755,7 +764,7 @@ class MatrixHttpApi(object):
 
     def get_download_url(self, mxcurl):
         if mxcurl.startswith('mxc://'):
-            return self.base_url + "/_matrix/media/r0/download/" + mxcurl[6:]
+            return self._base_url + "/_matrix/media/r0/download/" + mxcurl[6:]
         else:
             raise ValueError("MXC URL did not begin with 'mxc://'")
 
