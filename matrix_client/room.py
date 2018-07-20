@@ -654,18 +654,35 @@ class Room(object):
         except MatrixRequestError:
             return False
 
-    def enable_encryption(self):
+    def enable_encryption(self, rotation_period_ms=None, rotation_period_msgs=None):
         """Enables encryption in the room.
 
         NOTE: Once enabled, encryption cannot be disabled.
 
+        Args:
+            rotation_period_ms (int): Optional. Lifetime of Megolm sessions in the room.
+            rotation_period_msgs (int): Optional. Number of messages that can be encrypted
+                by a Megolm session before it is rotated.
+
         Returns:
-        True if successful, False if not
+            ``True`` if successful, ``False`` if not.
+            If the room was already encrypted, True is returned, but the
+            ``rotation_period_ms`` and ``rotation_period_ms`` parameters have no effect.
         """
+        if self.encrypted:
+            return True
+
+        content = {"algorithm": "m.megolm.v1.aes-sha2"}
+        if rotation_period_ms:
+            content["rotation_period_ms"] = rotation_period_ms
+        if rotation_period_msgs:
+            content["rotation_period_msgs"] = rotation_period_msgs
+
         try:
-            self.send_state_event("m.room.encryption",
-                                  {"algorithm": "m.megolm.v1.aes-sha2"})
+            self.send_state_event("m.room.encryption", content)
             self.encrypted = True
+            self.rotation_period_ms = rotation_period_ms
+            self.rotation_period_msgs = rotation_period_msgs
             return True
         except MatrixRequestError:
             return False

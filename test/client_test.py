@@ -536,6 +536,15 @@ def test_enable_encryption_in_room():
     assert room.enable_encryption()
     assert room.encrypted
 
+    room = client._mkroom(room_id)
+    assert room.enable_encryption(rotation_period_msgs=1, rotation_period_ms=1)
+    assert room.rotation_period_msgs == 1
+    assert room.rotation_period_ms == 1
+
+    assert room.enable_encryption(rotation_period_msgs=2)
+    # The room was already encrypted, we should not have changed its attribute
+    assert room.rotation_period_msgs == 1
+
 
 @responses.activate
 def test_detect_encryption_state():
