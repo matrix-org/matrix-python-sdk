@@ -47,48 +47,51 @@ class CryptoStore(object):
         self.create_tables_if_needed()
 
     def instanciate_connection(self):
-        return sqlite3.connect(self.db_filepath, detect_types=sqlite3.PARSE_DECLTYPES)
+        con = sqlite3.connect(self.db_filepath, detect_types=sqlite3.PARSE_DECLTYPES)
+        con.row_factory = sqlite3.Row
+        return con
 
     def create_tables_if_needed(self):
         """Ensures all the tables exist."""
         c = self.conn.cursor()
-        c.execute('PRAGMA foreign_keys = ON')
-        c.execute('CREATE TABLE IF NOT EXISTS accounts (device_id TEXT PRIMARY KEY,'
-                  'account BLOB)')
-        c.execute('CREATE TABLE IF NOT EXISTS olm_sessions (device_id TEXT,'
-                  'session_id TEXT PRIMARY KEY, curve_key TEXT, session BLOB,'
-                  'FOREIGN KEY(device_id) REFERENCES accounts(device_id) '
-                  'ON DELETE CASCADE)')
-        c.execute('CREATE TABLE IF NOT EXISTS megolm_inbound_sessions '
-                  '(device_id TEXT, session_id TEXT PRIMARY KEY, room_id TEXT,'
-                  'curve_key TEXT, session BLOB,'
-                  'FOREIGN KEY(device_id) REFERENCES accounts(device_id) '
-                  'ON DELETE CASCADE)')
-        c.execute('CREATE TABLE IF NOT EXISTS megolm_outbound_sessions '
-                  '(device_id TEXT, room_id TEXT PRIMARY KEY, session BLOB,'
-                  'max_age_s FLOAT, max_messages INTEGER, creation_time TIMESTAMP,'
-                  'message_count INTEGER,'
-                  'FOREIGN KEY(device_id) REFERENCES accounts(device_id) '
-                  'ON DELETE CASCADE)')
-        c.execute('CREATE TABLE IF NOT EXISTS megolm_outbound_devices '
-                  '(device_id TEXT, room_id TEXT, user_device_id TEXT,'
-                  'UNIQUE(device_id, room_id, user_device_id),'
-                  'FOREIGN KEY(room_id) REFERENCES megolm_outbound_sessions(room_id) '
-                  'ON DELETE CASCADE,'
-                  'FOREIGN KEY(device_id) REFERENCES accounts(device_id))')
-        c.execute('CREATE TABLE IF NOT EXISTS device_keys '
-                  '(device_id TEXT, user_id TEXT, user_device_id TEXT PRIMARY KEY,'
-                  'ed_key TEXT, curve_key TEXT,'
-                  'FOREIGN KEY(device_id) REFERENCES accounts(device_id) '
-                  'ON DELETE CASCADE)')
-        c.execute('CREATE TABLE IF NOT EXISTS tracked_users '
-                  '(device_id TEXT, user_id TEXT, UNIQUE(device_id, user_id),'
-                  'FOREIGN KEY(device_id) REFERENCES accounts(device_id) '
-                  'ON DELETE CASCADE)')
-        c.execute('CREATE TABLE IF NOT EXISTS sync_tokens '
-                  '(device_id TEXT PRIMARY KEY, token TEXT,'
-                  'FOREIGN KEY(device_id) REFERENCES accounts(device_id) '
-                  'ON DELETE CASCADE)')
+        c.executescript("""
+PRAGMA foreign_keys = ON;
+CREATE TABLE IF NOT EXISTS accounts (device_id TEXT PRIMARY KEY NOT NULL, account BLOB);
+CREATE TABLE IF NOT EXISTS olm_sessions(
+    device_id TEXT, session_id TEXT PRIMARY KEY, curve_key TEXT, session BLOB,
+    FOREIGN KEY(device_id) REFERENCES accounts(device_id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS megolm_inbound_sessions(
+    device_id TEXT, session_id TEXT PRIMARY KEY, room_id TEXT, curve_key TEXT,
+    session BLOB,
+    FOREIGN KEY(device_id) REFERENCES accounts(device_id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS megolm_outbound_sessions(
+    device_id TEXT, room_id TEXT PRIMARY KEY, session BLOB, max_age_s FLOAT,
+    max_messages INTEGER, creation_time TIMESTAMP, message_count INTEGER,
+    FOREIGN KEY(device_id) REFERENCES accounts(device_id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS megolm_outbound_devices(
+    device_id TEXT, room_id TEXT, user_device_id TEXT,
+    UNIQUE(device_id, room_id, user_device_id),
+    FOREIGN KEY(room_id) REFERENCES megolm_outbound_sessions(room_id) ON DELETE CASCADE,
+    FOREIGN KEY(device_id) REFERENCES accounts(device_id)
+);
+CREATE TABLE IF NOT EXISTS device_keys(
+    device_id TEXT, user_id TEXT, user_device_id TEXT PRIMARY KEY, ed_key TEXT,
+    curve_key TEXT,
+    FOREIGN KEY(device_id) REFERENCES accounts(device_id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS tracked_users(
+    device_id TEXT, user_id TEXT,
+    UNIQUE(device_id, user_id),
+    FOREIGN KEY(device_id) REFERENCES accounts(device_id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS sync_tokens(
+    device_id TEXT PRIMARY KEY, token TEXT,
+    FOREIGN KEY(device_id) REFERENCES accounts(device_id) ON DELETE CASCADE
+);
+        """)
         c.close()
         self.conn.commit()
 
@@ -111,13 +114,14 @@ class CryptoStore(object):
         """Gets the Olm account.
 
         Returns:
-            olm.Account object, or None if it wasn't found for the current device_id.
+            ``olm.Account`` object, or ``None`` if it wasn't found for the current
+            device_id.
         """
         c = self.conn.cursor()
         c.execute(
             'SELECT account FROM accounts WHERE device_id=?', (self.device_id,))
         try:
-            account_data = c.fetchone()[0]
+            account_data = c.fetchone()['account']
             # sqlite gives us unicode in Python2, we want bytes
             account_data = bytes(account_data)
         except TypeError:
@@ -144,7 +148,7 @@ class CryptoStore(object):
 
         Args:
             sessions (defaultdict(list)): A map from curve25519 keys to a list of
-                olm.Session objects.
+                ``olm.Session`` objects.
         """
         c = self.conn.cursor()
         rows = [(self.device_id, s.id, key, s.pickle(self.pickle_key))
@@ -158,14 +162,14 @@ class CryptoStore(object):
 
         Args:
             sessions (defaultdict(list)): A map from curve25519 keys to a list of
-                olm.Session objects, which will be populated.
+                ``olm.Session`` objects, which will be populated.
         """
         c = self.conn.cursor()
         rows = c.execute('SELECT curve_key, session FROM olm_sessions WHERE device_id=?',
                          (self.device_id,))
         for row in rows:
-            session = olm.Session.from_pickle(bytes(row[1]), self.pickle_key)
-            sessions[row[0]].append(session)
+            session = olm.Session.from_pickle(bytes(row['session']), self.pickle_key)
+            sessions[row['curve_key']].append(session)
         c.close()
 
     def get_olm_sessions(self, curve_key, sessions_dict=None):
@@ -174,10 +178,10 @@ class CryptoStore(object):
         Args:
             curve_key (str): The curve25519 key of the device.
             sessions_dict (defaultdict(list)): Optional. A map from curve25519 keys to a
-                list of olm.Session objects, to which the session list will be added.
+                list of ``olm.Session`` objects, to which the session list will be added.
 
         Returns:
-            A list of olm.Session objects, or None if none were found.
+            A list of ``olm.Session`` objects, or ``None`` if none were found.
 
         NOTE:
             When overriding this, be careful to append the retrieved sessions to the
@@ -188,7 +192,7 @@ class CryptoStore(object):
             'SELECT session FROM olm_sessions WHERE device_id=? AND curve_key=?',
             (self.device_id, curve_key)
         )
-        sessions = [olm.Session.from_pickle(bytes(row[0]), self.pickle_key)
+        sessions = [olm.Session.from_pickle(bytes(row['session']), self.pickle_key)
                     for row in rows]
         if sessions_dict is not None:
             sessions_dict[curve_key].extend(sessions)
@@ -225,8 +229,9 @@ class CryptoStore(object):
             'SELECT * FROM megolm_inbound_sessions WHERE device_id=?', (self.device_id,)
         )
         for row in rows:
-            session = olm.InboundGroupSession.from_pickle(bytes(row[2]), self.pickle_key)
-            sessions[row[0]][row[1]][session.id] = session
+            session = olm.InboundGroupSession.from_pickle(
+                bytes(row['session']), self.pickle_key)
+            sessions[row['room_id']][row['curve_key']][session.id] = session
         c.close()
 
     def get_inbound_session(self, room_id, curve_key, session_id, sessions=None):
@@ -236,11 +241,11 @@ class CryptoStore(object):
             room_id (str): The room corresponding to the session.
             curve_key (str): The curve25519 key of the device.
             session_id (str): The id of the session.
-            sessions (dict): Optional. A map from session id to olm.InboundGroupSession
-                object, to which the session will be added.
+            sessions (dict): Optional. A map from session id to
+                ``olm.InboundGroupSession`` object, to which the session will be added.
 
         Returns:
-            olm.InboundGroupSession object, or None if the session was not found.
+            ``olm.InboundGroupSession`` object, or ``None`` if the session was not found.
         """
         c = self.conn.cursor()
         c.execute(
@@ -249,7 +254,7 @@ class CryptoStore(object):
             (self.device_id, room_id, curve_key, session_id)
         )
         try:
-            session_data = c.fetchone()[0]
+            session_data = c.fetchone()['session']
             session_data = bytes(session_data)
         except TypeError:
             return None
@@ -285,8 +290,8 @@ class CryptoStore(object):
         Also loads the devices each are shared with.
 
         Args:
-            sessions (dict): A map from room_id to a :class:`.MegolmOutboundSession`
-                object, which will be populated.
+            sessions (dict): A map from room_id to a ``MegolmOutboundSession`` object,
+                which will be populated.
         """
         c = self.conn.cursor()
         rows = c.execute(
@@ -294,14 +299,16 @@ class CryptoStore(object):
         for row in rows.fetchall():
             device_ids = c.execute(
                 'SELECT user_device_id FROM megolm_outbound_devices WHERE device_id=? '
-                'AND room_id=?', (self.device_id, row[0])
+                'AND room_id=?', (self.device_id, row['room_id'])
             )
             devices = {device_id[0] for device_id in device_ids}
-            max_age_s = row[2]
+            max_age_s = row['max_age_s']
             max_age = timedelta(seconds=max_age_s)
             session = MegolmOutboundSession.from_pickle(
-                bytes(row[1]), devices, max_age, row[3], row[4], row[5], self.pickle_key)
-            sessions[row[0]] = session
+                bytes(row['session']), devices, max_age, row['max_messages'],
+                row['creation_time'], row['message_count'], self.pickle_key
+            )
+            sessions[row['room_id']] = session
         c.close()
 
     def get_outbound_session(self, room_id, sessions=None):
@@ -326,7 +333,7 @@ class CryptoStore(object):
         )
         try:
             row = c.fetchone()
-            session_data = bytes(row[0])
+            session_data = bytes(row['session'])
         except TypeError:
             c.close()
             return None
@@ -336,10 +343,12 @@ class CryptoStore(object):
         )
         devices = {device_id[0] for device_id in device_ids}
         c.close()
-        max_age_s = row[1]
+        max_age_s = row['max_age_s']
         max_age = timedelta(seconds=max_age_s)
         session = MegolmOutboundSession.from_pickle(
-            session_data, devices, max_age, row[2], row[3], row[4], self.pickle_key)
+            session_data, devices, max_age, row['max_messages'], row['creation_time'],
+            row['message_count'], self.pickle_key
+        )
         if sessions is not None:
             sessions[room_id] = session
         return session
@@ -399,9 +408,9 @@ class CryptoStore(object):
         rows = c.execute(
             'SELECT * FROM device_keys WHERE device_id=?', (self.device_id,))
         for row in rows:
-            device_keys[row[0]][row[1]] = {
-                'ed25519': row[2],
-                'curve25519': row[3]
+            device_keys[row['user_id']][row['user_device_id']] = {
+                'ed25519': row['ed_key'],
+                'curve25519': row['curve_key']
             }
         c.close()
 
@@ -410,11 +419,14 @@ class CryptoStore(object):
 
         Args:
             user_devices (dict): A map from user ids to a list of device ids.
+                If no device ids are given for a user, all will be retrieved.
             device_keys (defaultdict(dict)): Optional. Will be updated with
-                the retrieved keys.
+                the retrieved keys. The format is ``{<user_id>: {<device_id>:
+                {'curve25519': <curve25519_key>, 'ed25519': <ed25519_key>}``.
 
         Returns:
-            A defaultdict(dict) containing the keys.
+            A ``defaultdict(dict)`` containing the keys, the format is the same as the
+            ``device_keys`` argument.
         """
         c = self.conn.cursor()
         rows = []
@@ -435,9 +447,9 @@ class CryptoStore(object):
         c.close()
         result = defaultdict(dict)
         for row in rows:
-            result[row[0]][row[1]] = {
-                'ed25519': row[2],
-                'curve25519': row[3]
+            result[row['user_id']][row['user_device_id']] = {
+                'ed25519': row['ed_key'],
+                'curve25519': row['curve_key']
             }
         if device_keys is not None and result:
             device_keys.update(result)
@@ -476,7 +488,7 @@ class CryptoStore(object):
         c = self.conn.cursor()
         rows = c.execute(
             'SELECT user_id FROM tracked_users WHERE device_id=?', (self.device_id,))
-        tracked_users.update(t[0] for t in rows)
+        tracked_users.update(row['user_id'] for row in rows)
         c.close()
         return tracked_users
 
@@ -495,12 +507,12 @@ class CryptoStore(object):
         """Gets the saved sync token.
 
         Returns:
-            A string corresponding to the token, or None if there wasn't any.
+            A string corresponding to the token, or ``None`` if there wasn't any.
         """
         c = self.conn.cursor()
         c.execute('SELECT token FROM sync_tokens WHERE device_id=?', (self.device_id,))
         try:
-            return c.fetchone()[0]
+            return c.fetchone()['token']
         except TypeError:
             return None
         finally:
