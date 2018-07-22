@@ -15,7 +15,7 @@ class TestUser:
 
     @pytest.fixture()
     def user(self):
-        return User(self.cli.api, self.user_id)
+        return User(self.cli, self.user_id)
 
     @pytest.fixture()
     def room(self):
