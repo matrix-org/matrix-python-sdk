@@ -85,17 +85,14 @@ class Room(object):
         # Member display names without me
         members = [u.get_display_name() for u in self.get_joined_members() if
                    self.client.user_id != u.user_id]
-        first_two = members[:2]
-        if len(first_two) == 1:
-            return first_two[0]
+        members.sort()
+
+        if len(members) == 1:
+            return members[0]
         elif len(members) == 2:
-            return "{0} and {1}".format(
-                first_two[0],
-                first_two[1])
+            return "{0} and {1}".format(members[0], members[1])
         elif len(members) > 2:
-            return "{0} and {1} others".format(
-                first_two[0],
-                len(members) - 1)
+            return "{0} and {1} others".format(members[0], len(members) - 1)
         else:  # len(members) <= 0 or not an integer
             # TODO i18n
             return "Empty room"
