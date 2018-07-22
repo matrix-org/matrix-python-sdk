@@ -45,7 +45,7 @@ class Room(object):
         self.invite_only = None
         self.guest_access = None
         self._prev_batch = None
-        self._members = []
+        self._members = {}
         self.encrypted = False
 
     def set_user_profile(self,
@@ -477,23 +477,21 @@ class Room(object):
     def get_joined_members(self):
         """Returns list of joined members (User objects)."""
         if self._members:
-            return self._members
+            return list(self._members.values())
         response = self.client.api.get_room_members(self.room_id)
         for event in response["chunk"]:
             if event["content"]["membership"] == "join":
-                self._mkmembers(
-                    User(self.client.api,
-                         event["state_key"],
-                         event["content"].get("displayname"))
-                )
-        return self._members
+                self._add_member(event["state_key"], event["content"].get("displayname"))
+        return list(self._members.values())
 
-    def _mkmembers(self, member):
-        if member.user_id not in [x.user_id for x in self._members]:
-            self._members.append(member)
-
-    def _rmmembers(self, user_id):
-        self._members[:] = [x for x in self._members if x.user_id != user_id]
+    def _add_member(self, user_id, displayname=None):
+        if user_id in self._members:
+            return
+        if user_id in self.client.users:
+            self._members[user_id] = self.client.users[user_id]
+            return
+        self._members[user_id] = User(self.client.api, user_id, displayname)
+        self.client.users[user_id] = self._members[user_id]
 
     def backfill_previous_messages(self, reverse=False, limit=10):
         """Backfill handling of previous messages.
@@ -660,13 +658,10 @@ class Room(object):
             elif etype == "m.room.member" and clevel == clevel.ALL:
                 # tracking room members can be large e.g. #matrix:matrix.org
                 if econtent["membership"] == "join":
-                    self._mkmembers(
-                        User(self.client.api,
-                             state_event["state_key"],
-                             econtent.get("displayname"))
-                    )
+                    self._add_member(
+                        state_event["state_key"], econtent.get("displayname"))
                 elif econtent["membership"] in ("leave", "kick", "invite"):
-                    self._rmmembers(state_event["state_key"])
+                    self._members.pop(state_event["state_key"], None)
 
         for listener in self.state_listeners:
             if (

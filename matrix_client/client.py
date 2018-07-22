@@ -103,6 +103,13 @@ class MatrixClient(object):
 
             def global_callback(incoming_event):
                 pass
+
+    Attributes:
+        users (dict): A map from user ID to :class:`.User` object.
+            It is populated automatically while tracking the membership in rooms, and
+            shouldn't be modified directly.
+            A :class:`.User` object in this dict is shared between all :class:`.Room`
+            objects where the corresponding user is joined.
     """
 
     def __init__(self, base_url, token=None, user_id=None,
@@ -143,6 +150,9 @@ class MatrixClient(object):
         self.bad_sync_timeout_limit = 60 * 60
         self.rooms = {
             # room_id: Room
+        }
+        self.users = {
+            # user_id: User
         }
         if token:
             check_user_id(user_id)
@@ -626,14 +636,17 @@ class MatrixClient(object):
                         listener['callback'](event)
 
     def get_user(self, user_id):
-        """ Return a User by their id.
+        """Deprecated. Return a User by their id.
 
-        NOTE: This function only returns a user object, it does not verify
-            the user with the Home Server.
+        This method only instantiate a User, which should be done directly.
+        You can also use :attr:`users` in order to access a User object which
+        was created automatically.
 
         Args:
             user_id (str): The matrix user id of a user.
         """
+        warn("get_user is deprecated. Directly instantiate a User instead.",
+             DeprecationWarning)
         return User(self.api, user_id)
 
     # TODO: move to Room class

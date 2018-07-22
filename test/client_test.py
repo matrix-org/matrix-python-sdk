@@ -110,7 +110,7 @@ def test_state_event():
     ev["state_key"] = "@stereo:xxx.org"
     room._process_state_event(ev)
     assert len(room._members) == 1
-    assert room._members[0].user_id == "@stereo:xxx.org"
+    assert room._members["@stereo:xxx.org"]
     # test member leave event
     ev["content"]['membership'] = 'leave'
     room._process_state_event(ev)
@@ -216,7 +216,7 @@ def test_get_rooms_display_name():
 
     def add_members(api, room, num):
         for i in range(num):
-            room._mkmembers(User(api, '@frho%s:matrix.org' % i, 'ho%s' % i))
+            room._add_member('@frho%s:matrix.org' % i, 'ho%s' % i)
 
     client = MatrixClient("http://example.com")
     client.user_id = "@frho0:matrix.org"
@@ -428,9 +428,9 @@ def test_cache():
     assert m_some.rooms[room_id].name == room_name
     assert m_all.rooms[room_id].name == room_name
 
-    assert m_none.rooms[room_id]._members == m_some.rooms[room_id]._members == []
+    assert m_none.rooms[room_id]._members == m_some.rooms[room_id]._members == {}
     assert len(m_all.rooms[room_id]._members) == 2
-    assert m_all.rooms[room_id]._members[0].user_id == "@alice:example.com"
+    assert m_all.rooms[room_id]._members["@alice:example.com"]
 
 
 @responses.activate
