@@ -125,35 +125,38 @@ class MatrixHttpApi(object):
     def validate_certificate(self, valid):
         self.validate_cert = valid
 
-    def register(self, content=None, kind='user'):
+    def register(self, auth_body=None, kind="user", bind_email=None,
+                 username=None, password=None, device_id=None,
+                 initial_device_display_name=None, inhibit_login=None):
         """Performs /register.
 
         Args:
-            content (dict): The request payload.
-
-                | Should be specified for all non-guest registrations.
-
-                | username (string): The local part of the desired Matrix ID.
-                |     If omitted, the homeserver MUST generate a Matrix ID local part.
-
-                | bind_email (boolean): If true, the server binds the email used for
-                |     authentication to the Matrix ID with the ID Server.
-                |     *Email Registration not currently supported*
-
-                | password (string): Required. The desired password for the account.
-
-                | auth (dict): Authentication Data
-                |     session (string):  The value of the session key given by the
-                |         homeserver.
-
-                |     type (string): Required. The login type that the client is
-                |         attempting to complete. "m.login.dummy" is the only
-                |         non-interactive type.
-
-            kind (str): Specify kind="guest" to register as guest.
+            auth_body (dict): Authentication Params.
+            kind (str): Specify kind of account to register. Can be 'guest' or 'user'.
+            bind_email (bool): Whether to use email in registration and authentication.
+            username (str): The localpart of a Matrix ID.
+            password (str): The desired password of the account.
+            device_id (str): ID of the client device.
+            initial_device_display_name (str): Display name to be assigned.
+            inhibit_login (bool): Whether to login after registration. Defaults to false.
         """
-        if content is None:
-            content = {}
+        content = {}
+        content["kind"] = kind
+        if auth_body:
+            content["auth"] = auth_body
+        if username:
+            content["username"] = username
+        if password:
+            content["password"] = password
+        if device_id:
+            content["device_id"] = device_id
+        if initial_device_display_name:
+            content["initial_device_display_name"] = \
+                    initial_device_display_name
+        if bind_email:
+            content["bind_email"] = bind_email
+        if inhibit_login:
+            content["inhibit_login"] = inhibit_login
         return self._send(
             "POST",
             "/register",
