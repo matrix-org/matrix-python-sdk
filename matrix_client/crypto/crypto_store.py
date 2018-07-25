@@ -67,24 +67,25 @@ CREATE TABLE IF NOT EXISTS megolm_inbound_sessions(
     FOREIGN KEY(device_id) REFERENCES accounts(device_id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS megolm_outbound_sessions(
-    device_id TEXT, room_id TEXT PRIMARY KEY, session BLOB, max_age_s FLOAT,
+    device_id TEXT, room_id TEXT, session BLOB, max_age_s FLOAT,
     max_messages INTEGER, creation_time TIMESTAMP, message_count INTEGER,
+    PRIMARY KEY(device_id, room_id),
     FOREIGN KEY(device_id) REFERENCES accounts(device_id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS megolm_outbound_devices(
     device_id TEXT, room_id TEXT, user_device_id TEXT,
-    UNIQUE(device_id, room_id, user_device_id),
-    FOREIGN KEY(room_id) REFERENCES megolm_outbound_sessions(room_id) ON DELETE CASCADE,
-    FOREIGN KEY(device_id) REFERENCES accounts(device_id)
+    PRIMARY KEY(device_id, room_id, user_device_id),
+    FOREIGN KEY(device_id, room_id) REFERENCES
+    megolm_outbound_sessions(device_id, room_id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS device_keys(
-    device_id TEXT, user_id TEXT, user_device_id TEXT PRIMARY KEY, ed_key TEXT,
-    curve_key TEXT,
+    device_id TEXT, user_id TEXT, user_device_id TEXT, ed_key TEXT,
+    curve_key TEXT, PRIMARY KEY(device_id, user_id, user_device_id),
     FOREIGN KEY(device_id) REFERENCES accounts(device_id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS tracked_users(
     device_id TEXT, user_id TEXT,
-    UNIQUE(device_id, user_id),
+    PRIMARY KEY(device_id, user_id),
     FOREIGN KEY(device_id) REFERENCES accounts(device_id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS sync_tokens(
