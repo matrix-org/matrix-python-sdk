@@ -68,3 +68,9 @@ class E2EUnknownDevices(Exception):
             "The room contains unknown devices which have not been verified. They can "
             "be inspected via the 'user_devices' attribute of this exception.")
         self.user_devices = user_devices
+
+
+class UnableToDecryptError(Exception):
+    """An encrypted message couldn't be decrypted due to missing keys."""
+
+    pass

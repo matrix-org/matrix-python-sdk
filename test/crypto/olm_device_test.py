@@ -18,7 +18,7 @@ from matrix_client.api import MATRIX_V2_API_PATH
 from matrix_client.client import MatrixClient
 from matrix_client.user import User
 from matrix_client.device import Device
-from matrix_client.errors import E2EUnknownDevices
+from matrix_client.errors import E2EUnknownDevices, UnableToDecryptError
 from test.crypto.dummy_olm_device import OlmDevice, DummyStore
 from matrix_client.crypto.sessions import MegolmOutboundSession, MegolmInboundSession
 from test.response_examples import (example_key_upload_response,
@@ -571,8 +571,11 @@ class TestOlmDevice:
     def test_megolm_add_inbound_session(self, device):
         session = MegolmOutboundSession()
 
-        assert not device.megolm_add_inbound_session(
-            self.room_id, self.alice_curve_key, self.alice_ed_key, session.id, 'wrong')
+        with pytest.raises(ValueError):
+            device.megolm_add_inbound_session(
+                self.room_id, self.alice_curve_key, self.alice_ed_key, session.id,
+                'wrong'
+            )
         assert device.megolm_add_inbound_session(
             self.room_id, self.alice_curve_key, self.alice_ed_key, session.id,
             session.session_key
@@ -583,10 +586,11 @@ class TestOlmDevice:
             self.room_id, self.alice_curve_key, self.alice_ed_key, session.id,
             session.session_key
         )
-        assert not device.megolm_add_inbound_session(
-            self.room_id, self.alice_curve_key, self.alice_ed_key, 'wrong',
-            session.session_key
-        )
+        with pytest.raises(ValueError):
+            device.megolm_add_inbound_session(
+                self.room_id, self.alice_curve_key, self.alice_ed_key, 'wrong',
+                session.session_key
+            )
 
     def test_handle_room_key_event(self, device):
         device.handle_room_key_event(example_room_key_event, self.alice_curve_key)
@@ -656,7 +660,7 @@ class TestOlmDevice:
             'event_id': 1
         }
 
-        with pytest.raises(RuntimeError):
+        with pytest.raises(UnableToDecryptError):
             device.megolm_decrypt_event(event)
 
         session_key = out_session.session_key

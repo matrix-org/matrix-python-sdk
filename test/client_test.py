@@ -578,15 +578,15 @@ def test_one_time_keys_sync():
     sync_response["device_one_time_keys_count"] = payload
     sync_response['rooms']['join'] = {}
 
-    class DummyDevice:
+    class DummyDevice(OlmDevice):
 
         def update_one_time_key_counts(self, payload):
-            self.payload = payload
+            self.test_payload = payload
 
-    device = DummyDevice()
+    device = DummyDevice(None, '@test:localhost', 'test')
     client.olm_device = device
 
     responses.add(responses.GET, sync_url, json=sync_response)
 
     client._sync()
-    assert device.payload == payload
+    assert device.test_payload == payload

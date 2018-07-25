@@ -7,12 +7,13 @@ from canonicaljson import encode_canonical_json
 
 from matrix_client.checks import check_user_id
 from matrix_client.device import Device
-from matrix_client.errors import E2EUnknownDevices
+from matrix_client.errors import E2EUnknownDevices, UnableToDecryptError
 from matrix_client.crypto.one_time_keys import OneTimeKeysManager
 from matrix_client.crypto.device_list import DeviceList
 from matrix_client.crypto.sessions import MegolmOutboundSession, MegolmInboundSession
 from matrix_client.crypto.crypto_store import CryptoStore
 from matrix_client.crypto.verified_event import VerifiedEvent
+from matrix_client.crypto.key_sharing import KeySharingManager
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,7 @@ class OlmDevice(Device):
                                                         keys_threshold)
         self.device_list = DeviceList(self, api, self.device_keys, self.db)
         self.megolm_index_record = defaultdict(dict)
+        self.key_sharing_manager = KeySharingManager(api, user_id, device_id, self)
         keys = self.olm_account.identity_keys
         super(OlmDevice, self).__init__(self.api, self.user_id, device_id,
                                         database=self.db, ed25519_key=keys['ed25519'],
@@ -680,15 +682,20 @@ class OlmDevice(Device):
         if 'algorithm' not in content or content['algorithm'] != self._olm_algorithm:
             return
 
+        sender = encrypted_event['sender']
         try:
-            event = self.olm_decrypt_event(content, encrypted_event['sender'])
+            event = self.olm_decrypt_event(content, sender)
         except RuntimeError as e:
-            logger.warning('Failed to decrypt m.room_key event sent by user %s: %s',
+            logger.warning('Failed to decrypt toDevice Olm event sent by user %s: %s',
                            encrypted_event['sender'], e)
             return
 
+        sender_key = encrypted_event['content']['sender_key']
         if event['type'] == 'm.room_key':
-            self.handle_room_key_event(event, encrypted_event['content']['sender_key'])
+            self.handle_room_key_event(event, sender_key)
+        elif event['type'] == 'm.forwarded_room_key':
+            self.key_sharing_manager.handle_forwarded_room_key_event(event, sender,
+                                                                     sender_key)
 
     def handle_room_key_event(self, event, sender_key):
         """Handle a m.room_key event.
@@ -705,9 +712,13 @@ class OlmDevice(Device):
         user_id = event['sender']
         device_id = event['sender_device']
 
-        new = self.megolm_add_inbound_session(content['room_id'], sender_key,
-                                              signing_key, content['session_id'],
-                                              content['session_key'])
+        try:
+            new = self.megolm_add_inbound_session(content['room_id'], sender_key,
+                                                  signing_key, content['session_id'],
+                                                  content['session_key'])
+        except ValueError as e:
+            logger.warning(e)
+            return
         if new:
             logger.info('Created a new Megolm inbound session with device %s of '
                         'user %s.', device_id, user_id)
@@ -716,7 +727,8 @@ class OlmDevice(Device):
                         'already exists or is invalid.', device_id, user_id)
 
     def megolm_add_inbound_session(self, room_id, sender_key, signing_key, session_id,
-                                   session_key):
+                                   session_key, forwarding_chain=None,
+                                   export_format=False):
         """Create a new Megolm inbound session if necessary.
 
         Args:
@@ -727,8 +739,10 @@ class OlmDevice(Device):
             signing_key (str): The ed25519 key of the event which established the session.
 
         Returns:
-            ``True`` if a new session was created, ``False`` if it already existed or if
-            the parameters were invalid.
+            ``True`` if a new session was created, ``False`` if it already existed.
+
+        Raises:
+            ValueError if one of the parameters were invalid.
         """
         sessions = self.megolm_inbound_sessions[room_id][sender_key]
         if session_id in sessions:
@@ -737,13 +751,16 @@ class OlmDevice(Device):
         if self.db.get_inbound_session(room_id, sender_key, session_id, sessions):
             return False
         try:
-            session = MegolmInboundSession(session_key, signing_key)
-        except olm.OlmGroupSessionError:
-            return False
+            if export_format:
+                session = MegolmInboundSession.import_session(session_key, signing_key,
+                                                              forwarding_chain)
+            else:
+                session = MegolmInboundSession(session_key, signing_key)
+        except olm.OlmGroupSessionError as e:
+            raise ValueError('olmlib error when trying to add the session: {}.'.format(e))
         if session.id != session_id:
-            logger.warning('Session ID mismatch in m.room_key event. Expected %s from '
-                           'event property, got %s.', session_id, session.id)
-            return False
+            raise ValueError('Session ID mismatch in m.room_key event. Expected {} from '
+                             'event property, got {}.'.format(session_id, session.id))
         self.db.save_inbound_session(room_id, sender_key, session)
         sessions[session_id] = session
         return True
@@ -779,9 +796,11 @@ class OlmDevice(Device):
             session = self.db.get_inbound_session(
                 room_id, sender_key, session_id, sessions)
             if not session:
-                raise RuntimeError("Unable to decrypt event sent by device {} of user "
-                                   "{}: The sender's device has not sent us the keys for "
-                                   "this message.".format(device_id, user_id))
+                raise UnableToDecryptError(
+                    "Unable to decrypt event sent by device {} of user {}: The sender's "
+                    "device has not sent us the keys for this message."
+                    .format(device_id, user_id)
+                )
 
         try:
             decrypted_event, message_index = session.decrypt(content['ciphertext'])
@@ -795,7 +814,8 @@ class OlmDevice(Device):
         except KeyError:
             pass
         else:
-            if device.verified:
+            # Do not mark events decrypted using a forwarded key as verified
+            if device.verified and not session.forwarding_chain:
                 if device.ed25519 != session.ed25519 or device.curve25519 != sender_key:
                     raise RuntimeError('Device keys mismatch in event sent by device {}.'
                                        .format(device.device_id))

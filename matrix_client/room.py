@@ -19,7 +19,7 @@ from uuid import uuid4
 
 from .checks import check_room_id
 from .user import User
-from .errors import MatrixRequestError, MatrixNoEncryptionError
+from .errors import MatrixRequestError, MatrixNoEncryptionError, UnableToDecryptError
 
 logger = logging.getLogger(__name__)
 
@@ -348,6 +348,9 @@ class Room(object):
                     event = self.client.olm_device.megolm_decrypt_event(event)
                 except RuntimeError as e:
                     logger.warning(e)
+                except UnableToDecryptError as e:
+                    logger.warning(e)
+                    self.client.olm_device.key_sharing_manager.request_missing_key(event)
         self.events.append(event)
         if len(self.events) > self.event_history_limit:
             self.events.pop(0)
