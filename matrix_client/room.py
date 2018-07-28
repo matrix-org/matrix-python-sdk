@@ -31,7 +31,7 @@ class Room(object):
     NOTE: This does not verify the room with the Home Server.
     """
 
-    def __init__(self, client, room_id):
+    def __init__(self, client, room_id, verify_devices=False):
         check_room_id(room_id)
 
         self.room_id = room_id
@@ -55,6 +55,7 @@ class Room(object):
         self.encrypted = False
         self.rotation_period_msgs = None
         self.rotation_period_ms = None
+        self.verify_devices = verify_devices
 
     def set_user_profile(self,
                          displayname=None,

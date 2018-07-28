@@ -67,6 +67,10 @@ class MatrixClient(object):
         restore_device_id (bool): Optional. Only valid when encryption is enabled. When
             turned on, the device ID corresponding to the user ID will be retrieved from
             the encryption database, if it exists.
+        verify_devices (bool): Optional. When enabled, sending a message will fail when
+            there are unknown devices in an encrypted room. A client will have to
+            inspect those, and resend its message. Note that this can be configured later
+            on a per room basis.
 
     Returns:
         `MatrixClient`
@@ -116,7 +120,7 @@ class MatrixClient(object):
     def __init__(self, base_url, token=None, user_id=None,
                  valid_cert_check=True, sync_filter_limit=20,
                  cache_level=CACHE.ALL, encryption=False, encryption_conf=None,
-                 restore_device_id=False):
+                 restore_device_id=False, verify_devices=False):
         if user_id:
             warn(
                 "user_id is deprecated. "
@@ -143,6 +147,7 @@ class MatrixClient(object):
         self.olm_device = None
         self.first_sync = True
         self.restore_device_id = restore_device_id
+        self.verify_devices = verify_devices
         if isinstance(cache_level, CACHE):
             self._cache_level = cache_level
         else:
@@ -594,7 +599,7 @@ class MatrixClient(object):
             )
 
     def _mkroom(self, room_id):
-        room = Room(self, room_id)
+        room = Room(self, room_id, verify_devices=self.verify_devices)
         if self._encryption:
             try:
                 event = self.api.get_state_event(room_id, "m.room.encryption")
