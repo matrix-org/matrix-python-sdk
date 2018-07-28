@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from olm import OutboundGroupSession
+from olm import OutboundGroupSession, InboundGroupSession
 
 
 class MegolmOutboundSession(OutboundGroupSession):
@@ -72,4 +72,22 @@ class MegolmOutboundSession(OutboundGroupSession):
         session.max_messages = max_messages
         session.creation_time = creation_time
         session.message_count = message_count
+        return session
+
+
+class MegolmInboundSession(InboundGroupSession):
+
+    """Olm session with memory of the ed25519 key of the user it was established with."""
+
+    def __init__(self, session_key, signing_key):
+        self.ed25519 = signing_key
+        super(MegolmInboundSession, self).__init__(session_key)
+
+    def __new__(cls, *args):
+        return super(MegolmInboundSession, cls).__new__(cls)
+
+    @classmethod
+    def from_pickle(cls, pickle, signing_key, passphrase=''):
+        session = super(MegolmInboundSession, cls).from_pickle(pickle, passphrase)
+        session.ed25519 = signing_key
         return session

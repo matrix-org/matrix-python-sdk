@@ -8,7 +8,7 @@ from threading import current_thread
 import olm
 from appdirs import user_data_dir
 
-from matrix_client.crypto.megolm_outbound_session import MegolmOutboundSession
+from matrix_client.crypto.sessions import MegolmOutboundSession, MegolmInboundSession
 from matrix_client.device import Device
 
 logger = logging.getLogger(__name__)
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS olm_sessions(
 );
 CREATE TABLE IF NOT EXISTS megolm_inbound_sessions(
     device_id TEXT, session_id TEXT PRIMARY KEY, room_id TEXT, curve_key TEXT,
-    session BLOB,
+    ed_key TEXT, session BLOB,
     FOREIGN KEY(device_id) REFERENCES accounts(device_id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS megolm_outbound_sessions(
@@ -246,11 +246,11 @@ CREATE TABLE IF NOT EXISTS sync_tokens(
         Args:
             room_id (str): The room corresponding to the session.
             curve_key (str): The curve25519 key of the device.
-            session (olm.InboundGroupSession): The session to save.
+            session (MegolmInboundSession): The session to save.
         """
         c = self.conn.cursor()
-        c.execute('REPLACE INTO megolm_inbound_sessions VALUES (?,?,?,?,?)',
-                  (self.device_id, session.id, room_id, curve_key,
+        c.execute('REPLACE INTO megolm_inbound_sessions VALUES (?,?,?,?,?,?)',
+                  (self.device_id, session.id, room_id, curve_key, session.ed25519,
                    session.pickle(self.pickle_key)))
         c.close()
         self.conn.commit()
@@ -262,15 +262,15 @@ CREATE TABLE IF NOT EXISTS sync_tokens(
             sessions (defaultdict(defaultdict(dict))): An object which will get
                 populated with the sessions. The format is
                 ``{<room_id>: {<curve25519_key>: {<session_id>:
-                <olm.InboundGroupSession>}}}``.
+                <MegolmInboundSession>}}}``.
         """
         c = self.conn.cursor()
         rows = c.execute(
             'SELECT * FROM megolm_inbound_sessions WHERE device_id=?', (self.device_id,)
         )
         for row in rows:
-            session = olm.InboundGroupSession.from_pickle(
-                bytes(row['session']), self.pickle_key)
+            session = MegolmInboundSession.from_pickle(
+                bytes(row['session']), row['ed_key'], self.pickle_key)
             sessions[row['room_id']][row['curve_key']][session.id] = session
         c.close()
 
@@ -282,25 +282,26 @@ CREATE TABLE IF NOT EXISTS sync_tokens(
             curve_key (str): The curve25519 key of the device.
             session_id (str): The id of the session.
             sessions (dict): Optional. A map from session id to
-                ``olm.InboundGroupSession`` object, to which the session will be added.
+                ``MegolmInboundSession`` object, to which the session will be added.
 
         Returns:
-            ``olm.InboundGroupSession`` object, or ``None`` if the session was not found.
+            ``MegolmInboundSession`` object, or ``None`` if the session was not found.
         """
         c = self.conn.cursor()
         c.execute(
-            'SELECT session FROM megolm_inbound_sessions WHERE device_id=? AND room_id=? '
-            'AND curve_key=? AND session_id=?',
+            'SELECT session, ed_key FROM megolm_inbound_sessions WHERE device_id=? AND '
+            'room_id=? AND curve_key=? AND session_id=?',
             (self.device_id, room_id, curve_key, session_id)
         )
         try:
-            session_data = c.fetchone()['session']
-            session_data = bytes(session_data)
+            row = c.fetchone()
+            session_data = bytes(row['session'])
         except TypeError:
             return None
         finally:
             c.close()
-        session = olm.InboundGroupSession.from_pickle(session_data, self.pickle_key)
+        session = MegolmInboundSession.from_pickle(session_data, row['ed_key'],
+                                                   self.pickle_key)
         if sessions is not None:
             sessions[session.id] = session
         return session

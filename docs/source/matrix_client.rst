@@ -62,7 +62,7 @@ matrix_client.crypto
     :undoc-members:
     :show-inheritance:
 
-.. automodule:: matrix_client.crypto.megolm_outbound_session
+.. automodule:: matrix_client.crypto.sessions
     :members:
     :undoc-members:
     :show-inheritance:

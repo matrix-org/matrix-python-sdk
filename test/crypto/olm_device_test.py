@@ -18,7 +18,7 @@ from matrix_client.client import MatrixClient
 from matrix_client.user import User
 from matrix_client.device import Device
 from test.crypto.dummy_olm_device import OlmDevice
-from matrix_client.crypto.megolm_outbound_session import MegolmOutboundSession
+from matrix_client.crypto.sessions import MegolmOutboundSession, MegolmInboundSession
 from test.response_examples import (example_key_upload_response,
                                     example_claim_keys_response,
                                     example_room_key_event)
@@ -533,15 +533,21 @@ class TestOlmDevice:
         self.device.megolm_inbound_sessions.clear()
 
         assert not self.device.megolm_add_inbound_session(
-            self.room_id, self.alice_curve_key, session.id, 'wrong')
+            self.room_id, self.alice_curve_key, self.alice_ed_key, session.id, 'wrong')
         assert self.device.megolm_add_inbound_session(
-            self.room_id, self.alice_curve_key, session.id, session.session_key)
+            self.room_id, self.alice_curve_key, self.alice_ed_key, session.id,
+            session.session_key
+        )
         assert session.id in \
             self.device.megolm_inbound_sessions[self.room_id][self.alice_curve_key]
         assert not self.device.megolm_add_inbound_session(
-            self.room_id, self.alice_curve_key, session.id, session.session_key)
+            self.room_id, self.alice_curve_key, self.alice_ed_key, session.id,
+            session.session_key
+        )
         assert not self.device.megolm_add_inbound_session(
-            self.room_id, self.alice_curve_key, 'wrong', session.session_key)
+            self.room_id, self.alice_curve_key, self.alice_ed_key, 'wrong',
+            session.session_key
+        )
 
     def test_handle_room_key_event(self):
         self.device.megolm_inbound_sessions.clear()
@@ -629,7 +635,7 @@ class TestOlmDevice:
         with pytest.raises(RuntimeError):
             self.device.megolm_decrypt_event(event)
 
-        in_session = olm.InboundGroupSession(out_session.session_key)
+        in_session = MegolmInboundSession(out_session.session_key, self.alice_ed_key)
         sessions = self.device.megolm_inbound_sessions[self.room_id]
         sessions[self.alice_curve_key][in_session.id] = in_session
 

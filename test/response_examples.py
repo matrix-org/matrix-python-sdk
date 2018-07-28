@@ -251,5 +251,8 @@ example_room_key_event = {
             "G413GWJkw9T+G6y51bsNEKsSU23lnJz32u5XwgNY9qdFKxGA6WL1wZZS6/iGW4gfTU/Jk89aGSA8"
             "Aw")
     },
-    "type": "m.room_key"
+    "type": "m.room_key",
+    "keys": {
+        "ed25519": "4VjV3OhFUxWFAcO5YOaQVmTIn29JdRmtNh9iAxoyhkc",
+    }
 }

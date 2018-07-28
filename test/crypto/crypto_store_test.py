@@ -7,7 +7,7 @@ from tempfile import mkdtemp
 
 from matrix_client.crypto.crypto_store import CryptoStore
 from matrix_client.crypto.olm_device import OlmDevice
-from matrix_client.crypto.megolm_outbound_session import MegolmOutboundSession
+from matrix_client.crypto.sessions import MegolmOutboundSession, MegolmInboundSession
 from matrix_client.room import Room
 from matrix_client.user import User
 
@@ -51,6 +51,10 @@ class TestCryptoStore(object):
     @pytest.fixture()
     def curve_key(self, account):
         return account.identity_keys['curve25519']
+
+    @pytest.fixture()
+    def ed_key(self, account):
+        return account.identity_keys['ed25519']
 
     @pytest.fixture()
     def device(self):
@@ -137,9 +141,9 @@ class TestCryptoStore(object):
         self.store.remove_olm_account()
         assert not self.store.get_olm_sessions(curve_key)
 
-    def test_megolm_inbound_persistence(self, curve_key, device):
+    def test_megolm_inbound_persistence(self, curve_key, ed_key, device):
         out_session = olm.OutboundGroupSession()
-        session = olm.InboundGroupSession(out_session.session_key)
+        session = MegolmInboundSession(out_session.session_key, ed_key)
         sessions = defaultdict(lambda: defaultdict(dict))
 
         self.store.load_inbound_sessions(sessions)
@@ -161,7 +165,7 @@ class TestCryptoStore(object):
 
         assert not device.megolm_inbound_sessions
         created = device.megolm_add_inbound_session(
-            self.room_id, curve_key, session.id, out_session.session_key)
+            self.room_id, curve_key, ed_key, session.id, out_session.session_key)
         assert not created
         assert device.megolm_inbound_sessions[self.room_id][curve_key][session.id].id == \
             session.id
@@ -311,12 +315,12 @@ class TestCryptoStore(object):
         self.store.save_sync_token(sync_token)
         assert self.store.get_sync_token() == sync_token
 
-    def test_load_all(self, account, curve_key, device):
+    def test_load_all(self, account, curve_key, ed_key, device):
         curve_key = account.identity_keys['curve25519']
         session = olm.OutboundSession(account, curve_key, curve_key)
         out_session = MegolmOutboundSession()
         out_session.add_device(self.device_id)
-        in_session = olm.InboundGroupSession(out_session.session_key)
+        in_session = MegolmInboundSession(out_session.session_key, ed_key)
         device_keys_to_save = {self.user_id: {self.device_id: device}}
 
         self.store.save_inbound_session(self.room_id, curve_key, in_session)

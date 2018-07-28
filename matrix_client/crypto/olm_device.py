@@ -9,7 +9,7 @@ from matrix_client.checks import check_user_id
 from matrix_client.device import Device
 from matrix_client.crypto.one_time_keys import OneTimeKeysManager
 from matrix_client.crypto.device_list import DeviceList
-from matrix_client.crypto.megolm_outbound_session import MegolmOutboundSession
+from matrix_client.crypto.sessions import MegolmOutboundSession, MegolmInboundSession
 from matrix_client.crypto.crypto_store import CryptoStore
 
 logger = logging.getLogger(__name__)
@@ -466,7 +466,7 @@ class OlmDevice(Device):
         self.megolm_share_session(room.room_id, user_devices, session)
         # Store a corresponding inbound session, so that we can decrypt our own messages
         self.megolm_add_inbound_session(
-            room.room_id, self.curve25519, session.id, session.session_key)
+            room.room_id, self.curve25519, self.ed25519, session.id, session.session_key)
         return session
 
     def megolm_share_session(self, room_id, user_devices, session):
@@ -628,6 +628,7 @@ class OlmDevice(Device):
         Args:
             event (dict): m.room_key event.
         """
+        signing_key = event['keys']['ed25519']
         content = event['content']
         if content['algorithm'] != self._megolm_algorithm:
             logger.info('Ignoring unsupported algorithm %s in m.room_key event.',
@@ -637,7 +638,7 @@ class OlmDevice(Device):
         device_id = event['sender_device']
 
         new = self.megolm_add_inbound_session(content['room_id'], sender_key,
-                                              content['session_id'],
+                                              signing_key, content['session_id'],
                                               content['session_key'])
         if new:
             logger.info('Created a new Megolm inbound session with device %s of '
@@ -646,7 +647,8 @@ class OlmDevice(Device):
             logger.info('Inbound Megolm session with device %s of user %s '
                         'already exists or is invalid.', device_id, user_id)
 
-    def megolm_add_inbound_session(self, room_id, sender_key, session_id, session_key):
+    def megolm_add_inbound_session(self, room_id, sender_key, signing_key, session_id,
+                                   session_key):
         """Create a new Megolm inbound session if necessary.
 
         Args:
@@ -654,6 +656,7 @@ class OlmDevice(Device):
             sender_key (str): The curve25519 key of the sender's device.
             session_id (str): The id of the session.
             session_key (str): The key of the session.
+            signing_key (str): The ed25519 key of the event which established the session.
 
         Returns:
             ``True`` if a new session was created, ``False`` if it already existed or if
@@ -666,7 +669,7 @@ class OlmDevice(Device):
         if self.db.get_inbound_session(room_id, sender_key, session_id, sessions):
             return False
         try:
-            session = olm.InboundGroupSession(session_key)
+            session = MegolmInboundSession(session_key, signing_key)
         except olm.OlmGroupSessionError:
             return False
         if session.id != session_id:
