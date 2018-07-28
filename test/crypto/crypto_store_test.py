@@ -242,6 +242,7 @@ class TestCryptoStore(object):
     def test_device_keys_persistence(self, device):
         user_devices = {self.user_id: [self.device_id]}
         device_keys = defaultdict(dict)
+        device.verified = True
 
         self.store.load_device_keys(None, device_keys)
         assert not device_keys
@@ -253,6 +254,7 @@ class TestCryptoStore(object):
         self.store.load_device_keys(None, device_keys)
         assert device_keys[self.user_id][self.device_id].curve25519 == \
             device.curve25519
+        assert device_keys[self.user_id][self.device_id].verified
 
         device_keys.clear()
         devices = self.store.get_device_keys(None, user_devices)[self.user_id]
@@ -260,6 +262,7 @@ class TestCryptoStore(object):
         assert self.store.get_device_keys(None, user_devices, device_keys)
         assert device_keys[self.user_id][self.device_id].curve25519 == \
             device.curve25519
+        assert device_keys[self.user_id][self.device_id].verified
 
         # Test [] wildcard
         devices = self.store.get_device_keys(None, {self.user_id: []})[self.user_id]
