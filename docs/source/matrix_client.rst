@@ -76,3 +76,8 @@ matrix_client.crypto
     :members:
     :undoc-members:
     :show-inheritance:
+
+.. automodule:: matrix_client.crypto.verified_event
+    :members:
+    :undoc-members:
+    :show-inheritance:

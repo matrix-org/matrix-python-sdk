@@ -345,7 +345,7 @@ class Room(object):
         if self.encrypted and self.client._encryption:
             if event['type'] == 'm.room.encrypted':
                 try:
-                    self.client.olm_device.megolm_decrypt_event(event)
+                    event = self.client.olm_device.megolm_decrypt_event(event)
                 except RuntimeError as e:
                     logger.warning(e)
         self.events.append(event)

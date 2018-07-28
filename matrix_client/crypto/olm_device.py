@@ -12,6 +12,7 @@ from matrix_client.crypto.one_time_keys import OneTimeKeysManager
 from matrix_client.crypto.device_list import DeviceList
 from matrix_client.crypto.sessions import MegolmOutboundSession, MegolmInboundSession
 from matrix_client.crypto.crypto_store import CryptoStore
+from matrix_client.crypto.verified_event import VerifiedEvent
 
 logger = logging.getLogger(__name__)
 
@@ -334,8 +335,10 @@ class OlmDevice(Device):
         else:
             encrypted_message = olm.OlmMessage(payload['body'])
 
-        decrypted_event = self._olm_decrypt(encrypted_message, content['sender_key'])
+        sender_key = content['sender_key']
+        decrypted_event = self._olm_decrypt(encrypted_message, sender_key)
 
+        signing_key = decrypted_event['keys']['ed25519']
         if decrypted_event['sender'] != user_id:
             raise RuntimeError(
                 'Found user {} instead of sender {} in Olm plaintext {}.'
@@ -352,6 +355,16 @@ class OlmDevice(Device):
                 'Found key {} instead of ours own ed25519 key {} in Olm plaintext {}.'
                 .format(our_key, self.ed25519, decrypted_event)
             )
+        try:
+            device = self.device_keys[user_id][decrypted_event['sender_device']]
+        except KeyError:
+            pass
+        else:
+            if device.verified:
+                if device.curve25519 != sender_key or device.ed25519 != signing_key:
+                    raise RuntimeError(
+                        'Device keys mismatch between payload and /keys/query data.'
+                    )
 
         return decrypted_event
 
@@ -739,11 +752,12 @@ class OlmDevice(Device):
     def megolm_decrypt_event(self, event):
         """Decrypt a Megolm m.room.encrypted event.
 
-        The event is decrypted in-place, meaning its content and type properties are
-        overwritten by those of the decrypted event.
-
         Args:
-            event (dict): The event to decrypt.
+            event (dict): The event to decrypt. It may be modified in the process.
+
+        Returns:
+            The decrypted event, as a normal ``dict`` if unverified, or as a
+            :class:`.VerifiedEvent` if verified.
         """
         content = event['content']
         device_id = content['device_id']
@@ -778,6 +792,17 @@ class OlmDevice(Device):
                                                                           user_id, e))
 
         try:
+            device = self.device_keys[user_id][device_id]
+        except KeyError:
+            pass
+        else:
+            if device.verified:
+                if device.ed25519 != session.ed25519 or device.curve25519 != sender_key:
+                    raise RuntimeError('Device keys mismatch in event sent by device {}.'
+                                       .format(device.device_id))
+                event = VerifiedEvent(event)
+
+        try:
             properties = self.megolm_index_record[session.id][message_index]
         except KeyError:
             self.megolm_index_record[session.id][message_index] = {
@@ -795,6 +820,8 @@ class OlmDevice(Device):
 
         event['type'] = decrypted_event['type']
         event['content'] = decrypted_event['content']
+
+        return event
 
     def sign_json(self, json):
         """Signs a JSON object.

@@ -13,6 +13,7 @@ except ImportError:
 import responses
 
 from matrix_client.crypto import olm_device
+from matrix_client.crypto.verified_event import VerifiedEvent
 from matrix_client.api import MATRIX_V2_API_PATH
 from matrix_client.client import MatrixClient
 from matrix_client.user import User
@@ -369,6 +370,27 @@ class TestOlmDevice:
         # Now we can test
         self.device.olm_decrypt_event(encrypted_event, self.alice)
 
+        # Device verification
+        alice_device.verified = True
+        encrypted_event = alice_device.olm_build_encrypted_event(
+            'example_type', {'content': 'test'}, self.user_id, self.device_id)
+        self.device.olm_decrypt_event(encrypted_event, self.alice)
+
+        # The signing_key is wrong
+        encrypted_event = alice_device.olm_build_encrypted_event(
+            'example_type', {'content': 'test'}, self.user_id, self.device_id)
+        self.device.device_keys[self.alice][self.alice_device_id]._ed25519 = 'wrong'
+        with pytest.raises(RuntimeError):
+            self.device.olm_decrypt_event(encrypted_event, self.alice)
+
+        # We do not have the keys
+        encrypted_event = alice_device.olm_build_encrypted_event(
+            'example_type', {'content': 'test'}, self.user_id, self.device_id)
+        self.device.device_keys[self.alice].clear()
+        self.device.olm_decrypt_event(encrypted_event, self.alice)
+        self.device.device_keys[self.alice][self.alice_device_id] = alice_device
+        alice_device.verified = False
+
         # Type 1 Olm payload
         alice_device.olm_decrypt_event(
             self.device.olm_build_encrypted_event(
@@ -667,7 +689,8 @@ class TestOlmDevice:
         with pytest.raises(RuntimeError):
             self.device.megolm_decrypt_event(event)
 
-        in_session = MegolmInboundSession(out_session.session_key, self.alice_ed_key)
+        session_key = out_session.session_key
+        in_session = MegolmInboundSession(session_key, self.alice_ed_key)
         sessions = self.device.megolm_inbound_sessions[self.room_id]
         sessions[self.alice_curve_key][in_session.id] = in_session
 
@@ -690,6 +713,30 @@ class TestOlmDevice:
         event['event_id'] = 2
         with pytest.raises(RuntimeError):
             self.device.megolm_decrypt_event(event)
+        event['event_id'] = 1
+
+        # Device verification
+        self.device.device_keys[self.alice][self.alice_device_id] = self.alice_device
+        event['content'] = content
+        # Unverified
+        self.device.megolm_decrypt_event(event)
+        assert event['content'] == plaintext['content']
+        assert isinstance(event, dict)
+
+        event['content'] = content
+        # Verified
+        self.alice_device.verified = True
+        decrypted_event = self.device.megolm_decrypt_event(event)
+        assert decrypted_event['content'] == plaintext['content']
+        assert isinstance(decrypted_event, VerifiedEvent)
+
+        in_session = MegolmInboundSession(session_key, self.alice_curve_key)
+        sessions = self.device.megolm_inbound_sessions[self.room_id]
+        sessions[self.alice_curve_key][in_session.id] = in_session
+        # Wrong signing key
+        with pytest.raises(RuntimeError):
+            self.device.megolm_decrypt_event(event)
+        self.alice_device.verified = False
 
         event['content']['algorithm'] = 'wrong'
         with pytest.raises(RuntimeError):
