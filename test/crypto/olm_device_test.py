@@ -17,6 +17,7 @@ from matrix_client.api import MATRIX_V2_API_PATH
 from matrix_client.client import MatrixClient
 from matrix_client.user import User
 from matrix_client.device import Device
+from matrix_client.errors import E2EUnknownDevices
 from test.crypto.dummy_olm_device import OlmDevice
 from matrix_client.crypto.sessions import MegolmOutboundSession, MegolmInboundSession
 from test.response_examples import (example_key_upload_response,
@@ -451,8 +452,9 @@ class TestOlmDevice:
         self.device.device_keys[self.alice][self.alice_device_id] = self.alice_device
         self.device.device_list.tracked_user_ids.add(self.alice)
         self.device.olm_sessions[self.alice_curve_key] = [self.alice_olm_session]
+        user_devices = {self.alice: [self.alice_device_id]}
 
-        self.device.megolm_start_session(self.room)
+        self.device.megolm_start_session(self.room, user_devices)
         session = self.device.megolm_outbound_sessions[self.room_id]
         assert self.alice_device_id in session.devices
 
@@ -481,13 +483,43 @@ class TestOlmDevice:
         self.device.olm_sessions[self.alice_curve_key] = [self.alice_olm_session]
         session = MegolmOutboundSession()
         self.device.megolm_outbound_sessions[self.room_id] = session
+        user_devices = {self.alice: [self.alice_device_id]}
 
-        self.device.megolm_share_session_with_new_devices(self.room, session)
+        self.device.megolm_share_session_with_new_devices(
+            self.room, user_devices, session)
         assert self.alice_device_id in session.devices
         assert len(responses.calls) == 1
 
-        self.device.megolm_share_session_with_new_devices(self.room, session)
+        self.device.megolm_share_session_with_new_devices(
+            self.room, user_devices, session)
         assert len(responses.calls) == 1
+
+    def test_megolm_get_recipients(self):
+        self.device.device_keys[self.alice][self.alice_device_id] = self.alice_device
+
+        user_devices, _ = self.device.megolm_get_recipients(self.room)
+        assert user_devices == {self.alice: [self.alice_device_id]}
+
+        self.device.megolm_outbound_sessions.clear()
+        session = MegolmOutboundSession()
+        self.device.megolm_outbound_sessions[self.room_id] = session
+
+        user_devices, removed = self.device.megolm_get_recipients(self.room, session)
+        assert user_devices == {self.alice: [self.alice_device_id]} and not removed
+
+        self.alice_device.blacklisted = True
+        _, removed = self.device.megolm_get_recipients(self.room, session)
+        assert not removed
+        session.add_device(self.alice_device_id)
+        _, removed = self.device.megolm_get_recipients(self.room, session)
+        assert removed and self.room_id not in self.device.megolm_outbound_sessions
+        self.alice_device.blacklisted = False
+
+        self.room.verify_devices = True
+        with pytest.raises(E2EUnknownDevices) as e:
+            self.device.megolm_get_recipients(self.room)
+        assert e.value.user_devices == {self.alice: [self.alice_device]}
+        self.room.verify_devices = False
 
     @responses.activate
     def test_megolm_build_encrypted_event(self):

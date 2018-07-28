@@ -231,8 +231,9 @@ class TestCryptoStore(object):
         # Verify the saved devices have been erased with the session
         assert not saved_session.devices
 
-        with pytest.raises(KeyError):
-            device.megolm_build_encrypted_event(self.room, {})
+        room = Room(None, self.room_id)
+        with pytest.raises(AttributeError):
+            device.megolm_build_encrypted_event(room, {})
         assert device.megolm_outbound_sessions[self.room_id].id == session.id
 
         self.store.remove_olm_account()

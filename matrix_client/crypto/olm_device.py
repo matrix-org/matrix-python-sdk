@@ -7,6 +7,7 @@ from canonicaljson import encode_canonical_json
 
 from matrix_client.checks import check_user_id
 from matrix_client.device import Device
+from matrix_client.errors import E2EUnknownDevices
 from matrix_client.crypto.one_time_keys import OneTimeKeysManager
 from matrix_client.crypto.device_list import DeviceList
 from matrix_client.crypto.sessions import MegolmOutboundSession, MegolmInboundSession
@@ -442,11 +443,13 @@ class OlmDevice(Device):
         if user_devices_no_session:
             self.olm_start_sessions(user_devices_no_session)
 
-    def megolm_start_session(self, room):
+    def megolm_start_session(self, room, user_devices):
         """Start a megolm session in a room, and share it with its members.
 
         Args:
             room (Room): The room to use.
+            user_devices (dict): Map from user id to a list of device ids. The session
+                will be shared with those devices.
 
         Returns:
             The newly created session.
@@ -457,10 +460,6 @@ class OlmDevice(Device):
         logger.info('Starting a new Meglom outbound session %s in %s.',
                     session.id, room.room_id)
 
-        users = room.get_joined_members()
-        self.device_list.get_room_device_keys(room)
-        user_devices = {user.user_id: list(self.device_keys[user.user_id])
-                        for user in users}
         self.db.remove_outbound_session(room.room_id)
         self.db.save_outbound_session(room.room_id, session)
         self.megolm_share_session(room.room_id, user_devices, session)
@@ -507,25 +506,66 @@ class OlmDevice(Device):
         session.add_devices(new_devices)
         self.db.save_megolm_outbound_devices(room_id, new_devices)
 
-    def megolm_share_session_with_new_devices(self, room, session):
+    def megolm_share_session_with_new_devices(self, room, user_devices, session):
         """Share a megolm session with new devices in a room.
 
         Args:
             room (Room): The room corresponding to the session.
             session (MegolmOutboundSession): The session to share.
+            user_devices (dict): Map from user id to a list of device ids. The session
+                will be shared with those devices if not already.
         """
-        user_devices = {}
-        users = room.get_joined_members()
-        for user in users:
-            user_id = user.user_id
+        new_user_devices = {}
+        for user_id in user_devices:
             missing_devices = list(set(self.device_keys[user_id].keys()) -
                                    self.megolm_outbound_sessions[room.room_id].devices)
             if missing_devices:
-                user_devices[user_id] = missing_devices
-        if user_devices:
-            logger.info('Sharing existing Megolm outbound session %s with new devices: '
-                        '%s', session.id, user_devices)
-            self.megolm_share_session(room.room_id, user_devices, session)
+                new_user_devices[user_id] = missing_devices
+
+        if new_user_devices:
+            logger.info('Sharing existing Megolm outbound session %s with new '
+                        'devices: %s', session.id, new_user_devices)
+            self.megolm_share_session(room.room_id, new_user_devices, session)
+
+    def megolm_get_recipients(self, room, session=None):
+        """Get the devices who should be able to decrypt a Megolm event in a room.
+
+        This implements device verification checks.
+
+        Args:
+            room (Room): The room to use.
+            session (MegolmOutboundSession): Optional. If a device the session had
+                been shared with has been blacklisted, remove the session.
+
+        Returns:
+            A two element tuple containing a map from user id to a list of device ids,
+            and a boolean indicating whether the session has been removed.
+
+        Raises:
+            E2EUnknownDevices if there are never seen before devices in the room.
+        """
+        users = room.get_joined_members()
+
+        user_devices = defaultdict(list)
+        unknown_devices = defaultdict(list)
+        removed_session = False
+        for user in users:
+            for device_id, device in self.device_keys[user.user_id].items():
+                if device.blacklisted:
+                    if session and device.device_id in session.devices:
+                        self.megolm_remove_outbound_session(room.room_id)
+                        removed_session = True
+                else:
+                    if not room.verify_devices or device.ignored or device.verified:
+                        user_devices[user.user_id].append(device_id)
+                    else:
+                        unknown_devices[user.user_id].append(device)
+        if unknown_devices and room.verify_devices:
+            logger.warning('Room %s contains unknown devices which have not been '
+                           'verified.', room.room_id)
+            raise E2EUnknownDevices(unknown_devices)
+
+        return user_devices, removed_session
 
     def megolm_build_encrypted_event(self, room, event):
         """Build an encrypted Megolm payload from a plaintext event.
@@ -539,18 +579,32 @@ class OlmDevice(Device):
 
         Returns:
             The encrypted event, as a dict.
+
+        Raises:
+            E2EUnknownDevices if there are never seen before devices in the room.
         """
         room_id = room.room_id
 
-        session = self.megolm_outbound_sessions.get(room_id)
-        if not session:
+        try:
+            session = self.megolm_outbound_sessions[room_id]
+        except KeyError:
             session = self.db.get_outbound_session(room_id, self.megolm_outbound_sessions)
-            if not session:
-                session = self.megolm_start_session(room)
-        if session.should_rotate():
-            session = self.megolm_start_session(room)
+            # We have to fetch device keys if there is no session. If there is one, we are
+            # already tracking the device list of users in the room, so it shouldn't be
+            # needed.
+            # However, there is the edge case where a device is blacklisted, and then the
+            # client is shutdown. When we load the session, if we do not fetch the keys
+            # (which triggers loading the devices from db), we would miss that a device
+            # had been blacklisted and we would keep using the session instead of rotating
+            # it as expected. Hence we also fetch device keys after a session is loaded.
+            self.device_list.get_room_device_keys(room)
+
+        user_devices, removed_session = self.megolm_get_recipients(room, session)
+
+        if not session or removed_session or session.should_rotate():
+            session = self.megolm_start_session(room, user_devices)
         else:
-            self.megolm_share_session_with_new_devices(room, session)
+            self.megolm_share_session_with_new_devices(room, user_devices, session)
 
         payload = {
             'type': event['type'],
@@ -594,6 +648,8 @@ class OlmDevice(Device):
 
         Raises:
             MatrixRequestError if there was an error sending the event.
+            E2EUnknownDevices if there are never seen before devices in the room.
+                The event will not be sent.
         """
         event = {'content': content, 'room_id': room.room_id, 'type': 'm.room.message'}
         encrypted_event = self.megolm_build_encrypted_event(room, event)
