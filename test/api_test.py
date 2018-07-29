@@ -3,6 +3,7 @@ import pytest
 import json
 from matrix_client import client, api
 from matrix_client.errors import MatrixRequestError, MatrixError, MatrixHttpLibError
+from matrix_client import __version__ as lib_version
 
 MATRIX_V2_API_PATH = "/_matrix/client/r0"
 
@@ -256,6 +257,19 @@ class TestMainApi:
         req = responses.calls[0].request
         assert req.method == 'GET'
         assert req.headers['Authorization'] == 'Bearer %s' % self.token
+
+    @responses.activate
+    def test_send_user_agent_header(self):
+        mapi = api.MatrixHttpApi("http://example.com")
+        responses.add(
+            responses.GET,
+            mapi._base_url+MATRIX_V2_API_PATH+self.test_path,
+            body='{"application/json": {"user_id": "%s"}}' % self.user_id
+        )
+        mapi._send("GET", self.test_path)
+        req = responses.calls[0].request
+        assert req.method == 'GET'
+        assert req.headers['User-Agent'] == 'matrix-python-sdk/%s' % lib_version
 
     @responses.activate
     def test_send_token_query(self):

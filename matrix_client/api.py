@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright 2015 OpenMarket Ltd
+# Copyright 2017, 2018 Adam Beckmeyer
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +18,7 @@ import json
 import warnings
 from requests import Session, RequestException
 from time import time, sleep
+from .__init__ import __version__
 from .errors import MatrixError, MatrixRequestError, MatrixHttpLibError
 from urllib3.util import parse_url
 from urllib3.exceptions import LocationParseError
@@ -27,8 +29,6 @@ except ImportError:
     from urllib.parse import quote
 
 MATRIX_V2_API_PATH = "/_matrix/client/r0"
-
-__version__ = __import__(__package__).__version__
 
 
 class MatrixHttpApi(object):
