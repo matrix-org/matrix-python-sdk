@@ -249,7 +249,7 @@ class TestMainApi:
         mapi = api.MatrixHttpApi("http://example.com", token=self.token)
         responses.add(
             responses.GET,
-            mapi.base_url+MATRIX_V2_API_PATH+self.test_path,
+            mapi._base_url+MATRIX_V2_API_PATH+self.test_path,
             body='{"application/json": {"user_id": "%s"}}' % self.user_id
         )
         mapi._send("GET", self.test_path)
@@ -266,7 +266,7 @@ class TestMainApi:
         )
         responses.add(
             responses.GET,
-            mapi.base_url+MATRIX_V2_API_PATH+self.test_path,
+            mapi._base_url+MATRIX_V2_API_PATH+self.test_path,
             body='{"application/json": {"user_id": "%s"}}' % self.user_id
         )
         mapi._send("GET", self.test_path)
@@ -283,7 +283,7 @@ class TestMainApi:
         )
         responses.add(
             responses.GET,
-            mapi.base_url+MATRIX_V2_API_PATH+self.test_path,
+            mapi._base_url+MATRIX_V2_API_PATH+self.test_path,
             body='{"application/json": {"user_id": "%s"}}' % self.user_id
         )
         mapi._send("GET", self.test_path)
