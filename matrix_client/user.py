@@ -37,7 +37,9 @@ class User(object):
             try:
                 self.displayname = self.api.get_display_name(self.user_id)
             except MatrixRequestError as e:
-                if e.code == 404:
+                if e.code != 404:
+                    raise e
+                else:
                     return None
         return self.displayname
 
