@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from .checks import check_user_id
+from .errors import MatrixRequestError
 
 
 class User(object):
@@ -33,7 +34,13 @@ class User(object):
             str: Display Name
         """
         if not self.displayname:
-            self.displayname = self.api.get_display_name(self.user_id)
+            try:
+                self.displayname = self.api.get_display_name(self.user_id)
+            except MatrixRequestError as e:
+                if e.code != 404:
+                    raise e
+                else:
+                    return None
         return self.displayname
 
     def get_friendly_name(self):
