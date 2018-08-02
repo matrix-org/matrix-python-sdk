@@ -133,6 +133,9 @@ class MatrixClient(object):
         if restore_device_id and not encryption:
             raise ValueError("restore_device_id only makes sense when encryption is "
                              "enabled.")
+        if encryption and cache_level != CACHE.ALL:
+            raise ValueError("Encryption is unvailable on cache_level other than "
+                             "CACHE.ALL.")
 
         self.api = MatrixHttpApi(base_url, token)
         self.api.validate_certificate(valid_cert_check)
