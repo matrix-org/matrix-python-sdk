@@ -22,7 +22,8 @@ class OlmDevice(object):
     Args:
         api (MatrixHttpApi): The api object used to make requests.
         user_id (str): Matrix user ID. Must match the one used when logging in.
-        device_id (str): Must match the one used when logging in.
+        device_id (str): Optional. Must match the one used when logging in. If absent,
+            attempt to retrieve it from database using ``user_id``.
         signed_keys_proportion (float): Optional. The proportion of signed one-time keys
             we should maintain on the HS compared to unsigned keys. The maximum value of
             ``1`` means only signed keys will be uploaded, while the minimum value of
@@ -41,6 +42,10 @@ class OlmDevice(object):
         load_all (bool): Optional. If True, all content of the database for the current
             device will be loaded at once. This will increase runtime performance but
             also launch time and memory usage.
+
+    Raises:
+        ``ValueError`` if ``device_id`` was not given and couldn't be retrieved
+            from database.
     """
 
     _olm_algorithm = 'm.olm.v1.curve25519-aes-sha2'
@@ -50,7 +55,7 @@ class OlmDevice(object):
     def __init__(self,
                  api,
                  user_id,
-                 device_id,
+                 device_id=None,
                  signed_keys_proportion=1,
                  keys_threshold=0.1,
                  Store=CryptoStore,
@@ -65,12 +70,14 @@ class OlmDevice(object):
         self.user_id = user_id
         self.device_id = device_id
         conf = store_conf or {}
-        self.db = Store(self.device_id, **conf)
+        self.db = Store(user_id, device_id=device_id, **conf)
         self.olm_sessions = defaultdict(list)
         self.megolm_inbound_sessions = defaultdict(lambda: defaultdict(dict))
         self.megolm_outbound_sessions = {}
         self.device_keys = defaultdict(dict)
         self.olm_account = self.db.get_olm_account()
+        if not device_id:
+            self.device_id = self.db.device_id
         if self.olm_account:
             if load_all:
                 self.db.load_olm_sessions(self.olm_sessions)
@@ -80,7 +87,7 @@ class OlmDevice(object):
             logger.info('Loaded Olm account from database for device %s.', device_id)
         else:
             self.olm_account = olm.Account()
-            self.db.save_olm_account(self.olm_account)
+            self.db.replace_olm_account(self.olm_account)
             logger.info('Created new Olm account for device %s.', device_id)
         self.identity_keys = self.olm_account.identity_keys
         # Try to maintain half the number of one-time keys libolm can hold uploaded

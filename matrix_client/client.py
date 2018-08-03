@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from .api import MatrixHttpApi
+from .checks import check_user_id
 from .errors import MatrixRequestError, MatrixUnexpectedResponse
 from .room import Room
 from .user import User
@@ -63,6 +64,9 @@ class MatrixClient(object):
         encryption_conf (dict): Optional. Configuration parameters for encryption.
             Refer to :func:`~matrix_client.crypto.olm_device.OlmDevice` for supported
             options, since it will be passed to this class.
+        restore_device_id (bool): Optional. Only valid when encryption is enabled. When
+            turned on, the device ID corresponding to the user ID will be retrieved from
+            the encryption database, if it exists.
 
     Returns:
         `MatrixClient`
@@ -111,7 +115,8 @@ class MatrixClient(object):
 
     def __init__(self, base_url, token=None, user_id=None,
                  valid_cert_check=True, sync_filter_limit=20,
-                 cache_level=CACHE.ALL, encryption=False, encryption_conf=None):
+                 cache_level=CACHE.ALL, encryption=False, encryption_conf=None,
+                 restore_device_id=False):
         if user_id:
             warn(
                 "user_id is deprecated. "
@@ -121,6 +126,9 @@ class MatrixClient(object):
         if encryption and not ENCRYPTION_SUPPORT:
             raise ValueError("Failed to enable encryption. Please make sure the olm "
                              "library is available.")
+        if restore_device_id and not encryption:
+            raise ValueError("restore_device_id only makes sense when encryption is "
+                             "enabled.")
 
         self.api = MatrixHttpApi(base_url, token)
         self.api.validate_certificate(valid_cert_check)
@@ -134,6 +142,7 @@ class MatrixClient(object):
         self.encryption_conf = encryption_conf or {}
         self.olm_device = None
         self.first_sync = True
+        self.restore_device_id = restore_device_id
         if isinstance(cache_level, CACHE):
             self._cache_level = cache_level
         else:
@@ -266,8 +275,11 @@ class MatrixClient(object):
             limit (int): Deprecated. How many messages to return when syncing.
                 This will be replaced by a filter API in a later release.
             sync (bool): Optional. Whether to initiate a /sync request after logging in.
-            device_id (str): Optional. ID of the client device. The server will
-                auto-generate a device_id if this is not specified.
+            device_id (str): Optional. ID of the client device. If it is not specified,
+                the server will auto-generate one, or it may be retrieved
+                from database if ``restore_device_id`` is ``True``. If it is specified,
+                and ``restore_device_id`` is ``True``, the eventual encryption keys stored
+                along with a previous device ID of the current user are discarded.
 
         Returns:
             str: Access token
@@ -275,6 +287,20 @@ class MatrixClient(object):
         Raises:
             MatrixRequestError
         """
+        if not device_id and self.restore_device_id:
+            try:
+                check_user_id(username)
+            except ValueError:
+                raise ValueError("When using restore_device_id, a full user ID "
+                                 "must be supplied when logging in.")
+            try:
+                self.olm_device = OlmDevice(
+                    self.api, username, **self.encryption_conf)
+                device_id = self.olm_device.device_id
+                logger.info('Device ID was sucessfully retrieved from database.')
+            except ValueError:
+                pass
+
         response = self.api.login(
             "m.login.password", user=username, password=password, device_id=device_id
         )
@@ -285,8 +311,9 @@ class MatrixClient(object):
         self.device_id = response["device_id"]
 
         if self._encryption:
-            self.olm_device = OlmDevice(
-                self.api, self.user_id, self.device_id, **self.encryption_conf)
+            if not self.olm_device:
+                self.olm_device = OlmDevice(
+                    self.api, self.user_id, self.device_id, **self.encryption_conf)
             self.olm_device.upload_identity_keys()
             self.olm_device.upload_one_time_keys()
 

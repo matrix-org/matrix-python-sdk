@@ -17,7 +17,9 @@ class CryptoStore(object):
     """Manages persistent storage for an OlmDevice.
 
     Args:
-        device_id (str): The device id of the OlmDevice.
+        user_id (str): The user ID of the OlmDevice.
+        device_id (str): Optional. The device ID of the OlmDevice. Will be retrieved using
+            ``user_id`` if not present.
         db_name (str): Optional. The name of the database file to use. Will be created
             if necessary.
         db_path (str): Optional. The path where to store the database file. Defaults to
@@ -28,11 +30,13 @@ class CryptoStore(object):
     """
 
     def __init__(self,
-                 device_id,
+                 user_id,
+                 device_id=None,
                  db_name='crypto.db',
                  db_path=None,
                  app_name='matrix-python-sdk',
                  pickle_key='DEFAULT_KEY'):
+        self.user_id = user_id
         self.device_id = device_id
         data_dir = db_path or user_data_dir(app_name, '')
         try:
@@ -56,7 +60,9 @@ class CryptoStore(object):
         c = self.conn.cursor()
         c.executescript("""
 PRAGMA foreign_keys = ON;
-CREATE TABLE IF NOT EXISTS accounts (device_id TEXT PRIMARY KEY NOT NULL, account BLOB);
+CREATE TABLE IF NOT EXISTS accounts(
+    device_id TEXT NOT NULL UNIQUE, account BLOB, user_id TEXT PRIMARY KEY NOT NULL
+);
 CREATE TABLE IF NOT EXISTS olm_sessions(
     device_id TEXT, session_id TEXT PRIMARY KEY, curve_key TEXT, session BLOB,
     FOREIGN KEY(device_id) REFERENCES accounts(device_id) ON DELETE CASCADE
@@ -104,10 +110,28 @@ CREATE TABLE IF NOT EXISTS sync_tokens(
         """
         account_data = account.pickle(self.pickle_key)
         c = self.conn.cursor()
-        c.execute('INSERT OR IGNORE INTO accounts (device_id, account) VALUES (?,?)',
-                  (self.device_id, account_data))
+        c.execute(
+            'INSERT OR IGNORE INTO accounts (device_id, account, user_id) VALUES (?,?,?)',
+            (self.device_id, account_data, self.user_id)
+        )
         c.execute('UPDATE accounts SET account=? WHERE device_id=?',
                   (account_data, self.device_id))
+        c.close()
+        self.conn.commit()
+
+    def replace_olm_account(self, account):
+        """Replace an Olm account.
+
+        Instead of updating it as done with :meth:`save_olm_account`, this saves the
+        new account and discards all data associated with the previous one.
+
+        Args:
+            account (olm.Account): The account object to save.
+        """
+        account_data = account.pickle(self.pickle_key)
+        c = self.conn.cursor()
+        c.execute('REPLACE INTO accounts (device_id, account, user_id) VALUES (?,?,?)',
+                  (self.device_id, account_data, self.user_id))
         c.close()
         self.conn.commit()
 
@@ -117,12 +141,25 @@ CREATE TABLE IF NOT EXISTS sync_tokens(
         Returns:
             ``olm.Account`` object, or ``None`` if it wasn't found for the current
             device_id.
+
+        Raises:
+            ``ValueError`` if ``device_id`` was ``None`` and couldn't be retrieved.
         """
         c = self.conn.cursor()
-        c.execute(
-            'SELECT account FROM accounts WHERE device_id=?', (self.device_id,))
+        if self.device_id:
+            c.execute(
+                'SELECT account, device_id FROM accounts WHERE user_id=? AND device_id=?',
+                (self.user_id, self.device_id)
+            )
+        else:
+            c.execute('SELECT account, device_id FROM accounts WHERE user_id=?',
+                      (self.user_id,))
+        row = c.fetchone()
+        if not row and not self.device_id:
+            raise ValueError('Failed to retrieve device_id.')
         try:
-            account_data = c.fetchone()['account']
+            self.device_id = row['device_id']
+            account_data = row['account']
             # sqlite gives us unicode in Python2, we want bytes
             account_data = bytes(account_data)
         except TypeError:
@@ -138,7 +175,7 @@ CREATE TABLE IF NOT EXISTS sync_tokens(
         (keys, sessions...)
         """
         c = self.conn.cursor()
-        c.execute('DELETE FROM accounts WHERE device_id=?', (self.device_id,))
+        c.execute('DELETE FROM accounts WHERE user_id=?', (self.user_id,))
         c.close()
 
     def save_olm_session(self, curve_key, session):

@@ -27,11 +27,13 @@ class TestCryptoStore(object):
         'db_name': db_name,
         'db_path': db_path
     }
-    store = CryptoStore(device_id, db_path=db_path, db_name=db_name)
+    store = CryptoStore(
+        user_id, device_id=device_id, db_path=db_path, db_name=db_name)
     db_filepath = os.path.join(db_path, db_name)
     assert os.path.exists(db_filepath)
     store.close()
-    store = CryptoStore(device_id, db_path=db_path, db_name='test.db')
+    store = CryptoStore(
+        user_id, device_id=device_id, db_path=db_path, db_name=db_name)
 
     @pytest.fixture(autouse=True, scope='class')
     def cleanup(self):
@@ -63,14 +65,36 @@ class TestCryptoStore(object):
         saved_account = self.store.get_olm_account()
         assert saved_account is None
 
+        # Try to load inexisting account without device_id
+        self.store.device_id = None
+        with pytest.raises(ValueError):
+            self.store.get_olm_account()
+        self.store.device_id = self.device_id
+
         # Save and load
         self.store.save_olm_account(account)
         saved_account = self.store.get_olm_account()
         assert saved_account.identity_keys == identity_keys
 
+        # Save and load without device_id
+        self.store.save_olm_account(account)
+        self.store.device_id = None
+        saved_account = self.store.get_olm_account()
+        assert saved_account.identity_keys == identity_keys
+        assert self.store.device_id == self.device_id
+
+        # Replace the account, causing foreign keys to be deleted
+        self.store.save_sync_token('test')
+        self.store.replace_olm_account(account)
+        assert self.store.get_sync_token() is None
+
         # Load the account from an OlmDevice
         device = OlmDevice(None, self.user_id, self.device_id, store_conf=self.store_conf)
         assert device.olm_account.identity_keys == account.identity_keys
+
+        # Load the account from an OlmDevice, without device_id
+        device = OlmDevice(None, self.user_id, store_conf=self.store_conf)
+        assert device.device_id == self.device_id
 
     def test_olm_sessions_persistence(self, account, curve_key, device):
         session = olm.OutboundSession(account, curve_key, curve_key)
