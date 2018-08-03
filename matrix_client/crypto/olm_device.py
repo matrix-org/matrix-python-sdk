@@ -102,9 +102,8 @@ class OlmDevice(Device):
         self.device_list = DeviceList(self, api, self.device_keys, self.db)
         self.megolm_index_record = defaultdict(dict)
         keys = self.olm_account.identity_keys
-        super(OlmDevice, self).__init__(self.api,
-                                        device_id,
-                                        ed25519_key=keys['ed25519'],
+        super(OlmDevice, self).__init__(self.api, self.user_id, device_id,
+                                        database=self.db, ed25519_key=keys['ed25519'],
                                         curve25519_key=keys['curve25519'])
 
     def upload_identity_keys(self):

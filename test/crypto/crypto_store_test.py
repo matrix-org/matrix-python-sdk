@@ -243,7 +243,7 @@ class TestCryptoStore(object):
     def test_device_keys_persistence(self, device):
         user_devices = {self.user_id: [self.device_id]}
         device_keys = defaultdict(dict)
-        device.verified = True
+        device._verified = True
 
         self.store.load_device_keys(None, device_keys)
         assert not device_keys

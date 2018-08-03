@@ -204,9 +204,10 @@ class DeviceList:
                 try:
                     device = devices[device_id]
                 except KeyError:
-                    devices[device_id] = Device(self.api, device_id,
+                    devices[device_id] = Device(self.api, user_id, device_id,
                                                 curve25519_key=curve_key,
-                                                ed25519_key=signing_key)
+                                                ed25519_key=signing_key,
+                                                database=self.db)
                 else:
                     if device.ed25519 != signing_key:
                         logger.warning('Ed25519 key has changed for device %s of '

@@ -19,7 +19,7 @@ from matrix_client.client import MatrixClient
 from matrix_client.user import User
 from matrix_client.device import Device
 from matrix_client.errors import E2EUnknownDevices
-from test.crypto.dummy_olm_device import OlmDevice
+from test.crypto.dummy_olm_device import OlmDevice, DummyStore
 from matrix_client.crypto.sessions import MegolmOutboundSession, MegolmInboundSession
 from test.response_examples import (example_key_upload_response,
                                     example_claim_keys_response,
@@ -39,8 +39,8 @@ class TestOlmDevice:
     alice_device_id = 'JLAFKJWSCS'
     alice_curve_key = 'mmFRSHuJVq3aTudx3KB3w5ZvSFQhgEcy8d+m+vkEfUQ'
     alice_ed_key = '4VjV3OhFUxWFAcO5YOaQVmTIn29JdRmtNh9iAxoyhkc'
-    alice_device = Device(cli.api, alice_device_id, curve25519_key=alice_curve_key,
-                          ed25519_key=alice_ed_key)
+    alice_device = Device(cli.api, alice, alice_device_id, database=DummyStore(),
+                          curve25519_key=alice_curve_key, ed25519_key=alice_ed_key)
     alice_olm_session = olm.OutboundSession(
         device.olm_account, alice_curve_key, alice_curve_key)
     room = cli._mkroom(room_id)
@@ -455,7 +455,7 @@ class TestOlmDevice:
         self.device.olm_sessions.clear()
         self.device.device_keys[self.alice][self.alice_device_id] = self.alice_device
         self.device.device_keys['dummy']['dummy'] = \
-            Device(self.cli.api, 'dummy', curve25519_key='a', ed25519_key='a')
+            Device(self.cli.api, 'dummy', 'dummy', curve25519_key='a', ed25519_key='a')
         user_devices = {self.alice: [self.alice_device_id], 'dummy': ['dummy']}
         session = MegolmOutboundSession()
 

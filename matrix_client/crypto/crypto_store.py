@@ -494,13 +494,11 @@ CREATE TABLE IF NOT EXISTS sync_tokens(
             device_keys.update(result)
         return result
 
-    @staticmethod
-    def _device_from_row(row, api):
-        return Device(
-            api, row['user_device_id'], ed25519_key=row['ed_key'],
-            curve25519_key=row['curve_key'], verified=row['verified'],
-            blacklisted=row['blacklisted'], ignored=row['ignored']
-        )
+    def _device_from_row(self, row, api):
+        return Device(api, row['user_id'], row['user_device_id'], database=self,
+                      ed25519_key=row['ed_key'], curve25519_key=row['curve_key'],
+                      verified=row['verified'], blacklisted=row['blacklisted'],
+                      ignored=row['ignored'])
 
     def save_tracked_users(self, user_ids):
         """Saves tracked users.

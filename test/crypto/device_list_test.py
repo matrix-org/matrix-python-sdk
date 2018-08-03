@@ -95,7 +95,7 @@ class TestDeviceList:
         assert download_device_keys(user_devices)
         req = json.loads(responses.calls[0].request.body)
         assert req['device_keys'] == {self.alice: [], bob: [], self.user_id: []}
-        device = Device(self.cli.api, 'JLAFKJWSCS',
+        device = Device(self.cli.api, self.alice, 'JLAFKJWSCS', database=DummyStore,
                         curve25519_key='3C5BFWi2Y8MaVvjM8M22DBmh24PmgR0nPvJOIArzgyI',
                         ed25519_key='VzJIYXQ85u19z2ZpEeLLVu8hUKTCE0VXYUn4IY4iFcA')
         expected_device_keys = {
