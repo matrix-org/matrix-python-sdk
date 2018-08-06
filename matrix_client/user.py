@@ -12,6 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from warnings import warn
+
 from .checks import check_user_id
 
 
@@ -25,20 +27,30 @@ class User(object):
         self.displayname = displayname
         self.api = api
 
-    def get_display_name(self):
-        """ Get this users display name.
-            See also get_friendly_name()
+    def get_display_name(self, room=None):
+        """Get this user's display name.
+
+        Args:
+            room (Room): Optional. When specified, return the display name of the user
+                in this room.
 
         Returns:
-            str: Display Name
+            The display name. Defaults to the user ID if not set.
         """
+        if room:
+            try:
+                return room.members_displaynames[self.user_id]
+            except KeyError:
+                return self.user_id
         if not self.displayname:
             self.displayname = self.api.get_display_name(self.user_id)
-        return self.displayname
+        return self.displayname or self.user_id
 
     def get_friendly_name(self):
-        display_name = self.api.get_display_name(self.user_id)
-        return display_name if display_name is not None else self.user_id
+        """Deprecated. Use :meth:`get_display_name` instead."""
+        warn("get_friendly_name is deprecated. Use get_display_name instead.",
+             DeprecationWarning)
+        return self.get_display_name()
 
     def set_display_name(self, display_name):
         """ Set this users display name.

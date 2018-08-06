@@ -46,6 +46,9 @@ class Room(object):
         self.guest_access = None
         self._prev_batch = None
         self._members = {}
+        self.members_displaynames = {
+            # user_id: displayname
+        }
         self.encrypted = False
 
     def set_user_profile(self,
@@ -83,7 +86,7 @@ class Room(object):
             return self.canonical_alias
 
         # Member display names without me
-        members = [u.get_display_name() for u in self.get_joined_members() if
+        members = [u.get_display_name(self) for u in self.get_joined_members() if
                    self.client.user_id != u.user_id]
         members.sort()
 
@@ -478,10 +481,12 @@ class Room(object):
         response = self.client.api.get_room_members(self.room_id)
         for event in response["chunk"]:
             if event["content"]["membership"] == "join":
-                self._add_member(event["state_key"], event["content"].get("displayname"))
+                user_id = event["state_key"]
+                self._add_member(user_id, event["content"].get("displayname"))
         return list(self._members.values())
 
     def _add_member(self, user_id, displayname=None):
+        self.members_displaynames[user_id] = displayname
         if user_id in self._members:
             return
         if user_id in self.client.users:
@@ -655,8 +660,8 @@ class Room(object):
             elif etype == "m.room.member" and clevel == clevel.ALL:
                 # tracking room members can be large e.g. #matrix:matrix.org
                 if econtent["membership"] == "join":
-                    self._add_member(
-                        state_event["state_key"], econtent.get("displayname"))
+                    user_id = state_event["state_key"]
+                    self._add_member(user_id, econtent.get("displayname"))
                 elif econtent["membership"] in ("leave", "kick", "invite"):
                     self._members.pop(state_event["state_key"], None)
 
