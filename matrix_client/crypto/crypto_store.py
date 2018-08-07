@@ -59,6 +59,7 @@ class CryptoStore(object):
         """Ensures all the tables exist."""
         c = self.conn.cursor()
         c.executescript("""
+PRAGMA secure_delete = ON;
 PRAGMA foreign_keys = ON;
 CREATE TABLE IF NOT EXISTS accounts(
     device_id TEXT NOT NULL UNIQUE, account BLOB, user_id TEXT PRIMARY KEY NOT NULL
