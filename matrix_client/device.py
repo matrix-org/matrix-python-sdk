@@ -2,6 +2,23 @@ from .errors import MatrixRequestError
 
 
 class Device(object):
+    """Represents a Matrix device, belonging to a user.
+
+    Args:
+        api (MatrixHttpApi): The api object used to make requests.
+        user_id (str): User ID of this device's owner.
+        device_id (str): The device ID.
+        display_name (str): Optional. The display name of this device, if any.
+        last_seen_ip (str): Optional. The IP address where this device was last seen.
+        last_seen_ts (int): Optional. The timestamp (in milliseconds since the unix
+            epoch) when this device was last seen.
+        verified, blacklisted, ignored (bool): Optional. Device verification info.
+        ed25519_key (str): Optional. The Ed25519 fingerprint key of this device. The
+            corresponding attribute ``ed25519`` cannot be changed after initialisation.
+        curve25519_key (str): Optional. The Curve25519 fingerprint key of this device. The
+            corresponding attribute ``curve25519`` cannot be changed after initialisation.
+        database (CryptoStore): Optional. Allows to save device verification info.
+    """
 
     def __init__(self,
                  api,
