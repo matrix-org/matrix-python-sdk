@@ -265,6 +265,13 @@ class TestCryptoStore(object):
             device.curve25519
         assert device_keys[self.user_id][self.device_id].verified
 
+        # Test device verification persistence
+        device.verified = False
+        device.ignored = True
+        devices = self.store.get_device_keys(None, user_devices)[self.user_id]
+        assert not devices[self.device_id].verified
+        assert devices[self.device_id].ignored
+
         # Test [] wildcard
         devices = self.store.get_device_keys(None, {self.user_id: []})[self.user_id]
         assert devices[self.device_id].curve25519 == device.curve25519
@@ -285,6 +292,11 @@ class TestCryptoStore(object):
         device_keys = self.store.get_device_keys(None, user_devices)
         assert device_keys[self.user_id][self.device_id].curve25519 == device.curve25519
         assert device_keys[user_id][device_id].curve25519 == device.curve25519
+
+        # Try to verify a device that has no keys
+        device._ed25519 = None
+        with pytest.raises(ValueError):
+            device.verified = False
 
         self.store.remove_olm_account()
         assert not self.store.get_device_keys(None, user_devices)
