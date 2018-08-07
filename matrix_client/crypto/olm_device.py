@@ -102,7 +102,8 @@ class OlmDevice(Device):
                                                         keys_threshold)
         self.device_list = DeviceList(self, api, self.device_keys, self.db)
         self.megolm_index_record = defaultdict(dict)
-        self.key_sharing_manager = KeySharingManager(api, user_id, device_id, self)
+        self.key_sharing_manager = KeySharingManager(api, self.db, user_id, device_id,
+                                                     self)
         keys = self.olm_account.identity_keys
         super(OlmDevice, self).__init__(self.api, self.user_id, device_id,
                                         database=self.db, ed25519_key=keys['ed25519'],

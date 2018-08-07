@@ -333,6 +333,23 @@ class TestCryptoStore(object):
         self.store.save_sync_token(sync_token)
         assert self.store.get_sync_token() == sync_token
 
+    @pytest.mark.usefixtures('account')
+    def test_key_requests(self):
+        session_id = 'test'
+        session_ids = set()
+
+        self.store.load_outgoing_key_requests(session_ids)
+        assert not session_ids
+
+        self.store.add_outgoing_key_request(session_id)
+        self.store.load_outgoing_key_requests(session_ids)
+        assert session_id in session_ids
+
+        session_ids.clear()
+        self.store.remove_outgoing_key_request(session_id)
+        self.store.load_outgoing_key_requests(session_ids)
+        assert not session_ids
+
     def test_load_all(self, account, curve_key, ed_key, device):
         curve_key = account.identity_keys['curve25519']
         session = olm.OutboundSession(account, curve_key, curve_key)

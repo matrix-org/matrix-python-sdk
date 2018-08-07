@@ -106,6 +106,10 @@ CREATE TABLE IF NOT EXISTS sync_tokens(
     device_id TEXT PRIMARY KEY, token TEXT,
     FOREIGN KEY(device_id) REFERENCES accounts(device_id) ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS outgoing_key_requests(
+    device_id TEXT PRIMARY KEY, session_id TEXT,
+    FOREIGN KEY(device_id) REFERENCES accounts(device_id) ON DELETE CASCADE
+);
         """)
         c.close()
         self.conn.commit()
@@ -579,6 +583,42 @@ CREATE TABLE IF NOT EXISTS sync_tokens(
             return None
         finally:
             c.close()
+
+    def add_outgoing_key_request(self, session_id):
+        """Saves a key request.
+
+        Args:
+            session_id (str): The requested session.
+        """
+        c = self.conn.cursor()
+        c.execute('INSERT OR IGNORE INTO outgoing_key_requests VALUES (?,?)',
+                  (self.device_id, session_id))
+        c.close()
+        self.conn.commit()
+
+    def remove_outgoing_key_request(self, session_id):
+        """Removes a key request.
+
+        Args:
+            session_id (str): The requested session.
+        """
+        c = self.conn.cursor()
+        c.execute('DELETE FROM outgoing_key_requests WHERE device_id=? and session_id=?',
+                  (self.device_id, session_id))
+        c.close()
+
+    def load_outgoing_key_requests(self, session_ids):
+        """Load key requests.
+
+        Args:
+            session_ids (set): Will be populated with session IDs.
+        """
+        c = self.conn.cursor()
+        c.execute('SELECT session_id FROM outgoing_key_requests WHERE device_id=?',
+                  (self.device_id,))
+        for row in c:
+            session_ids.add(row['session_id'])
+        c.close()
 
     def close(self):
         self.conn.close()

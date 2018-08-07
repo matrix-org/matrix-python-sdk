@@ -6,13 +6,15 @@ logger = logging.getLogger(__name__)
 
 class KeySharingManager(object):
 
-    def __init__(self, api, user_id, device_id, olm_device):
+    def __init__(self, api, db, user_id, device_id, olm_device):
         self.api = api
+        self.db = db
         self.user_id = user_id
         self.device_id = device_id
         self.olm_device = olm_device
         self.queued_key_requests = defaultdict(dict)
         self.outgoing_key_requests = set()
+        self.db.load_outgoing_key_requests(self.outgoing_key_requests)
         self.key_request_callback = None
         self.key_forward_callback = None
 
@@ -63,6 +65,7 @@ class KeySharingManager(object):
         }
         self.api.send_to_device('m.room_key_request', {self.user_id: {'*': payload}})
         self.outgoing_key_requests.discard(session_id)
+        self.db.remove_outgoing_key_request(session_id)
         if self.key_forward_callback:
             self.key_forward_callback(session_id)
 
@@ -193,3 +196,4 @@ class KeySharingManager(object):
         }
         self.api.send_to_device('m.room_key_request', {self.user_id: {'*': payload}})
         self.outgoing_key_requests.add(session_id)
+        self.db.add_outgoing_key_request(session_id)
