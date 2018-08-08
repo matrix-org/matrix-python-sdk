@@ -14,6 +14,7 @@ from matrix_client.crypto.sessions import MegolmOutboundSession, MegolmInboundSe
 from matrix_client.crypto.crypto_store import CryptoStore
 from matrix_client.crypto.verified_event import VerifiedEvent
 from matrix_client.crypto.key_sharing import KeySharingManager
+from matrix_client.crypto.key_export import encrypt_and_save, decrypt_and_read
 
 logger = logging.getLogger(__name__)
 
@@ -912,3 +913,64 @@ class OlmDevice(Device):
             json['unsigned'] = unsigned
 
         return success
+
+    def export_keys(self, outfile, passphrase, count=10000):
+        """Export all the Megolm decryption keys of this device.
+
+        The keys will be encrypted using the passphrase.
+
+        NOTE:
+            This does not save other information such as the private identity keys
+            of the device.
+
+        Args:
+            outfile (str): The file to write the keys to.
+            passphrase (str): The encryption passphrase.
+            count (int): Optional. Round count for the underlying key derivation.
+                It is not recommended to specify it unless absolutely sure of the
+                consequences.
+        """
+        session_list = []
+        self.db.load_inbound_sessions(self.megolm_inbound_sessions)
+        for room_id in self.megolm_inbound_sessions:
+            for sender_key, sessions in self.megolm_inbound_sessions[room_id].items():
+                for session in sessions.values():
+                    payload = {
+                        'algorithm': self._megolm_algorithm,
+                        'sender_key': sender_key,
+                        'sender_claimed_keys': {
+                            'ed25519': session.ed25519
+                        },
+                        'forwarding_curve25519_key_chain': session.forwarding_chain,
+                        'room_id': room_id,
+                        'session_id': session.id,
+                        'session_key': session.export_session(session.first_known_index)
+                    }
+                    session_list.append(payload)
+        data = json.dumps({'sessions': session_list}).encode()
+        encrypt_and_save(data, outfile, passphrase, count=count)
+        logger.info('Success exporting keys to %s.', outfile)
+
+    def import_keys(self, infile, passphrase):
+        """Import Megolm decryption keys.
+
+        The keys will be added to the current instance as well as written to database.
+
+        Args:
+            infile (str): The file containing the keys.
+            passphrase (str): The decryption passphrase.
+        """
+        data = decrypt_and_read(infile, passphrase)
+        session_list = json.loads(data)['sessions']
+        for session in session_list:
+            if session['algorithm'] != self._megolm_algorithm:
+                logger.warning('Ignoring session with unsupported algorithm.')
+                continue
+            # This could be improved by writing everything to db at once at the end
+            self.megolm_add_inbound_session(
+                session['room_id'], session['sender_key'],
+                session['sender_claimed_keys']['ed25519'], session['session_id'],
+                session['session_key'], session['forwarding_curve25519_key_chain'],
+                export_format=True
+            )
+        logger.info('Success importing keys from %s.', infile)
