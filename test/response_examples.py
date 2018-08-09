@@ -256,3 +256,45 @@ example_room_key_event = {
         "ed25519": "4VjV3OhFUxWFAcO5YOaQVmTIn29JdRmtNh9iAxoyhkc",
     }
 }
+
+example_forwarded_room_key_event = {
+    "content": {
+        "algorithm": "m.megolm.v1.aes-sha2",
+        "forwarding_curve25519_key_chain": [
+            "hPQNcabIABgGnx3/ACv/jmMmiQHoeFfuLB17tzWp6Hw"
+        ],
+        "room_id": "!Cuyf34gef24t:localhost",
+        "sender_claimed_ed25519_key": "aj40p+aw64yPIdsxoog8jhPu9i7l7NcFRecuOQblE3Y",
+        "sender_key": "RF3s+E7RkTQTGF2d8Deol0FkQvgII2aJDf3/Jp5mxVU",
+        "session_id": "iR4Q8LUXrtjwse7U80iALTZjcezHm0fI1UvXloTV0xs",
+        "session_key":
+        ("AQAAAADk1Ouk7LX6RuCsuHvtkD3/yvEDx4q4oXaK3sfPh03lUxNM3mXx6OHOH8kGFANHEVXQYr0OdYh"
+         "UeFM6xNSididZ5jiFpSQ0rIftSl+z4RlmFZPbt3XkvS2/8Q0mDr70g4rSYMkqxdWQy9Vi2lj0sWfQNl"
+         "QR92G0RwGsPNZdzYsBJokeEPC1F67Y8LHu1PNIgC02Y3Hsx5tHyNVL15aE1dMb")
+    },
+    "type": "m.room_key"
+}
+
+example_room_key_request_event = {
+    "content": {
+        "action": "request",
+        "body": {
+            "algorithm": "m.megolm.v1.aes-sha2",
+            "room_id": "!Cuyf34gef24t:localhost",
+            "sender_key": "RF3s+E7RkTQTGF2d8Deol0FkQvgII2aJDf3/Jp5mxVU",
+            "session_id": "iR4Q8LUXrtjwse7U80iALTZjcezHm0fI1UvXloTV0xs"
+        },
+        "request_id": "1495474790150.19",
+        "requesting_device_id": "RJYKSTBOIE"
+    },
+    "type": "m.room_key_request"
+}
+
+example_room_key_cancel_event = {
+    "content": {
+        "action": "cancel_request",
+        "request_id": "1495474790150.19",
+        "requesting_device_id": "RJYKSTBOIE"
+    },
+    "type": "m.room_key_request"
+}

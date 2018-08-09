@@ -621,6 +621,17 @@ class TestOlmDevice:
         # Decrypting the same event twice will trigger an error
         device.olm_handle_encrypted_event(event)
 
+        # Forwarded key event
+        encrypted_event = alice_olm_device.olm_build_encrypted_event(
+            'm.forwarded_room_key', content, self.user_id, self.device_id)
+        event = {
+            'type': 'm.room.encrypted',
+            'content': encrypted_event,
+            'sender': self.alice
+        }
+        device.olm_handle_encrypted_event(event)
+
+        # Unhandled event
         encrypted_event = alice_olm_device.olm_build_encrypted_event(
             'm.other', content, self.user_id, self.device_id)
         event = {
