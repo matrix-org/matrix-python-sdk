@@ -81,7 +81,7 @@ class MegolmInboundSession(InboundGroupSession):
 
     def __init__(self, session_key, signing_key):
         self.ed25519 = signing_key
-        self.forwarding_chain = None
+        self.forwarding_chain = []
         super(MegolmInboundSession, self).__init__(session_key)
 
     def __new__(cls, *args):
@@ -91,12 +91,12 @@ class MegolmInboundSession(InboundGroupSession):
     def from_pickle(cls, pickle, signing_key, passphrase='', forwarding_chain=None):
         session = super(MegolmInboundSession, cls).from_pickle(pickle, passphrase)
         session.ed25519 = signing_key
-        session.forwarding_chain = forwarding_chain
+        session.forwarding_chain = forwarding_chain or []
         return session
 
     @classmethod
     def import_session(cls, session_key, signing_key, forwarding_chain=None):
         session = super(MegolmInboundSession, cls).import_session(session_key)
         session.ed25519 = signing_key
-        session.forwarding_chain = forwarding_chain
+        session.forwarding_chain = forwarding_chain or []
         return session

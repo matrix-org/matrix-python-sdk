@@ -144,6 +144,7 @@ class TestCryptoStore(object):
     def test_megolm_inbound_persistence(self, curve_key, ed_key, device):
         out_session = olm.OutboundGroupSession()
         session = MegolmInboundSession(out_session.session_key, ed_key)
+        session.forwarding_chain.append(curve_key)
         sessions = defaultdict(lambda: defaultdict(dict))
 
         self.store.load_inbound_sessions(sessions)
@@ -157,6 +158,7 @@ class TestCryptoStore(object):
         saved_session = self.store.get_inbound_session(self.room_id, curve_key,
                                                        session.id)
         assert saved_session.id == session.id
+        assert saved_session.forwarding_chain == [curve_key]
 
         sessions = {}
         saved_session = self.store.get_inbound_session(self.room_id, curve_key,

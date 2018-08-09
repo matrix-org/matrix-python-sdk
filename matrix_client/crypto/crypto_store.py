@@ -74,6 +74,11 @@ CREATE TABLE IF NOT EXISTS megolm_inbound_sessions(
     ed_key TEXT, session BLOB,
     FOREIGN KEY(device_id) REFERENCES accounts(device_id) ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS forwarded_chains(
+    device_id TEXT, session_id TEXT, curve_key TEXT,
+    PRIMARY KEY(device_id, session_id, curve_key),
+    FOREIGN KEY(device_id) REFERENCES accounts(device_id) ON DELETE CASCADE
+);
 CREATE TABLE IF NOT EXISTS megolm_outbound_sessions(
     device_id TEXT, room_id TEXT, session BLOB, max_age_s FLOAT,
     max_messages INTEGER, creation_time TIMESTAMP, message_count INTEGER,
@@ -253,6 +258,9 @@ CREATE TABLE IF NOT EXISTS sync_tokens(
         c.execute('REPLACE INTO megolm_inbound_sessions VALUES (?,?,?,?,?,?)',
                   (self.device_id, session.id, room_id, curve_key, session.ed25519,
                    session.pickle(self.pickle_key)))
+        rows = [(self.device_id, session.id, curve_key)
+                for curve_key in session.forwarding_chain]
+        c.executemany('INSERT OR IGNORE INTO forwarded_chains VALUES(?,?,?)', rows)
         c.close()
         self.conn.commit()
 
@@ -273,6 +281,7 @@ CREATE TABLE IF NOT EXISTS sync_tokens(
             session = MegolmInboundSession.from_pickle(
                 bytes(row['session']), row['ed_key'], self.pickle_key)
             sessions[row['room_id']][row['curve_key']][session.id] = session
+            self._load_forwarding_chain(session)
         c.close()
 
     def get_inbound_session(self, room_id, curve_key, session_id, sessions=None):
@@ -303,9 +312,17 @@ CREATE TABLE IF NOT EXISTS sync_tokens(
             c.close()
         session = MegolmInboundSession.from_pickle(session_data, row['ed_key'],
                                                    self.pickle_key)
+        self._load_forwarding_chain(session)
         if sessions is not None:
             sessions[session.id] = session
         return session
+
+    def _load_forwarding_chain(self, session):
+        c = self.conn.cursor()
+        c.execute('SELECT curve_key FROM forwarded_chains WHERE device_id=? '
+                  'AND session_id=?', (self.device_id, session.id))
+        session.forwarding_chain = [row['curve_key'] for row in c]
+        c.close()
 
     def save_outbound_session(self, room_id, session):
         """Saves a Megolm outbound session.
