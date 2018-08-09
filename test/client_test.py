@@ -17,6 +17,28 @@ def test_create_client():
     MatrixClient("http://example.com")
 
 
+@responses.activate
+def test_create_client_with_token():
+    user_id = "@alice:example.com"
+    token = "Dp0YKRXwx0iWDhFj7lg3DVjwsWzGcUIgARljgyAip2JD8qd5dSaW" \
+            "cxowTKEFetPulfLijAhv8eOmUSScyGcWgZyNMRTBmoJ0RFc0HotPvTBZ" \
+            "U98yKRLtat7V43aCpFmK"
+    whoami_url = HOSTNAME+MATRIX_V2_API_PATH+"/account/whoami"
+    responses.add(
+        responses.GET,
+        whoami_url,
+        body='{"user_id": "%s"}' % user_id
+    )
+    sync_response = deepcopy(response_examples.example_sync)
+    response_body = json.dumps(sync_response)
+    sync_url = HOSTNAME + MATRIX_V2_API_PATH + "/sync"
+    responses.add(responses.GET, sync_url, body=response_body)
+    MatrixClient(HOSTNAME, token=token)
+    req = responses.calls[0].request
+    assert req.method == 'GET'
+    assert whoami_url in req.url
+
+
 def test_sync_token():
     client = MatrixClient("http://example.com")
     assert client.get_sync_token() is None

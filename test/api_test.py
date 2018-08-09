@@ -405,3 +405,36 @@ class TestRoomApi:
         assert req.method == 'POST'
         j = json.loads(req.body)
         assert not j["creation_content"]["m.federate"]
+
+
+class TestWhoamiQuery:
+    user_id = "@alice:example.com"
+    token = "Dp0YKRXwx0iWDhFj7lg3DVjwsWzGcUIgARljgyAip2JD8qd5dSaW" \
+            "cxowTKEFetPulfLijAhv8eOmUSScyGcWgZyNMRTBmoJ0RFc0HotPvTBZ" \
+            "U98yKRLtat7V43aCpFmK"
+
+    @responses.activate
+    def test_whoami(self):
+        mapi = api.MatrixHttpApi("http://example.com", token=self.token)
+        whoami_url = "http://example.com/_matrix/client/r0/account/whoami"
+        responses.add(
+            responses.GET,
+            whoami_url,
+            body='{"user_id": "%s"}' % self.user_id
+        )
+        mapi.whoami()
+        req = responses.calls[0].request
+        assert req.method == 'GET'
+        assert whoami_url in req.url
+
+    @responses.activate
+    def test_whoami_unauth(self):
+        mapi = api.MatrixHttpApi("http://example.com")
+        whoami_url = "http://example.com/_matrix/client/r0/account/whoami"
+        responses.add(
+            responses.GET,
+            whoami_url,
+            body='{"user_id": "%s"}' % self.user_id
+        )
+        with pytest.raises(MatrixError):
+            mapi.whoami()

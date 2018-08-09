@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from .api import MatrixHttpApi
-from .checks import check_user_id
 from .errors import MatrixRequestError, MatrixUnexpectedResponse
 from .room import Room
 from .user import User
@@ -54,9 +53,7 @@ class MatrixClient(object):
             e.g. (ex: https://localhost:8008 )
         token (Optional[str]): If you have an access token
             supply it here.
-        user_id (Optional[str]): You must supply the user_id
-            (as obtained when initially logging in to obtain
-            the token) if supplying a token; otherwise, ignored.
+        user_id (Optional[str]): Optional. Obsolete. For backward compatibility.
         valid_cert_check (bool): Check the homeservers
             certificate on connections?
         cache_level (CACHE): One of CACHE.NONE, CACHE.SOME, or
@@ -115,8 +112,12 @@ class MatrixClient(object):
     def __init__(self, base_url, token=None, user_id=None,
                  valid_cert_check=True, sync_filter_limit=20,
                  cache_level=CACHE.ALL, encryption=False, encryption_conf=None):
-        if token is not None and user_id is None:
-            raise ValueError("must supply user_id along with token")
+        if user_id:
+            warn(
+                "user_id is deprecated. "
+                "Now it is requested from the server.", DeprecationWarning
+            )
+
         if encryption and not ENCRYPTION_SUPPORT:
             raise ValueError("Failed to enable encryption. Please make sure the olm "
                              "library is available.")
@@ -155,8 +156,8 @@ class MatrixClient(object):
             # user_id: User
         }
         if token:
-            check_user_id(user_id)
-            self.user_id = user_id
+            response = self.api.whoami()
+            self.user_id = response["user_id"]
             self._sync()
 
     def get_sync_token(self):
