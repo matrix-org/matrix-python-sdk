@@ -784,3 +784,33 @@ class MatrixClient(object):
         if not self._encryption:
             raise ValueError("Encryption is not enabled, this device has no fingerprint.")
         return self.olm_device.ed25519
+
+    def export_keys(self, outfile, passphrase):
+        """Export all the Megolm decryption keys of this device.
+
+        The keys will be encrypted using the passphrase.
+
+        NOTE:
+            This does not save other information such as the private identity keys
+            of the device.
+
+        Args:
+            outfile (str): The file to write the keys to.
+            passphrase (str): The encryption passphrase.
+        """
+        if not self._encryption:
+            raise ValueError("Encryption is not enabled, there are no keys to export.")
+        self.olm_device.export_keys(outfile, passphrase)
+
+    def import_keys(self, infile, passphrase):
+        """Import Megolm decryption keys.
+
+        The keys will be added to the current instance as well as written to database.
+
+        Args:
+            infile (str): The file containing the keys.
+            passphrase (str): The decryption passphrase.
+        """
+        if not self._encryption:
+            raise ValueError("Encryption is not enabled, cannot import keys.")
+        self.olm_device.import_keys(infile, passphrase)
