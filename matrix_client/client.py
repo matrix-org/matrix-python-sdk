@@ -722,3 +722,12 @@ class MatrixClient(object):
             return True
         except MatrixRequestError:
             return False
+
+    def get_fingerprint(self):
+        """Get the fingerprint of the current device.
+
+        This is used when verifying devices.
+        """
+        if not self._encryption:
+            raise ValueError("Encryption is not enabled, this device has no fingerprint.")
+        return self.olm_device.ed25519
