@@ -454,17 +454,20 @@ class Room(object):
         Returns:
             boolean: True if the aliases changed, False if not
         """
+        response = None
         try:
             response = self.client.api.get_room_state(self.room_id)
-            for chunk in response:
-                if "content" in chunk and "aliases" in chunk["content"]:
-                    if chunk["content"]["aliases"] != self.aliases:
-                        self.aliases = chunk["content"]["aliases"]
-                        return True
-                    else:
-                        return False
         except MatrixRequestError:
             return False
+        self.aliases = []
+        changed = False
+        for chunk in response:
+            if "content" in chunk and "aliases" in chunk["content"]:
+                for alias in chunk["content"]["aliases"]:
+                    if alias not in self.aliases:
+                        self.aliases.append(alias)
+                        changed = True
+        return changed
 
     def add_room_alias(self, room_alias):
         """Add an alias to the room and return True if successful."""
