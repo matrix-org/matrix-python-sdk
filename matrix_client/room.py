@@ -486,7 +486,8 @@ class Room(object):
         return list(self._members.values())
 
     def _add_member(self, user_id, displayname=None):
-        self.members_displaynames[user_id] = displayname
+        if displayname:
+            self.members_displaynames[user_id] = displayname
         if user_id in self._members:
             return
         if user_id in self.client.users:
