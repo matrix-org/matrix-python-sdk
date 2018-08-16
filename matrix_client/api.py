@@ -331,6 +331,13 @@ class MatrixHttpApi(object):
     # https://matrix.org/docs/spec/r0.0.1/client_server.html
     def send_content(self, room_id, item_url, item_name, msg_type, filename=None,
                      extra_information=None, timestamp=None, encryption_info=None):
+        content_pack = self.get_content_body(item_url, item_name, msg_type, filename,
+                                             extra_information, encryption_info)
+        return self.send_message_event(room_id, "m.room.message", content_pack,
+                                       timestamp=timestamp)
+
+    def get_content_body(self, item_url, item_name, msg_type, filename=None,
+                         extra_information=None, encryption_info=None):
         if extra_information is None:
             extra_information = {}
 
@@ -346,8 +353,7 @@ class MatrixHttpApi(object):
             content_pack['file'] = encryption_info
         else:
             content_pack['url'] = item_url
-        return self.send_message_event(room_id, "m.room.message", content_pack,
-                                       timestamp=timestamp)
+        return content_pack
 
     def get_location_body(self, geo_uri, name, thumb_url=None, thumb_info=None):
         content_pack = {

@@ -170,12 +170,17 @@ class Room(object):
             name (str): The filename of the image.
             fileinfo (): Extra information about the file
         """
-
-        return self.client.api.send_content(
-            self.room_id, url, name, "m.file",
-            extra_information=fileinfo,
-            encryption_info=encryption_info
-        )
+        if self.encrypted and self.client._encryption:
+            content = self.client.api.get_content_body(
+                url, name, "m.file", extra_information=fileinfo,
+                encryption_info=encryption_info
+            )
+            return self.send_encrypted(content)
+        else:
+            return self.client.api.send_content(
+                self.room_id, url, name, "m.file",
+                extra_information=fileinfo
+            )
 
     def send_notice(self, text):
         """Send a notice (from bot) message to the room."""
