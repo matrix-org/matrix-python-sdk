@@ -538,19 +538,20 @@ class MatrixClient(object):
             self.sync_thread = None
 
     # TODO: move to User class. Consider creating lightweight Media class.
-    def upload(self, content, content_type):
+    def upload(self, content, content_type, filename=None):
         """ Upload content to the home server and recieve a MXC url.
 
         Args:
             content (bytes): The data of the content.
             content_type (str): The mimetype of the content.
+            filename (str): Optional. Filename of the content.
 
         Raises:
             MatrixUnexpectedResponse: If the homeserver gave a strange response
             MatrixRequestError: If the upload failed for some reason.
         """
         try:
-            response = self.api.media_upload(content, content_type)
+            response = self.api.media_upload(content, content_type, filename)
             if "content_uri" in response:
                 return response["content_uri"]
             else:
