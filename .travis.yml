@@ -5,6 +5,12 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
+
+jobs:
+  include:
+    - dist: xenial
+      python: "3.7"
+
 before_install:
   - wget https://matrix.org/git/olm/snapshot/olm-2.2.2.tar.bz2
   - tar -xvf olm-2.2.2.tar.bz2
