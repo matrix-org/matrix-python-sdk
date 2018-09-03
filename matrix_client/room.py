@@ -454,7 +454,6 @@ class Room(object):
         Returns:
             boolean: True if the aliases changed, False if not
         """
-        response = None
         try:
             response = self.client.api.get_room_state(self.room_id)
         except MatrixRequestError:
@@ -652,7 +651,9 @@ class Room(object):
             elif etype == "m.room.topic":
                 self.topic = econtent.get("topic")
             elif etype == "m.room.aliases":
-                self.aliases = econtent.get("aliases")
+                for alias in econtent.get("aliases", []):
+                    if alias not in self.aliases:
+                        self.aliases.append(alias)
             elif etype == "m.room.join_rules":
                 self.invite_only = econtent["join_rule"] == "invite"
             elif etype == "m.room.guest_access":

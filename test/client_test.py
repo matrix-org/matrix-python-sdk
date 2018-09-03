@@ -73,7 +73,6 @@ def test_state_event():
 
     room.name = False
     room.topic = False
-    room.aliases = False
 
     ev = {
         "type": "m.room.name",
@@ -97,12 +96,12 @@ def test_state_event():
 
     ev["type"] = "m.room.aliases"
     room._process_state_event(ev)
-    assert room.aliases is None
+    assert room.aliases == []
 
     aliases = ["#foo:matrix.org", "#bar:matrix.org"]
     ev["content"]["aliases"] = aliases
     room._process_state_event(ev)
-    assert room.aliases is aliases
+    assert room.aliases == aliases
 
     # test member join event
     ev["type"] = "m.room.member"
