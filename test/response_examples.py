@@ -174,3 +174,13 @@ example_success_login_response = {
     "home_server": "matrix.org",
     "device_id": "GHTYAJCE"
 }
+
+example_preview_url = {
+    "matrix:image:size": 102400,
+    "og:description": "This is a really cool blog post from matrix.org",
+    "og:image": "mxc://example.com/ascERGshawAWawugaAcauga",
+    "og:image:height": 48,
+    "og:image:type": "image/png",
+    "og:image:width": 48,
+    "og:title": "Matrix Blog Post"
+}
