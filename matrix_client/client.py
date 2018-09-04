@@ -318,7 +318,9 @@ class MatrixClient(object):
         Raises:
             MatrixRequestError
         """
-        response = self.api.create_room(alias, is_public, invitees)
+        response = self.api.create_room(alias=alias,
+                                        is_public=is_public,
+                                        invitees=invitees)
         return self._mkroom(response["room_id"])
 
     def join_room(self, room_id_or_alias):
