@@ -744,12 +744,17 @@ class MatrixHttpApi(object):
 
         return response.json()
 
-    def media_upload(self, content, content_type):
+    def media_upload(self, content, content_type, filename=None):
+        query_params = {}
+        if filename is not None:
+            query_params['filename'] = filename
+
         return self._send(
             "POST", "",
             content=content,
             headers={"Content-Type": content_type},
-            api_path="/_matrix/media/r0/upload"
+            api_path="/_matrix/media/r0/upload",
+            query_params=query_params
         )
 
     def get_display_name(self, user_id):
