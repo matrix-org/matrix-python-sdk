@@ -995,10 +995,10 @@ class MatrixHttpApi(object):
         return txn_id
 
     def whoami(self):
-        """Determine user_id for authentificated user.
+        """Determine user_id for authenticated user.
         """
         if not self.token:
-            raise MatrixError("Authentification required.")
+            raise MatrixError("Authentication required.")
         return self._send(
             "GET",
             "/account/whoami"
