@@ -1,10 +1,11 @@
 import responses
 import pytest
 import json
+from copy import deepcopy
 from matrix_client import client, api
 from matrix_client.errors import MatrixRequestError, MatrixError, MatrixHttpLibError
 from matrix_client import __version__ as lib_version
-
+from . import response_examples
 MATRIX_V2_API_PATH = "/_matrix/client/r0"
 
 
@@ -315,6 +316,72 @@ class TestMainApi:
         mapi = api.MatrixHttpApi("http://example.com")
         with pytest.raises(MatrixHttpLibError):
             mapi._send("GET", self.test_path)
+
+
+class TestMediaApi:
+    cli = client.MatrixClient("http://example.com")
+    user_id = "@alice:example.com"
+    mxcurl = "mxc://example.com/OonjUOmcuVpUnmOWKtzPmAFe"
+
+    @responses.activate
+    def test_media_download(self):
+        media_url = \
+            "http://example.com/_matrix/media/r0/download/" + self.mxcurl[6:]
+        with open('test/response_examples.py', 'rb') as fil:
+            responses.add(
+                responses.GET, media_url,
+                content_type='application/python',
+                body=fil.read(), status=200, stream=True
+            )
+        resp = self.cli.api.media_download(self.mxcurl, allow_remote=False)
+        resp.raw.decode_content = True
+        req = responses.calls[0].request
+        assert req.url.split('?')[0] == media_url
+        assert req.method == 'GET'
+
+    def test_media_download_wrong_url(self):
+        with pytest.raises(ValueError):
+            self.cli.api.media_download(self.mxcurl[6:])
+
+    @responses.activate
+    def test_get_thumbnail(self):
+        media_url = \
+            "http://example.com/_matrix/media/r0/thumbnail/" + self.mxcurl[6:]
+        with open('test/response_examples.py', 'rb') as fil:
+            responses.add(
+                responses.GET, media_url,
+                content_type='application/python',
+                body=fil.read(), status=200, stream=True
+            )
+        resp = self.cli.api.get_thumbnail(
+            self.mxcurl, 28, 28, allow_remote=False
+        )
+        resp.raw.decode_content = True
+        req = responses.calls[0].request
+        assert req.url.split('?')[0] == media_url
+        assert req.method == 'GET'
+
+    def test_get_thumbnail_wrong_url(self):
+        with pytest.raises(ValueError):
+            self.cli.api.get_thumbnail(self.mxcurl[6:], 28, 28)
+
+    def test_get_thumbnail_wrong_method(self):
+        with pytest.raises(ValueError):
+            self.cli.api.get_thumbnail(self.mxcurl, 28, 28, 'cut')
+
+    @responses.activate
+    def test_get_url_preview(self):
+        media_url = \
+            "http://example.com/_matrix/media/r0/preview_url"
+        preview_url = deepcopy(response_examples.example_preview_url)
+        responses.add(
+            responses.GET, media_url,
+            body=json.dumps(preview_url)
+        )
+        self.cli.api.get_url_preview("https://google.com/", 1510610716656)
+        req = responses.calls[0].request
+        assert req.url.split('?')[0] == media_url
+        assert req.method == 'GET'
 
 
 class TestRoomApi:
