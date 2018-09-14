@@ -705,7 +705,7 @@ class MatrixClient(object):
         """
         warn("get_user is deprecated. Directly instantiate a User instead.",
              DeprecationWarning)
-        return User(self.api, user_id)
+        return User(self, user_id)
 
     # TODO: move to Room class
     def remove_room_alias(self, room_alias):
