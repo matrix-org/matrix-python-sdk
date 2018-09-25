@@ -185,6 +185,10 @@ class MatrixHttpApi(object):
         """
         return self._send("POST", "/logout")
 
+    def logout_all(self):
+        """Perform /logout/all."""
+        return self._send("POST", "/logout/all")
+
     def create_room(
                 self,
                 alias=None,
