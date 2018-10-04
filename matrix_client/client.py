@@ -184,7 +184,7 @@ class MatrixClient(object):
         Raises:
             MatrixRequestError
         """
-        response = self.api.register(kind='guest')
+        response = self.api.register(auth_body=None, kind='guest')
         return self._post_registration(response)
 
     def register_with_password(self, username, password):
@@ -201,11 +201,10 @@ class MatrixClient(object):
             MatrixRequestError
         """
         response = self.api.register(
-            {
-                "auth": {"type": "m.login.dummy"},
-                "username": username,
-                "password": password
-            }
+                auth_body={"type": "m.login.dummy"},
+                kind='user',
+                username=username,
+                password=password,
         )
         return self._post_registration(response)
 
