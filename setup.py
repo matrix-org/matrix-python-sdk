@@ -57,6 +57,6 @@ setup(
         'e2e': ['python-olm==dev', 'canonicaljson']
     },
     dependency_links=[
-        'git+https://github.com/poljar/python-olm.git#egg=python-olm-dev'
+        'git+https://github.com/poljar/python-olm.git@4752eb22f005cb9f6143857008572e6d83252841#egg=python-olm-dev'
     ]
 )
