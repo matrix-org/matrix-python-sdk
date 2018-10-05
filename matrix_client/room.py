@@ -507,6 +507,7 @@ class Room(object):
         res = self.client.api.get_room_messages(self.room_id, self.prev_batch,
                                                 direction="b", limit=limit)
         events = res["chunk"]
+        self.prev_batch = res["end"]
         if not reverse:
             events = reversed(events)
         for event in events:
