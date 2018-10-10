@@ -456,15 +456,17 @@ class Room(object):
         """
         try:
             response = self.client.api.get_room_state(self.room_id)
-            for chunk in response:
-                if "content" in chunk and "aliases" in chunk["content"]:
-                    if chunk["content"]["aliases"] != self.aliases:
-                        self.aliases = chunk["content"]["aliases"]
-                        return True
-                    else:
-                        return False
         except MatrixRequestError:
             return False
+        self.aliases = []
+        changed = False
+        for chunk in response:
+            if "content" in chunk and "aliases" in chunk["content"]:
+                for alias in chunk["content"]["aliases"]:
+                    if alias not in self.aliases:
+                        self.aliases.append(alias)
+                        changed = True
+        return changed
 
     def add_room_alias(self, room_alias):
         """Add an alias to the room and return True if successful."""
@@ -650,7 +652,9 @@ class Room(object):
             elif etype == "m.room.topic":
                 self.topic = econtent.get("topic")
             elif etype == "m.room.aliases":
-                self.aliases = econtent.get("aliases")
+                for alias in econtent.get("aliases", []):
+                    if alias not in self.aliases:
+                        self.aliases.append(alias)
             elif etype == "m.room.join_rules":
                 self.invite_only = econtent["join_rule"] == "invite"
             elif etype == "m.room.guest_access":
