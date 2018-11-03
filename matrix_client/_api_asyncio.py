@@ -104,12 +104,3 @@ class AsyncHTTPAPI(MatrixHttpApi):
             if mem['sender'] == user_id:
                 return mem['content']['displayname']
 
-    def get_event_in_room(self, room_id, event_id):
-        """
-        Get a single event based on roomId/eventId.
-
-        You must have permission to retrieve this event e.g. by being a member
-        in the room for this event.
-        """
-        return self._send("GET", "/rooms/{}/event/{}".format(room_id, event_id))
-
