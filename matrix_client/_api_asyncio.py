@@ -70,6 +70,10 @@ class AsyncHTTPAPI(MatrixHttpApi):
         content = await self._send("GET", "/profile/{}/displayname".format(user_id))
         return content.get('displayname', None)
 
+    async def set_display_name(self, user_id, display_name):
+        content = {"displayname": display_name}
+        await self._send("PUT", "/profile/%s/displayname" % user_id, content)
+
     async def get_avatar_url(self, user_id):
         content = await self._send("GET", "/profile/{}/avatar_url".format(user_id))
         return content.get('avatar_url', None)
@@ -88,3 +92,24 @@ class AsyncHTTPAPI(MatrixHttpApi):
             "/directory/room/{}".format(quote(room_alias)),
             api_path="/_matrix/client/r0")
         return content.get("room_id", None)
+
+    async def get_room_displayname(self, room_id, user_id):
+        """Get a users displayname for the given room"""
+        if room_id.startswith('#'):
+            room_id = await self.get_room_id(room_id)
+
+        members = await self.get_room_members(room_id)
+        members = members['chunk']
+        for mem in members:
+            if mem['sender'] == user_id:
+                return mem['content']['displayname']
+
+    def get_event_in_room(self, room_id, event_id):
+        """
+        Get a single event based on roomId/eventId.
+
+        You must have permission to retrieve this event e.g. by being a member
+        in the room for this event.
+        """
+        return self._send("GET", "/rooms/{}/event/{}".format(room_id, event_id))
+
