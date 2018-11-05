@@ -711,10 +711,11 @@ class MatrixHttpApi(object):
          if "Content-Type" not in headers:
             headers["Content-Type"] = "application/json"
 
-        if self.use_authorization_header:
-            headers["Authorization"] = 'Bearer %s' % self.token
-        else:
-            query_params["access_token"] = self.token
+	if self.token:
+            if self.use_authorization_header:
+                headers["Authorization"] = 'Bearer %s' % self.token
+            else:
+                query_params["access_token"] = self.token
 
         if self.identity:
             query_params["user_id"] = self.identity
