@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, Mock, call
 import pytest
 import matrix_client.errors
 
-from matrix_client.api_asyncio import AsyncHTTPAPI
+from matrix_client.api_async import AsyncHTTPAPI
 
 HEADERS = {'Authorization': 'Bearer 1234', 'Content-Type': 'application/json', 'User-Agent': 'matrix-python-sdk/0.4.0-dev'}
 
