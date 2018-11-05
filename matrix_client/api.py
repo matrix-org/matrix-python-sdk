@@ -1127,3 +1127,14 @@ class MatrixHttpApi(object):
         in the room for this event.
         """
         return self._send("GET", "/rooms/{}/event/{}".format(room_id, event_id))
+
+    def get_room_displayname(self, room_id, user_id):
+        """Get a users displayname for the given room"""
+        if room_id.startswith('#'):
+            room_id = self.get_room_id(room_id)
+
+        members = self.get_room_members(room_id)
+        members = members['chunk']
+        for mem in members:
+            if mem['sender'] == user_id:
+                return mem['content']['displayname']
