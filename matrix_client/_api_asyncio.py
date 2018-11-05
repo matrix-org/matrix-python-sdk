@@ -24,15 +24,9 @@ class AsyncHTTPAPI(MatrixHttpApi):
         loop.run_until_complete(main())
     """
 
-    def __init__(self, base_url, client_session, token=None,
-                 identity=None, default_429_wait_ms=5000):
-        self.base_url = base_url
-        self.identity = identity
-        self.token = token
-        self.txn_id = 0
-        self.validate_cert = True
+    def __init__(self, base_url, client_session, **kwargs):
         self.client_session = client_session
-        self.default_429_wait_ms = default_429_wait_ms
+        super().__init__(base_url, **kwargs)
 
     async def _send(self,
                     method,

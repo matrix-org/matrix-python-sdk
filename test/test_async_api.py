@@ -9,6 +9,8 @@ import matrix_client.errors
 
 from matrix_client.api_asyncio import AsyncHTTPAPI
 
+HEADERS = {'Authorization': 'Bearer 1234', 'Content-Type': 'application/json', 'User-Agent': 'matrix-python-sdk/0.4.0-dev'}
+
 
 def client_session(json, status=200):
     client_session = MagicMock()
@@ -43,7 +45,7 @@ def client_session(json, status=200):
 
 @pytest.fixture
 def api():
-    return partial(AsyncHTTPAPI, base_url="base_url", token="1234")
+    return partial(AsyncHTTPAPI, base_url="http://base_url", token="1234")
 
 
 @pytest.mark.asyncio
@@ -52,10 +54,10 @@ async def test_send(api):
 
     response = await api._send("GET", "/createRoom")
     api.client_session.request.assert_called_once_with("GET",
-                                                       "base_url/_matrix/client/r0/createRoom",
+                                                       "http://base_url/_matrix/client/r0/createRoom",
                                                        data="{}",
-                                                       headers={"Content-Type": "application/json"},
-                                                       params={"access_token": "1234"})
+                                                       headers=HEADERS,
+                                                       params={})
 
 
 @pytest.mark.asyncio
@@ -64,10 +66,10 @@ async def test_send_429(api):
 
     response = await api._send("GET", "/createRoom")
     call429 = call("GET",
-                   "base_url/_matrix/client/r0/createRoom",
+                   "http://base_url/_matrix/client/r0/createRoom",
                    data="{}",
-                   headers={"Content-Type": "application/json"},
-                   params={"access_token": "1234"})
+                   headers=HEADERS,
+                   params={})
 
     # If we 429 we should call request twice with the same parameters
     api.client_session.request.assert_has_calls([call429, call429])
@@ -84,10 +86,10 @@ async def test_send_429_timeout(api, json):
     response = await api._send("GET", "/createRoom")
 
     call429 = call("GET",
-                   "base_url/_matrix/client/r0/createRoom",
+                   "http://base_url/_matrix/client/r0/createRoom",
                    data="{}",
-                   headers={"Content-Type": "application/json"},
-                   params={"access_token": "1234"})
+                   headers=HEADERS,
+                   params={})
 
     # If we 429 we should call request twice with the same parameters
     api.client_session.request.assert_has_calls([call429, call429])
@@ -111,10 +113,10 @@ async def test_get_displayname(api):
     assert displayname == "African swallow"
 
     api.client_session.request.assert_called_once_with("GET",
-                                                       f"base_url/_matrix/client/r0/profile/{mxid}/displayname",
+                                                       f"http://base_url/_matrix/client/r0/profile/{mxid}/displayname",
                                                        data="{}",
-                                                       headers={"Content-Type": "application/json"},
-                                                       params={"access_token": "1234"})
+                                                       headers=HEADERS,
+                                                       params={})
 
 
 @pytest.mark.asyncio
@@ -124,10 +126,10 @@ async def test_set_displayname(api):
     await api.set_display_name(mxid, "African swallow")
 
     api.client_session.request.assert_called_once_with("PUT",
-                                                       f"base_url/_matrix/client/r0/profile/{mxid}/displayname",
+                                                       f"http://base_url/_matrix/client/r0/profile/{mxid}/displayname",
                                                        data='{"displayname": "African swallow"}',
-                                                       headers={"Content-Type": "application/json"},
-                                                       params={"access_token": "1234"})
+                                                       headers=HEADERS,
+                                                       params={})
 
 
 @pytest.mark.asyncio
@@ -138,10 +140,10 @@ async def test_get_avatar_url(api):
     assert url == "mxc://hello"
 
     api.client_session.request.assert_called_once_with("GET",
-                                                       f"base_url/_matrix/client/r0/profile/{mxid}/avatar_url",
+                                                       f"http://base_url/_matrix/client/r0/profile/{mxid}/avatar_url",
                                                        data="{}",
-                                                       headers={"Content-Type": "application/json"},
-                                                       params={"access_token": "1234"})
+                                                       headers=HEADERS,
+                                                       params={})
 
 
 @pytest.mark.asyncio
@@ -153,10 +155,10 @@ async def test_get_room_id(api):
     assert aid == "aroomid"
 
     api.client_session.request.assert_called_once_with("GET",
-                                                       f"base_url/_matrix/client/r0/directory/room/{quote(room_alias)}",
+                                                       f"http://base_url/_matrix/client/r0/directory/room/{quote(room_alias)}",
                                                        data="{}",
-                                                       headers={"Content-Type": "application/json"},
-                                                       params={"access_token": "1234"})
+                                                       headers=HEADERS,
+                                                       params={})
 
 
 @pytest.mark.asyncio
@@ -169,10 +171,10 @@ async def test_get_room_displayname(api):
     assert displayname == "African swallow"
 
     api.client_session.request.assert_called_once_with("GET",
-                                                       f"base_url/_matrix/client/r0/rooms/arromid/members",
+                                                       f"http://base_url/_matrix/client/r0/rooms/arromid/members",
                                                        data="{}",
-                                                       headers={"Content-Type": "application/json"},
-                                                       params={"access_token": "1234"})
+                                                       headers=HEADERS,
+                                                       params={})
 
 
 # Test the wrapping of a sync method
@@ -184,20 +186,20 @@ async def test_sync_wrap(api):
     displayname = await api.get_event_in_room(roomid, eventid)
 
     api.client_session.request.assert_called_once_with("GET",
-                                                       f"base_url/_matrix/client/r0/rooms/{roomid}/event/{eventid}",
+                                                       f"http://base_url/_matrix/client/r0/rooms/{roomid}/event/{eventid}",
                                                        data="{}",
-                                                       headers={"Content-Type": "application/json"},
-                                                       params={"access_token": "1234"})
+                                                       headers=HEADERS,
+                                                       params={})
 
 
 # Test no access token
 @pytest.mark.asyncio
 async def test_login(api):
-    api = AsyncHTTPAPI(base_url="base_url", client_session=client_session({}))
+    api = AsyncHTTPAPI(base_url="http://base_url", client_session=client_session({}))
     await api.login("bob")
 
     api.client_session.request.assert_called_once_with("POST",
-                                                       f"base_url/_matrix/client/r0/login",
+                                                       f"http://base_url/_matrix/client/r0/login",
                                                        data=json.dumps({"type": "bob"}),
-                                                       headers={"Content-Type": "application/json"},
+                                                       headers={'User-Agent': 'matrix-python-sdk/0.4.0-dev', "Content-Type": "application/json"},
                                                        params={})

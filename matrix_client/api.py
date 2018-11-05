@@ -708,10 +708,10 @@ class MatrixHttpApi(object):
         if "User-Agent" not in headers:
             headers["User-Agent"] = "matrix-python-sdk/%s" % __version__
 
-         if "Content-Type" not in headers:
+        if "Content-Type" not in headers:
             headers["Content-Type"] = "application/json"
 
-	if self.token:
+        if self.token:
             if self.use_authorization_header:
                 headers["Authorization"] = 'Bearer %s' % self.token
             else:
@@ -733,6 +733,7 @@ class MatrixHttpApi(object):
 
         This is factored out of _send as it is shared by the asyncio class.
         """
+        waittime = self.default_429_wait_ms / 1000
         try:
             waittime = responsejson['retry_after_ms'] / 1000
         except KeyError:
@@ -740,12 +741,12 @@ class MatrixHttpApi(object):
                 errordata = json.loads(responsejson['error'])
                 waittime = errordata['retry_after_ms'] / 1000
             except KeyError:
-                waittime = self.default_429_wait_ms / 1000
+                pass
         finally:
             return waittime
 
     def _send(self, method, path, content=None, query_params=None, headers=None,
-              api_path=MATRIX_V2_API_PATH):
+              api_path=MATRIX_V2_API_PATH, return_json=True):
 
         args = self._prepare_send(method, content, query_params, headers, path, api_path)
         content, query_params, headers, endpoint = args
