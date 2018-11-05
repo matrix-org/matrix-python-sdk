@@ -1,3 +1,4 @@
+# flake8: noqa E501
 import json
 from asyncio import Future
 from functools import partial
@@ -17,6 +18,7 @@ def client_session(json, status=200):
 
     class MockResponse(MagicMock):
         called = 0
+
         async def __aenter__(self):
             response = MagicMock()
             f = Future()
@@ -38,10 +40,10 @@ def client_session(json, status=200):
                 self.called += 1
                 return status
 
-
     client_session.request = MockResponse()
 
     return client_session
+
 
 @pytest.fixture
 def api():
@@ -52,7 +54,7 @@ def api():
 async def test_send(api):
     api = api(client_session=client_session({}))
 
-    response = await api._send("GET", "/createRoom")
+    await api._send("GET", "/createRoom")
     api.client_session.request.assert_called_once_with("GET",
                                                        "http://base_url/_matrix/client/r0/createRoom",
                                                        data="{}",
@@ -64,7 +66,7 @@ async def test_send(api):
 async def test_send_429(api):
     api = api(client_session=client_session({}, status=429))
 
-    response = await api._send("GET", "/createRoom")
+    await api._send("GET", "/createRoom")
     call429 = call("GET",
                    "http://base_url/_matrix/client/r0/createRoom",
                    data="{}",
@@ -75,7 +77,6 @@ async def test_send_429(api):
     api.client_session.request.assert_has_calls([call429, call429])
 
 
-
 @pytest.mark.parametrize("json", [{"error": '{"retry_after_ms": 10}'},
                                   {"error": {"retry_after_ms": 10}},
                                   {"retry_after_ms": 10}])
@@ -83,7 +84,7 @@ async def test_send_429(api):
 async def test_send_429_timeout(api, json):
     api = api(client_session=client_session(json, status=429))
 
-    response = await api._send("GET", "/createRoom")
+    await api._send("GET", "/createRoom")
 
     call429 = call("GET",
                    "http://base_url/_matrix/client/r0/createRoom",
@@ -100,7 +101,7 @@ async def test_send_404(api):
     api = api(client_session=client_session({}, status=404))
 
     with pytest.raises(matrix_client.errors.MatrixRequestError) as exc:
-        response = await api._send("GET", "/createRoom")
+        await api._send("GET", "/createRoom")
         assert exc.status == 404
         assert exc.content == "hello"
 
@@ -149,7 +150,6 @@ async def test_get_avatar_url(api):
 @pytest.mark.asyncio
 async def test_get_room_id(api):
     api = api(client_session=client_session({"room_id": "aroomid"}))
-    mxid = "@user:test"
     room_alias = "#test:test"
     aid = await api.get_room_id(room_alias)
     assert aid == "aroomid"
@@ -166,7 +166,6 @@ async def test_get_room_displayname(api):
     mxid = "@user:test"
     api = api(client_session=client_session({"chunk":
                                              [{"sender": mxid, "content": {"displayname": "African swallow"}}]}))
-    room_alias = "#test:test"
     displayname = await api.get_room_displayname("arromid", mxid)
     assert displayname == "African swallow"
 
@@ -183,7 +182,7 @@ async def test_sync_wrap(api):
     api = api(client_session=client_session({}))
     roomid = "!ldjaslkdja:test"
     eventid = "$alskdjsalkdjal:test"
-    displayname = await api.get_event_in_room(roomid, eventid)
+    await api.get_event_in_room(roomid, eventid)
 
     api.client_session.request.assert_called_once_with("GET",
                                                        f"http://base_url/_matrix/client/r0/rooms/{roomid}/event/{eventid}",

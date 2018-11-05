@@ -5,4 +5,4 @@ if sys.version_info < (3, 5):
 else:
     from ._api_asyncio import AsyncHTTPAPI
 
-    __all__ = ['AsyncHttpApi']
+    __all__ = ['AsyncHTTPAPI']

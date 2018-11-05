@@ -97,4 +97,3 @@ class AsyncHTTPAPI(MatrixHttpApi):
         for mem in members:
             if mem['sender'] == user_id:
                 return mem['content']['displayname']
-
