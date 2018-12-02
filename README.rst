@@ -21,7 +21,15 @@ Documentation can be found at http://matrix-org.github.io/matrix-python-sdk/
 
 .. _`#matrix-python-sdk:matrix.org`: https://matrix.to/#/%23matrix-python-sdk:matrix.org
 
+Project Status
+--------------
 
+This sdk is currently lightly maintained (without any sort of official or
+semi-official "lead" maintainer). In general pull-requests might be reviewed but
+little to no new-feature or bug-fix development is happening outside of that.
+For more info or to volunteer to help, please see
+https://github.com/matrix-org/matrix-python-sdk/issues/279. Or come chat in
+`#matrix-python-sdk:matrix.org`_.
 
 Installation
 ============
