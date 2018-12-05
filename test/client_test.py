@@ -99,7 +99,8 @@ def test_state_event():
 
     ev = {
         "type": "m.room.name",
-        "content": {}
+        "content": {},
+        "event_id": "$10000000000000AAAAA:matrix.org"
     }
 
     room._process_state_event(ev)
@@ -151,6 +152,13 @@ def test_state_event():
     ev["content"] = {"guest_access": "can_join"}
     room._process_state_event(ev)
     assert room.guest_access
+
+    # test malformed event (check does not throw exception)
+    room.guest_access = False
+    ev["type"] = "m.room.guest_access"
+    ev["content"] = {}
+    room._process_state_event(ev)
+    assert not room.guest_access
 
     # test encryption
     room.encrypted = False
