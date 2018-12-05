@@ -13,12 +13,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
 import re
+import traceback
 from uuid import uuid4
 
 from .checks import check_room_id
 from .user import User
 from .errors import MatrixRequestError
+
+logger = logging.getLogger(__name__)
 
 
 class Room(object):
@@ -643,28 +647,33 @@ class Room(object):
 
         # Don't keep track of room state if caching turned off
         if clevel >= 0:
-            if etype == "m.room.name":
-                self.name = econtent.get("name")
-            elif etype == "m.room.canonical_alias":
-                self.canonical_alias = econtent.get("alias")
-            elif etype == "m.room.topic":
-                self.topic = econtent.get("topic")
-            elif etype == "m.room.aliases":
-                self.aliases = econtent.get("aliases")
-            elif etype == "m.room.join_rules":
-                self.invite_only = econtent["join_rule"] == "invite"
-            elif etype == "m.room.guest_access":
-                self.guest_access = econtent["guest_access"] == "can_join"
-            elif etype == "m.room.encryption":
-                if econtent.get("algorithm") == "m.megolm.v1.aes-sha2":
-                    self.encrypted = True
-            elif etype == "m.room.member" and clevel == clevel.ALL:
-                # tracking room members can be large e.g. #matrix:matrix.org
-                if econtent["membership"] == "join":
-                    user_id = state_event["state_key"]
-                    self._add_member(user_id, econtent.get("displayname"))
-                elif econtent["membership"] in ("leave", "kick", "invite"):
-                    self._members.pop(state_event["state_key"], None)
+            try:
+                if etype == "m.room.name":
+                    self.name = econtent.get("name")
+                elif etype == "m.room.canonical_alias":
+                    self.canonical_alias = econtent.get("alias")
+                elif etype == "m.room.topic":
+                    self.topic = econtent.get("topic")
+                elif etype == "m.room.aliases":
+                    self.aliases = econtent.get("aliases")
+                elif etype == "m.room.join_rules":
+                    self.invite_only = econtent["join_rule"] == "invite"
+                elif etype == "m.room.guest_access":
+                    self.guest_access = econtent["guest_access"] == "can_join"
+                elif etype == "m.room.encryption":
+                    if econtent.get("algorithm") == "m.megolm.v1.aes-sha2":
+                        self.encrypted = True
+                elif etype == "m.room.member" and clevel == clevel.ALL:
+                    # tracking room members can be large e.g. #matrix:matrix.org
+                    if econtent["membership"] == "join":
+                        user_id = state_event["state_key"]
+                        self._add_member(user_id, econtent.get("displayname"))
+                    elif econtent["membership"] in ("leave", "kick", "invite"):
+                        self._members.pop(state_event["state_key"], None)
+            except KeyError:
+                id = state_event['event_id']
+                logger.error("Unable to parse state event %s, passing over." % id)
+                traceback.print_exc()
 
         for listener in self.state_listeners:
             if (
