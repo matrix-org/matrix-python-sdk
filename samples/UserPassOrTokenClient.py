@@ -16,9 +16,11 @@ Error Codes:
 """
 
 import argparse
-from matrix_client.client import MatrixClient
+
+from requests.exceptions import InvalidSchema, MissingSchema
+
 from matrix_client.api import MatrixRequestError
-from requests.exceptions import MissingSchema, InvalidSchema
+from matrix_client.client import MatrixClient
 
 
 def example(host, user, password, token):

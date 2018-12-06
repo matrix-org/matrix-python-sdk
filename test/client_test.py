@@ -1,10 +1,14 @@
-import pytest
-import responses
 import json
 from copy import deepcopy
-from matrix_client.client import MatrixClient, Room, User, CACHE
+
+import pytest
+import responses
+
 from matrix_client.api import MATRIX_V2_API_PATH
+from matrix_client.client import CACHE, MatrixClient, Room, User
+
 from . import response_examples
+
 try:
     from urllib import quote
 except ImportError:

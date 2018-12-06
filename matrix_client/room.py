@@ -17,8 +17,8 @@ import re
 from uuid import uuid4
 
 from .checks import check_room_id
-from .user import User
 from .errors import MatrixRequestError
+from .user import User
 
 
 class Room(object):

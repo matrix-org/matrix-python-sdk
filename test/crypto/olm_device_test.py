@@ -1,15 +1,18 @@
-import pytest
-pytest.importorskip("olm")  # noqa
-
 import json
 from copy import deepcopy
+from test.response_examples import example_key_upload_response
 
+import pytest
 import responses
 
 from matrix_client.api import MATRIX_V2_API_PATH
 from matrix_client.client import MatrixClient
 from matrix_client.crypto.olm_device import OlmDevice
-from test.response_examples import example_key_upload_response
+
+pytest.importorskip("olm")  # noqa
+
+
+
 
 HOSTNAME = 'http://example.com'
 
