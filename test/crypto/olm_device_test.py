@@ -11,9 +11,6 @@ from matrix_client.crypto.olm_device import OlmDevice
 
 pytest.importorskip("olm")  # noqa
 
-
-
-
 HOSTNAME = 'http://example.com'
 
 
