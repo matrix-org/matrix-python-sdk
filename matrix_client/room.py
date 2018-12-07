@@ -671,9 +671,8 @@ class Room(object):
                     elif econtent["membership"] in ("leave", "kick", "invite"):
                         self._members.pop(state_event["state_key"], None)
             except KeyError:
-                id = state_event['event_id']
-                logger.error("Unable to parse state event %s, passing over." % id)
-                traceback.print_exc()
+                logger.exception("Unable to parse state event %s, passing over.",
+                                 state_event['event_id'])
 
         for listener in self.state_listeners:
             if (
