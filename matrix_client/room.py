@@ -15,7 +15,6 @@
 # limitations under the License.
 import logging
 import re
-
 from uuid import uuid4
 
 from .checks import check_room_id
