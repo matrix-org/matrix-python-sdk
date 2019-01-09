@@ -78,6 +78,16 @@ def test_get_rooms():
     assert len(rooms) == 3
 
 
+def test_get_account_data():
+    client = MatrixClient("http://example.com")
+    assert isinstance(client.account_data, dict)
+    assert (len(client.account_data) == 0)
+
+    ab = client.get_account_data()
+    assert('events' in ab)
+    assert (len(ab['events']) == 0)
+
+
 def test_bad_state_events():
     client = MatrixClient("http://example.com")
     room = client._mkroom("!abc:matrix.org")

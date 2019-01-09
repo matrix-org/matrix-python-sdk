@@ -155,6 +155,9 @@ class MatrixClient(object):
         self.users = {
             # user_id: User
         }
+        self.account_data = {
+            # type: contents
+        }
         if token:
             response = self.api.whoami()
             self.user_id = response["user_id"]
@@ -638,6 +641,16 @@ class MatrixClient(object):
                     ):
                         listener['callback'](event)
 
+        for event in response['account_data']['events']:
+            self.account_data[event['type']] = event['content']
+
+            for listener in self.listeners:
+                if (
+                    listener['event_type'] is None or
+                    listener['event_type'] == event['type']
+                ):
+                    listener['callback'](event)
+
     def get_user(self, user_id):
         """Deprecated. Return a User by their id.
 
@@ -667,3 +680,14 @@ class MatrixClient(object):
             return True
         except MatrixRequestError:
             return False
+
+    def get_account_data(self):
+        """Return `account_data` structure
+
+        Returns:
+            dict: Formatted for use in e.g. `api.set_account_data`
+        """
+        events = []
+        for k,v in self.account_data.items():
+            events.append({'type': k, 'content': v})
+        return {'events': events}
