@@ -78,7 +78,7 @@ Client:
     token = client.register_with_password(username="foobar", password="monkey")
 
     # Existing user
-    token = client.login_with_password(username="foobar", password="monkey")
+    token = client.login(username="foobar", password="monkey")
 
     room = client.create_room("my_room_alias")
     room.send_text("Hello!")
