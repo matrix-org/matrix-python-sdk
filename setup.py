@@ -54,9 +54,6 @@ setup(
         'test': ['pytest', 'responses'],
         'doc': ['Sphinx==1.4.6', 'sphinx-rtd-theme==0.1.9', 'sphinxcontrib-napoleon==0.5.3'],
         'format': ['flake8'],
-        'e2e': ['python-olm==dev', 'canonicaljson']
+        'e2e': ['python-olm @ git+https://github.com/poljar/python-olm.git@4752eb22f005cb9f6143857008572e6d83252841', 'canonicaljson']
     },
-    dependency_links=[
-        'git+https://github.com/poljar/python-olm.git@4752eb22f005cb9f6143857008572e6d83252841#egg=python-olm-dev'
-    ]
 )
