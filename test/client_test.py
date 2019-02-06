@@ -43,7 +43,7 @@ def test_sync_token():
     client = MatrixClient("http://example.com")
     assert client.get_sync_token() is None
     client.set_sync_token("FAKE_TOKEN")
-    assert client.get_sync_token() is "FAKE_TOKEN"
+    assert client.get_sync_token() == "FAKE_TOKEN"
 
 
 def test__mkroom():
@@ -108,7 +108,7 @@ def test_state_event():
 
     ev["content"]["name"] = "TestName"
     room._process_state_event(ev)
-    assert room.name is "TestName"
+    assert room.name == "TestName"
 
     ev["type"] = "m.room.topic"
     room._process_state_event(ev)
@@ -116,7 +116,7 @@ def test_state_event():
 
     ev["content"]["topic"] = "TestTopic"
     room._process_state_event(ev)
-    assert room.topic is "TestTopic"
+    assert room.topic == "TestTopic"
 
     ev["type"] = "m.room.aliases"
     room._process_state_event(ev)
