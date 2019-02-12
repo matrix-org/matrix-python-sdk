@@ -11,13 +11,14 @@
 # 11 - Wrong room format.
 # 12 - Couldn't find room.
 
-import sys
-import samples_common  # Common bits used between samples
 import logging
+import sys
 
-from matrix_client.client import MatrixClient
-from matrix_client.api import MatrixRequestError
+import samples_common  # Common bits used between samples
 from requests.exceptions import MissingSchema
+
+from matrix_client.api import MatrixRequestError
+from matrix_client.client import MatrixClient
 
 
 # Called when a message is recieved.

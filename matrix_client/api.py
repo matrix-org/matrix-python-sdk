@@ -16,12 +16,14 @@
 
 import json
 import warnings
-from requests import Session, RequestException
-from time import time, sleep
-from .__init__ import __version__
-from .errors import MatrixError, MatrixRequestError, MatrixHttpLibError
-from urllib3.util import parse_url
+from time import sleep, time
+
+from requests import RequestException, Session
 from urllib3.exceptions import LocationParseError
+from urllib3.util import parse_url
+
+from .__init__ import __version__
+from .errors import MatrixError, MatrixHttpLibError, MatrixRequestError
 
 try:
     from urllib import quote

@@ -9,12 +9,12 @@
 # 11 - Serverside Error
 
 import sys
-import samples_common
 
-from matrix_client.client import MatrixClient
-from matrix_client.api import MatrixRequestError
+import samples_common
 from requests.exceptions import MissingSchema
 
+from matrix_client.api import MatrixRequestError
+from matrix_client.client import MatrixClient
 
 host, username, password = samples_common.get_user_details(sys.argv)
 

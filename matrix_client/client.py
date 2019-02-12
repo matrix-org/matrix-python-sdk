@@ -12,21 +12,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
+import sys
+from threading import Thread
+from time import sleep
+from uuid import uuid4
+from warnings import warn
+
 from .api import MatrixHttpApi
 from .errors import MatrixRequestError, MatrixUnexpectedResponse
 from .room import Room
 from .user import User
+
 try:
     from .crypto.olm_device import OlmDevice
     ENCRYPTION_SUPPORT = True
 except ImportError:
     ENCRYPTION_SUPPORT = False
-from threading import Thread
-from time import sleep
-from uuid import uuid4
-from warnings import warn
-import logging
-import sys
 
 logger = logging.getLogger(__name__)
 
