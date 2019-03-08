@@ -52,14 +52,6 @@ needed dependencies.
    cd matrix-python-sdk
    python setup.py install
 
-E2E development
-~~~~~~~~~~~~~~~
-
-The Olm bindings are not yet hosted on PyPI. Hence it it necessary to pass
-``--process-dependency-links`` when installing with pip, in order to fetch them
-from their Git repository. For example replace ``python setup.py install`` in
-the above instructions by ``pip install --process-dependency-links .[e2e]``.
-
 Usage
 =====
 The SDK provides 2 layers of interaction. The low-level layer just wraps the
