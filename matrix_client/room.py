@@ -426,6 +426,19 @@ class Room(object):
             state_key
         )
 
+    def send_read_markers(self, mfully_read, mread=None):
+        """ Send read markers
+        Args:
+            room_id(str): The room ID.
+            mfully_read (str): event_id the read marker should located at.
+            mread (str): (optional) The event ID to set the read receipt location at.
+        """
+
+        return self.client.api.send_read_markers(
+            self.room_id,
+            mfully_read,
+            mread)
+
     def update_room_topic(self):
         """Updates self.topic and returns True if room topic has changed."""
         try:
