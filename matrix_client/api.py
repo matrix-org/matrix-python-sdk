@@ -293,11 +293,11 @@ class MatrixHttpApi(object):
             mread (str): (optional) The event ID to set the read receipt location at.
         """
 
-        content = { "m.fully_read": mfully_read }
+        content = {"m.fully_read": mfully_read}
         if mread:
             content['m.read'] = mread
 
-        path = "/rooms/{}/read_markers".format( quote(room_id) )
+        path = "/rooms/{}/read_markers".format(quote(room_id))
         return self._send("POST", path, content)
 
     def send_message_event(self, room_id, event_type, content, txn_id=None,
