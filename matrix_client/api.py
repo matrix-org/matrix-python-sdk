@@ -57,7 +57,8 @@ class MatrixHttpApi(object):
     def __init__(
             self, base_url, token=None, identity=None,
             default_429_wait_ms=5000,
-            use_authorization_header=True
+            use_authorization_header=True,
+            connection_timeout=60
     ):
         try:
             scheme, auth, host, port, path, query, fragment = parse_url(base_url)
@@ -74,6 +75,7 @@ class MatrixHttpApi(object):
         self.session = Session()
         self.default_429_wait_ms = default_429_wait_ms
         self.use_authorization_header = use_authorization_header
+        self.connection_timeout = connection_timeout
 
     def initial_sync(self, limit=1):
         """
@@ -725,7 +727,8 @@ class MatrixHttpApi(object):
                     params=query_params,
                     data=content,
                     headers=headers,
-                    verify=self.validate_cert
+                    verify=self.validate_cert,
+                    timeout=self.connection_timeout,
                 )
             except RequestException as e:
                 raise MatrixHttpLibError(e, method, endpoint)
