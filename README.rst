@@ -55,6 +55,11 @@ needed dependencies.
 E2E development
 ~~~~~~~~~~~~~~~
 
+The olm python bindings use `libolm-dev` headers to be able to compile. On debian based
+distributions the packages are in `buster for debian <https://packages.debian.org/buster/libolm-dev>`_
+and `bionic for Ubuntu <https://packages.ubuntu.com/bionic/libolm-dev>`_. Install them
+using `apt install libolm-dev`.
+
 The Olm bindings are not yet hosted on PyPI. Hence it it necessary to pass
 ``--process-dependency-links`` when installing with pip, in order to fetch them
 from their Git repository. For example replace ``python setup.py install`` in
