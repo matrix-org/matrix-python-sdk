@@ -36,7 +36,7 @@ def main(host, username, password, room_id_alias):
     client = MatrixClient(host)
 
     try:
-        client.login_with_password(username, password)
+        client.login(username, password)
     except MatrixRequestError as e:
         print(e)
         if e.code == 403:
