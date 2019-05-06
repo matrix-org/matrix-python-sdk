@@ -31,7 +31,7 @@ def example(host, user, password, token):
         else:
             print('password login')
             client = MatrixClient(host)
-            token = client.login_with_password(user, password)
+            token = client.login(user, password)
             print('got token: %s' % token)
     except MatrixRequestError as e:
         print(e)
