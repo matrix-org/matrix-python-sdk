@@ -21,7 +21,7 @@ host, username, password = samples_common.get_user_details(sys.argv)
 client = MatrixClient(host)
 
 try:
-    client.login_with_password_no_sync(username, password)
+    client.login(username, password, sync=False)
 except MatrixRequestError as e:
     print(e)
     if e.code == 403:
