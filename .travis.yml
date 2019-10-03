@@ -1,20 +1,28 @@
-sudo: false
 language: python
 python:
   - "2.7"
-  - "3.4"
   - "3.5"
   - "3.6"
-
-jobs:
-  include:
-    - dist: xenial
-      python: "3.7"
+  - "3.7"
 
 before_install:
   - wget https://gitlab.matrix.org/matrix-org/olm/-/archive/3.1.2/olm-3.1.2.tar.bz2
   - tar -xvf olm-3.1.2.tar.bz2
   - pushd olm-3.1.2 && make && sudo make PREFIX="/usr" install && popd
   - rm -r olm-3.1.2
-install: pip install tox-travis
-script: tox
+
+install:
+  - pip install -U coveralls
+  - pip install -U flake8
+  - pip install -U check-manifest
+  - pip install ".[test, doc, e2e]"
+
+script:
+  - flake8 matrix_client samples test
+  - check-manifest
+  - coverage run --source=matrix_client setup.py test
+  - sphinx-build -W docs/source docs/build/html
+
+after_sucess:
+  - coverage report
+  - coveralls
