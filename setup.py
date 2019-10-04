@@ -45,14 +45,15 @@ setup(
     ],
     keywords='chat sdk matrix matrix.org',
     install_requires=[
-        'requests',
-        'urllib3',
+        'requests~=2.22',
+        'urllib3~=1.21',
     ],
-    setup_requires=['pytest-runner',],
-    tests_require=['pytest', 'responses',],
+    setup_requires=['pytest-runner~=5.1'],
+    tests_require=['pytest >=4.6.5, <6.0.0', 'responses >=0.10.6, ==0.10.*'],
     extras_require={
-        'test': ['pytest', 'responses'],
-        'doc': ['Sphinx==1.4.6', 'sphinx-rtd-theme==0.1.9', 'sphinxcontrib-napoleon==0.5.3'],
-        'e2e': ['python-olm', 'canonicaljson']
+        'test': ['pytest >=4.6, <6.0.0', 'responses >=0.10.6, ==0.10.*'],
+        'doc': ['Sphinx >=1.7.6, ==1.*', 'sphinx-rtd-theme >=0.1.9, ==0.1.*',
+                'sphinxcontrib-napoleon >=0.5.3, ==0.5.*'],
+        'e2e': ['python-olm~=3.1', 'canonicaljson~=1.1']
     },
 )
