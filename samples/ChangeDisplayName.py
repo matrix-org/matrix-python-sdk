@@ -13,6 +13,7 @@ import samples_common
 
 from matrix_client.client import MatrixClient
 from matrix_client.api import MatrixRequestError
+from matrix_client.user import User
 from requests.exceptions import MissingSchema
 
 
@@ -35,7 +36,7 @@ except MissingSchema as e:
     print(e)
     sys.exit(3)
 
-user = client.get_user(client.user_id)
+user = User(client.api, client.user_id)
 
 if len(sys.argv) < 5:
     print("Current Display Name: %s" % user.get_display_name())

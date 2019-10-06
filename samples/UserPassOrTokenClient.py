@@ -27,7 +27,7 @@ def example(host, user, password, token):
     try:
         if token:
             print('token login')
-            client = MatrixClient(host, token=token, user_id=user)
+            client = MatrixClient(host, token=token)
         else:
             print('password login')
             client = MatrixClient(host)
