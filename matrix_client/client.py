@@ -341,7 +341,7 @@ class MatrixClient(object):
         return self._mkroom(room_id)
 
     def get_rooms(self):
-        """ Return a dict of {room_id: Room objects} that the user has joined.
+        """ Deprecated. Return a dict of {room_id: Room objects} that the user has joined.
 
         Returns:
             Room{}: Rooms the user has joined.
