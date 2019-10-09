@@ -10,26 +10,31 @@ Matrix Client SDK for Python
 .. image:: https://coveralls.io/repos/github/matrix-org/matrix-python-sdk/badge.svg?branch=master
   :target: https://coveralls.io/github/matrix-org/matrix-python-sdk?branch=master
   :alt: coveralls.io Results
+.. image:: https://img.shields.io/matrix/matrix-python-sdk:matrix.org
+   :target: https://matrix.to/#/%23matrix-python-sdk:matrix.org
+   :alt: Matrix chatroom
+.. image:: https://img.shields.io/badge/docs-stable-blue
+   :target: https://matrix-org.github.io/matrix-python-sdk/
+   :alt: Documentation
 
 
-This is a Matrix client-server SDK for Python 2.7 and 3.4+
-
-Community discussion on usage of this SDK and development of this SDK can be
-found at `#matrix-python-sdk:matrix.org`_.
-
-Documentation can be found at http://matrix-org.github.io/matrix-python-sdk/
-
-.. _`#matrix-python-sdk:matrix.org`: https://matrix.to/#/%23matrix-python-sdk:matrix.org
+Matrix client-server SDK for Python 2.7 and 3.4+
 
 Project Status
 --------------
 
-This sdk is currently lightly maintained (without any sort of official or
-semi-official "lead" maintainer). In general pull-requests might be reviewed but
-little to no new-feature or bug-fix development is happening outside of that.
-For more info or to volunteer to help, please see
-https://github.com/matrix-org/matrix-python-sdk/issues/279. Or come chat in
-`#matrix-python-sdk:matrix.org`_.
+We strongly recommend using the `matrix-nio`_ library rather than this
+sdk. It is both more featureful and more actively maintained.
+
+This sdk is currently lightly maintained without any person ultimately
+responsible for the project. Pull-requests **may** be reviewed, but no
+new-features or bug-fixes are being actively developed. For more info
+or to volunteer to help, please see
+https://github.com/matrix-org/matrix-python-sdk/issues/279 or come
+chat in `#matrix-python-sdk:matrix.org`_.
+
+.. _`matrix-nio`: https://github.com/poljar/matrix-nio
+.. _`#matrix-python-sdk:matrix.org`: https://matrix.to/#/%23matrix-python-sdk:matrix.org
 
 Installation
 ============
