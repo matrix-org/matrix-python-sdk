@@ -277,23 +277,52 @@ class MatrixClient(object):
         response = self.api.login(
             "m.login.password", user=username, password=password, device_id=device_id
         )
+        self.parse_login_response(response, sync, limit)
+        return self.token
+
+    def login(self, auth_string, limit=10, sync=True):
+        """Login to the homeserver using a manually crafted auth string.
+
+        Args:
+            auth_string (str): Valid auth string
+            Example of valid auth string
+            ---
+            {"type":"m.login.password", "user": username, "password": password}
+            ---
+            {
+                "type": "m.login.password", "identifier": {
+                    "type": "m.id.thirdparty",
+                    "medium": "email",
+                    "address": "test@thirdpartyinstance.team"
+            },
+                "password": "mysecretpassword", "initial_device_display_name": "mydevice"
+            }
+            limit (int): Deprecated. How many messages to return when syncing.
+                This will be replaced by a filter API in a later release.
+            sync (bool): Optional. Whether to initiate a /sync request after logging in.
+
+        Returns:
+            str: Access token
+
+        Raises:
+            MatrixRequestError
+        """
+        response = self.api.login(
+            auth_string
+        )
+        self.parse_login_response(response, sync, limit)
+        return self.token
+
+    def parse_login_response(self, response, sync, limit):
         self.user_id = response["user_id"]
         self.token = response["access_token"]
         self.hs = response["home_server"]
         self.api.token = self.token
-        self.device_id = response["device_id"]
-
-        if self._encryption:
-            self.olm_device = OlmDevice(
-                self.api, self.user_id, self.device_id, **self.encryption_conf)
-            self.olm_device.upload_identity_keys()
-            self.olm_device.upload_one_time_keys()
 
         if sync:
             """ Limit Filter """
             self.sync_filter = '{ "room": { "timeline" : { "limit" : %i } } }' % limit
             self._sync()
-        return self.token
 
     def logout(self):
         """ Logout from the homeserver.
