@@ -180,11 +180,12 @@ class MatrixHttpApi(object):
 
         return self._send("POST", "/login", content)
 
-    def login(self, auth_string):
+    def login_with_custom_string(self, auth_string):
         """Perform /login.
 
         Args:
-            auth_string(str): The auth string to user for authenticating. The string is built elsewhere.
+            auth_string(str): The auth string to user for authenticating.
+            The string is built elsewhere.
         """
         return self._send("POST", "/login", auth_string)
 

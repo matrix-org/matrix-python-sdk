@@ -280,7 +280,7 @@ class MatrixClient(object):
         self.parse_login_response(response, sync, limit)
         return self.token
 
-    def login(self, auth_string, limit=10, sync=True):
+    def login_with_custom_string(self, auth_string, limit=10, sync=True):
         """Login to the homeserver using a manually crafted auth string.
 
         Args:
@@ -307,7 +307,7 @@ class MatrixClient(object):
         Raises:
             MatrixRequestError
         """
-        response = self.api.login(
+        response = self.api.login_with_custom_string(
             auth_string
         )
         self.parse_login_response(response, sync, limit)
