@@ -613,12 +613,12 @@ class MatrixClient(object):
                     # TODO: the rest of this for loop should be in room object method
                     room.prev_batch = sync_room["timeline"]["prev_batch"]
 
-                    if "events" in sync_room["state"]:
+                    if "state" in sync_room and "events" in sync_room["state"]:
                         for event in sync_room["state"]["events"]:
                             event['room_id'] = room_id
                             room._process_state_event(event)
 
-                    if "events" in sync_room["timeline"]:
+                    if "timeline" in sync_room and "events" in sync_room["timeline"]:
                         for event in sync_room["timeline"]["events"]:
                             event['room_id'] = room_id
                             room._put_event(event)
@@ -634,7 +634,7 @@ class MatrixClient(object):
                                 ):
                                     listener['callback'](event)
 
-                    if "events" in sync_room["ephemeral"]:
+                    if "ephemeral" in sync_room and "events" in sync_room["ephemeral"]:
                         for event in sync_room['ephemeral']['events']:
                             event['room_id'] = room_id
                             room._put_ephemeral_event(event)
