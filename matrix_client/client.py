@@ -592,59 +592,59 @@ class MatrixClient(object):
             self.olm_device.update_one_time_key_counts(
                 response['device_one_time_keys_count'])
 
-        if 'rooms' in response:
-            if 'invite' in response['rooms']:
-                for room_id, invite_room in response['rooms']['invite'].items():
-                    for listener in self.invite_listeners:
-                        listener(room_id, invite_room['invite_state'])
+        rooms = response.get("rooms", {})
+        if 'invite' in rooms:
+            for room_id, invite_room in rooms['invite'].items():
+                for listener in self.invite_listeners:
+                    listener(room_id, invite_room['invite_state'])
 
-            if 'leave' in response['rooms']:
-                for room_id, left_room in response['rooms']['leave'].items():
-                    for listener in self.left_listeners:
-                        listener(room_id, left_room)
-                    if room_id in self.rooms:
-                        del self.rooms[room_id]
+        if 'leave' in rooms:
+            for room_id, left_room in rooms['leave'].items():
+                for listener in self.left_listeners:
+                    listener(room_id, left_room)
+                if room_id in self.rooms:
+                    del self.rooms[room_id]
 
-            if 'join' in response['rooms']:
-                for room_id, sync_room in response['rooms']['join'].items():
-                    if room_id not in self.rooms:
-                        self._mkroom(room_id)
-                    room = self.rooms[room_id]
-                    # TODO: the rest of this for loop should be in room object method
-                    room.prev_batch = sync_room["timeline"]["prev_batch"]
+        if 'join' in rooms:
+            for room_id, sync_room in rooms['join'].items():
+                if room_id not in self.rooms:
+                    self._mkroom(room_id)
+                room = self.rooms[room_id]
+                # TODO: the rest of this for loop should be in room object method
+                room.prev_batch = sync_room["timeline"]["prev_batch"]
 
-                    if "state" in sync_room and "events" in sync_room["state"]:
-                        for event in sync_room["state"]["events"]:
-                            event['room_id'] = room_id
-                            room._process_state_event(event)
+                if "state" in sync_room and "events" in sync_room["state"]:
+                    for event in sync_room["state"]["events"]:
+                        event['room_id'] = room_id
+                        room._process_state_event(event)
 
-                    if "timeline" in sync_room and "events" in sync_room["timeline"]:
-                        for event in sync_room["timeline"]["events"]:
-                            event['room_id'] = room_id
-                            room._put_event(event)
+                if "timeline" in sync_room and "events" in sync_room["timeline"]:
+                    for event in sync_room["timeline"]["events"]:
+                        event['room_id'] = room_id
+                        room._put_event(event)
 
-                            # TODO: global listeners can still exist but work by each
-                            # room.listeners[uuid] having reference to global listener
+                        # TODO: global listeners can still exist but work by each
+                        # room.listeners[uuid] having reference to global listener
 
-                            # Dispatch for client (global) listeners
-                            for listener in self.listeners:
-                                if (
-                                    listener['event_type'] is None or
-                                    listener['event_type'] == event['type']
-                                ):
-                                    listener['callback'](event)
+                        # Dispatch for client (global) listeners
+                        for listener in self.listeners:
+                            if (
+                                listener['event_type'] is None or
+                                listener['event_type'] == event['type']
+                            ):
+                                listener['callback'](event)
 
-                    if "ephemeral" in sync_room and "events" in sync_room["ephemeral"]:
-                        for event in sync_room['ephemeral']['events']:
-                            event['room_id'] = room_id
-                            room._put_ephemeral_event(event)
+                if "ephemeral" in sync_room and "events" in sync_room["ephemeral"]:
+                    for event in sync_room['ephemeral']['events']:
+                        event['room_id'] = room_id
+                        room._put_ephemeral_event(event)
 
-                            for listener in self.ephemeral_listeners:
-                                if (
-                                    listener['event_type'] is None or
-                                    listener['event_type'] == event['type']
-                                ):
-                                    listener['callback'](event)
+                        for listener in self.ephemeral_listeners:
+                            if (
+                                listener['event_type'] is None or
+                                listener['event_type'] == event['type']
+                            ):
+                                listener['callback'](event)
 
     def get_user(self, user_id):
         """Deprecated. Return a User by their id.
