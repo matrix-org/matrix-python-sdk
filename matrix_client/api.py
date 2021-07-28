@@ -782,6 +782,47 @@ class MatrixHttpApi(object):
         content = {"avatar_url": avatar_url}
         return self._send("PUT", "/profile/%s/avatar_url" % user_id, content)
 
+    def get_status(self, user_id):
+        content = self._send("GET", "/presence/%s/status" % user_id)
+        return content
+
+    def set_status(self, user_id, status_msg=None, presence="online"):
+        if(presence != "online"
+           and presence != "offline"
+           and presence != "unavailable"):
+            raise ValueError("Presence must be one of: online, offline, unavailable")
+        if status_msg is not None:
+            content = {"status_msg": status_msg, "presence": presence}
+        else:
+            content = {"presence": presence}
+        self._send("PUT", "/presence/%s/status" % user_id, content)
+
+    def get_presence_list(self, user_id):
+        content = self._send("GET", "/presence/list/%s" % user_id)
+        return content
+
+    def presence_list_invite_users(self, user_id, invite_list):
+        """Invite users to your presence list
+        
+        Args:
+            user_id(str): Your Matrix ID
+            invite_list(list(str)): List of Matrix IDs to add to your presence list
+
+        """
+        content = {"invite": invite_list}
+        self._send("POST", "/presence/list/%s" % user_id, content)
+
+    def presence_list_drop_users(self, user_id, drop_list):
+        """Drop users from your presence list
+        
+        Args:
+            user_id(str): Your Matrix ID
+            drop_list(list(str)): List of Matrix IDs to remove from your presence list
+
+        """
+        content = {"drop": drop_list}
+        self._send("POST", "/presence/list/%s" % user_id, content)
+
     def get_download_url(self, mxcurl):
         if mxcurl.startswith('mxc://'):
             return self._base_url + "/_matrix/media/r0/download/" + mxcurl[6:]
