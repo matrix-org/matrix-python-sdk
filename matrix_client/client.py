@@ -111,7 +111,8 @@ class MatrixClient(object):
 
     def __init__(self, base_url, token=None, user_id=None,
                  valid_cert_check=True, sync_filter_limit=20,
-                 cache_level=CACHE.ALL, encryption=False, encryption_conf=None):
+                 cache_level=CACHE.ALL, encryption=False, encryption_conf=None,
+                 api_connection_timeout=60):
         if user_id:
             warn(
                 "user_id is deprecated. "
@@ -122,7 +123,8 @@ class MatrixClient(object):
             raise ValueError("Failed to enable encryption. Please make sure the olm "
                              "library is available.")
 
-        self.api = MatrixHttpApi(base_url, token)
+        self.api = MatrixHttpApi(base_url, token,
+                                 connection_timeout=api_connection_timeout)
         self.api.validate_certificate(valid_cert_check)
         self.listeners = []
         self.presence_listeners = {}
