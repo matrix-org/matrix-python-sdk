@@ -284,6 +284,22 @@ class MatrixHttpApi(object):
         """
         return self._send("GET", "/rooms/{}/state/{}".format(quote(room_id), event_type))
 
+    def send_read_markers(self, room_id, mfully_read, mread=None):
+        """Perform PUT /rooms/$room_id/read_markers
+
+        Args:
+            room_id(str): The room ID.
+            mfully_read (str): event_id the read marker should located at.
+            mread (str): (optional) The event ID to set the read receipt location at.
+        """
+
+        content = {"m.fully_read": mfully_read}
+        if mread:
+            content['m.read'] = mread
+
+        path = "/rooms/{}/read_markers".format(quote(room_id))
+        return self._send("POST", path, content)
+
     def send_message_event(self, room_id, event_type, content, txn_id=None,
                            timestamp=None):
         """Perform PUT /rooms/$room_id/send/$event_type
