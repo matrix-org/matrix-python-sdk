@@ -352,18 +352,19 @@ class MatrixClient(object):
 
     # TODO: create Listener class and push as much of this logic there as possible
     # NOTE: listeners related to things in rooms should be attached to Room objects
-    def add_listener(self, callback, event_type=None):
+    def add_listener(self, callback, name=None, event_type=None):
         """ Add a listener that will send a callback when the client recieves
         an event.
 
         Args:
             callback (func(roomchunk)): Callback called when an event arrives.
+            name (str): Optional listener name to identify the listener more conveniently
             event_type (str): The event_type to filter for.
 
         Returns:
             uuid.UUID: Unique id of the listener, can be used to identify the listener.
         """
-        listener_uid = uuid4()
+        listener_uid = name if name else uuid4()
         # TODO: listeners should be stored in dict and accessed/deleted directly. Add
         # convenience method such that MatrixClient.listeners.new(Listener(...)) performs
         # MatrixClient.listeners[uuid4()] = Listener(...)
