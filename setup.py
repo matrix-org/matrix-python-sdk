@@ -32,7 +32,7 @@ setup(
     author='The Matrix.org Team',
     author_email='team@matrix.org',
     url='https://github.com/matrix-org/matrix-python-sdk',
-    packages=find_packages(),
+    packages=find_packages(exclude=['test*']),
     license='Apache License, Version 2.0',
     classifiers=[
         'Development Status :: 3 - Alpha',
