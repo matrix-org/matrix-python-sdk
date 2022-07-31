@@ -675,8 +675,10 @@ class MatrixHttpApi(object):
 
     def get_emote_body(self, text):
         return {
-            "msgtype": "m.emote",
-            "body": text
+            "format": "org.matrix.custom.html",
+            "body": text,
+            "formatted_body": text,
+            "msgtype": "m.emote"
         }
 
     def get_filter(self, user_id, filter_id):
